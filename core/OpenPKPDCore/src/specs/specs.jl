@@ -1,11 +1,14 @@
 # Specifications are pure data. No solver logic and no hidden defaults.
 
-export ModelKind, OneCompIVBolus, OneCompIVBolusParams, DoseEvent, ModelSpec
+export ModelKind,
+    OneCompIVBolus, OneCompOralFirstOrder, OneCompIVBolusParams, OneCompOralFirstOrderParams
+export DoseEvent, ModelSpec
 export SolverSpec, SimGrid, SimResult
 
 abstract type ModelKind end
 
 struct OneCompIVBolus <: ModelKind end
+struct OneCompOralFirstOrder <: ModelKind end
 
 struct DoseEvent
     time::Float64
@@ -13,6 +16,12 @@ struct DoseEvent
 end
 
 struct OneCompIVBolusParams
+    CL::Float64
+    V::Float64
+end
+
+struct OneCompOralFirstOrderParams
+    Ka::Float64
     CL::Float64
     V::Float64
 end
