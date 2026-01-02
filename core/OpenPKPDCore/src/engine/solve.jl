@@ -35,14 +35,13 @@ function validate(solver::SolverSpec)
     return nothing
 end
 
+const _SOLVER_MAP = Dict{Symbol,Any}(:Tsit5 => Tsit5, :Rosenbrock23 => Rosenbrock23)
+
 function _solver_alg(alg::Symbol)
-    if alg == :Tsit5
-        return Tsit5()
-    elseif alg == :Rosenbrock23
-        return Rosenbrock23()
-    else
-        error("Unsupported solver alg: $(alg). Supported: :Tsit5, :Rosenbrock23")
+    if !haskey(_SOLVER_MAP, alg)
+        error("Unsupported solver alg: $(alg). Supported: $(collect(keys(_SOLVER_MAP)))")
     end
+    return _SOLVER_MAP[alg]()
 end
 
 function _dose_callback(doses::Vector{DoseEvent}, t0::Float64, t1::Float64)
@@ -109,6 +108,7 @@ function simulate(
         "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
         "deterministic_output_grid" => true,
         "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
     )
 
     return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
@@ -186,6 +186,7 @@ function simulate(
         "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
         "deterministic_output_grid" => true,
         "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
     )
 
     return SimResult(Vector{Float64}(sol.t), states, observations, metadata)

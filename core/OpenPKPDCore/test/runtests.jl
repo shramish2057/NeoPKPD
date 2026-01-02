@@ -435,3 +435,20 @@ end
 
     @test res.metadata["event_semantics_version"] == "1.0.0"
 end
+
+@testset "Solver semantics version is present and stable" begin
+    spec = ModelSpec(
+        OneCompIVBolus(),
+        "solver_semantics_test",
+        OneCompIVBolusParams(5.0, 50.0),
+        [DoseEvent(0.0, 100.0)],
+    )
+
+    grid = SimGrid(0.0, 12.0, collect(0.0:1.0:12.0))
+    solver = SolverSpec(:Tsit5, 1e-9, 1e-11, 10^7)
+
+    res = simulate(spec, grid, solver)
+
+    @test haskey(res.metadata, "solver_semantics_version")
+    @test res.metadata["solver_semantics_version"] == "1.0.0"
+end

@@ -136,6 +136,7 @@ function simulate_pkpd_coupled(
             Dict("Kin" => Kin, "Kout" => Kout, "R0" => R0, "Imax" => Imax, "IC50" => IC50),
         "deterministic_output_grid" => true,
         "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
     )
 
     return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
