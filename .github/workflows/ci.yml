@@ -24,3 +24,9 @@ jobs:
         shell: bash
         run: |
           julia -e 'using Pkg; Pkg.activate("core/OpenPKPDCore"); Pkg.instantiate(); Pkg.test()'
+
+      - name: Golden validation (replay artifacts)
+        shell: bash
+        run: |
+          julia validation/scripts/run_golden_validation.jl
+
