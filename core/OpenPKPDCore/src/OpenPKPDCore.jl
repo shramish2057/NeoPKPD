@@ -90,6 +90,17 @@ include("serialization/deserialize_sensitivity.jl")
 include("analysis/exposure.jl")
 include("analysis/response_metrics.jl")
 
+# ------------------------------------------------------------------
+# NCA (Non-Compartmental Analysis)
+# FDA/EMA compliant NCA metrics
+# ------------------------------------------------------------------
+include("nca/nca.jl")
 
+# ------------------------------------------------------------------
+# Clinical Trial Simulation
+# Parallel, crossover, dose-escalation, adaptive designs
+# Virtual population, power analysis, bioequivalence
+# ------------------------------------------------------------------
+include("trial/trial.jl")
 
 end

@@ -31,8 +31,11 @@ theme:
 
 nav:
   - Home: index.md
-  - Getting Started:
+  - User Guide:
     - Models: models.md
+    - NCA: nca.md
+    - Trial Simulation: trial.md
+    - Visualization: visualization.md
     - Population Simulation: population.md
     - Sensitivity Analysis: sensitivity.md
   - Reference:

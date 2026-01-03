@@ -102,6 +102,41 @@ OpenPKPD provides validated pharmacokinetic and pharmacodynamic models:
 | PD | `DirectEmax` | Direct effect Emax model |
 | PD | `IndirectResponseTurnover` | Indirect response with inhibition |
 
+### Non-Compartmental Analysis (NCA)
+
+FDA/EMA-compliant NCA for exposure assessment:
+
+```python
+from openpkpd.nca import run_nca
+
+result = run_nca(times, conc, dose)
+print(f"Cmax: {result.cmax}, t½: {result.t_half}")
+```
+
+### Clinical Trial Simulation
+
+Complete trial simulation capabilities:
+
+```python
+from openpkpd import trial
+
+design = trial.parallel_design(2)
+regimen = trial.dosing_qd(100.0, 28)
+pop = trial.generate_virtual_population(100)
+```
+
+### Visualization
+
+Dual-backend (Matplotlib/Plotly) visualization:
+
+```python
+from openpkpd import viz
+
+viz.set_backend("matplotlib")
+viz.plot_conc_time(result)
+viz.plot_vpc(pop_result, observed_data)
+```
+
 ### Population Variability
 
 Model variability at multiple levels:
@@ -126,6 +161,9 @@ Artifacts can be replayed to verify reproducibility across versions.
 | Section | Description |
 |---------|-------------|
 | [Models](models.md) | Complete PK and PD model reference |
+| [NCA](nca.md) | Non-compartmental analysis (FDA/EMA compliant) |
+| [Trial Simulation](trial.md) | Clinical trial design and simulation |
+| [Visualization](visualization.md) | Matplotlib and Plotly plotting |
 | [Population Simulation](population.md) | IIV, IOV, and covariate modeling |
 | [Sensitivity Analysis](sensitivity.md) | Parameter sensitivity methods |
 | [Architecture](architecture.md) | System design and boundaries |

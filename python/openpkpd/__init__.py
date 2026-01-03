@@ -58,51 +58,23 @@ Quick Start:
 For more information, see the docstrings for individual functions.
 """
 
-from .bridge import (
-    # Core initialization
+# Core initialization and utilities
+from ._core import (
     init_julia,
     version,
-
-    # Data classes
     SensitivityMetrics,
     SensitivityResult,
     PopulationSensitivityResult,
+)
 
-    # Artifact operations
+# Artifact operations
+from .artifacts import (
     replay_artifact,
     write_single_artifact,
+)
 
-    # Single PK simulations - One-compartment
-    simulate_pk_iv_bolus,
-    simulate_pk_oral_first_order,
-
-    # Single PK simulations - Two-compartment
-    simulate_pk_twocomp_iv_bolus,
-    simulate_pk_twocomp_oral,
-
-    # Single PK simulations - Three-compartment
-    simulate_pk_threecomp_iv_bolus,
-
-    # Single PK simulations - Advanced models
-    simulate_pk_transit_absorption,
-    simulate_pk_michaelis_menten,
-
-    # Coupled PKPD simulations - Direct PD models
-    simulate_pkpd_direct_emax,
-    simulate_pkpd_sigmoid_emax,
-    simulate_pkpd_biophase_equilibration,
-
-    # Coupled PKPD simulations - ODE-based PD models
-    simulate_pkpd_indirect_response,
-
-    # Population simulations
-    simulate_population_iv_bolus,
-    simulate_population_oral,
-
-    # Sensitivity analysis
-    run_sensitivity,
-
-    # PK/PD metrics
+# PK/PD metrics
+from .metrics import (
     cmax,
     auc_trapezoid,
     emin,
@@ -110,6 +82,67 @@ from .bridge import (
     auc_above_baseline,
     tmax,
     half_life,
+)
+
+# Simulations - One-compartment PK
+from .simulations.pk_onecomp import (
+    simulate_pk_iv_bolus,
+    simulate_pk_oral_first_order,
+)
+
+# Simulations - Two-compartment PK
+from .simulations.pk_twocomp import (
+    simulate_pk_twocomp_iv_bolus,
+    simulate_pk_twocomp_oral,
+)
+
+# Simulations - Three-compartment PK
+from .simulations.pk_threecomp import (
+    simulate_pk_threecomp_iv_bolus,
+)
+
+# Simulations - Advanced PK
+from .simulations.pk_advanced import (
+    simulate_pk_transit_absorption,
+    simulate_pk_michaelis_menten,
+)
+
+# Simulations - Coupled PKPD
+from .simulations.pkpd import (
+    simulate_pkpd_direct_emax,
+    simulate_pkpd_indirect_response,
+    simulate_pkpd_sigmoid_emax,
+    simulate_pkpd_biophase_equilibration,
+)
+
+# Simulations - Population
+from .simulations.population import (
+    simulate_population_iv_bolus,
+    simulate_population_oral,
+)
+
+# Simulations - Sensitivity
+from .simulations.sensitivity import (
+    run_sensitivity,
+)
+
+# NCA - Non-Compartmental Analysis
+from .nca import (
+    run_nca,
+    run_population_nca,
+    summarize_population_nca,
+    NCAConfig,
+    NCAResult,
+    nca_cmax,
+    nca_tmax,
+    auc_0_t,
+    auc_0_inf,
+    estimate_lambda_z,
+    nca_half_life,
+    bioequivalence_90ci,
+    tost_analysis,
+    be_conclusion,
+    geometric_mean_ratio,
 )
 
 
@@ -165,4 +198,21 @@ __all__ = [
     "auc_above_baseline",
     "tmax",
     "half_life",
+
+    # NCA
+    "run_nca",
+    "run_population_nca",
+    "summarize_population_nca",
+    "NCAConfig",
+    "NCAResult",
+    "nca_cmax",
+    "nca_tmax",
+    "auc_0_t",
+    "auc_0_inf",
+    "estimate_lambda_z",
+    "nca_half_life",
+    "bioequivalence_90ci",
+    "tost_analysis",
+    "be_conclusion",
+    "geometric_mean_ratio",
 ]
