@@ -75,8 +75,10 @@ function serialize_execution(;
 
     mode = "pk"
     if pd_spec !== nothing
-        if pd_spec.kind isa DirectEmax
+        # Direct PD models (pk_then_pd mode)
+        if pd_spec.kind isa DirectEmax || pd_spec.kind isa SigmoidEmax || pd_spec.kind isa BiophaseEquilibration
             mode = "pk_then_pd"
+        # Coupled ODE PD models (pkpd_coupled mode)
         elseif pd_spec.kind isa IndirectResponseTurnover
             mode = "pkpd_coupled"
         end

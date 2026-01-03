@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python -m pip install -e python
-python -m pip install pytest
+# Use existing venv if present, otherwise create one
+if [ -d "python/.venv" ]; then
+    source python/.venv/bin/activate
+else
+    python3 -m venv python/.venv
+    source python/.venv/bin/activate
+fi
+
+pip install -e python
+pip install pytest
 
 pytest -q python/tests
 

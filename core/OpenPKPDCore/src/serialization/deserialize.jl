@@ -16,11 +16,18 @@ _to_dict(x::JSON.Object) = Dict{String,Any}(x)
 const _MODEL_KIND_MAP = Dict{String,Function}(
     "OpenPKPDCore.OneCompIVBolus" => () -> OneCompIVBolus(),
     "OpenPKPDCore.OneCompOralFirstOrder" => () -> OneCompOralFirstOrder(),
+    "OpenPKPDCore.TwoCompIVBolus" => () -> TwoCompIVBolus(),
+    "OpenPKPDCore.TwoCompOral" => () -> TwoCompOral(),
+    "OpenPKPDCore.ThreeCompIVBolus" => () -> ThreeCompIVBolus(),
+    "OpenPKPDCore.TransitAbsorption" => () -> TransitAbsorption(),
+    "OpenPKPDCore.MichaelisMentenElimination" => () -> MichaelisMentenElimination(),
 )
 
 const _PD_KIND_MAP = Dict{String,Function}(
     "OpenPKPDCore.DirectEmax" => () -> DirectEmax(),
+    "OpenPKPDCore.SigmoidEmax" => () -> SigmoidEmax(),
     "OpenPKPDCore.IndirectResponseTurnover" => () -> IndirectResponseTurnover(),
+    "OpenPKPDCore.BiophaseEquilibration" => () -> BiophaseEquilibration(),
 )
 
 function _require_key(d::Dict, k::String)
@@ -83,6 +90,44 @@ function _parse_model_spec(d::Dict)::ModelSpec
         V = Float64(params_d["V"])
         params = OneCompOralFirstOrderParams(Ka, CL, V)
         return ModelSpec(kind, name, params, doses)
+    elseif kind isa TwoCompIVBolus
+        CL = Float64(params_d["CL"])
+        V1 = Float64(params_d["V1"])
+        Q = Float64(params_d["Q"])
+        V2 = Float64(params_d["V2"])
+        params = TwoCompIVBolusParams(CL, V1, Q, V2)
+        return ModelSpec(kind, name, params, doses)
+    elseif kind isa TwoCompOral
+        Ka = Float64(params_d["Ka"])
+        CL = Float64(params_d["CL"])
+        V1 = Float64(params_d["V1"])
+        Q = Float64(params_d["Q"])
+        V2 = Float64(params_d["V2"])
+        params = TwoCompOralParams(Ka, CL, V1, Q, V2)
+        return ModelSpec(kind, name, params, doses)
+    elseif kind isa ThreeCompIVBolus
+        CL = Float64(params_d["CL"])
+        V1 = Float64(params_d["V1"])
+        Q2 = Float64(params_d["Q2"])
+        V2 = Float64(params_d["V2"])
+        Q3 = Float64(params_d["Q3"])
+        V3 = Float64(params_d["V3"])
+        params = ThreeCompIVBolusParams(CL, V1, Q2, V2, Q3, V3)
+        return ModelSpec(kind, name, params, doses)
+    elseif kind isa TransitAbsorption
+        N = Int(params_d["N"])
+        Ktr = Float64(params_d["Ktr"])
+        Ka = Float64(params_d["Ka"])
+        CL = Float64(params_d["CL"])
+        V = Float64(params_d["V"])
+        params = TransitAbsorptionParams(N, Ktr, Ka, CL, V)
+        return ModelSpec(kind, name, params, doses)
+    elseif kind isa MichaelisMentenElimination
+        Vmax = Float64(params_d["Vmax"])
+        Km = Float64(params_d["Km"])
+        V = Float64(params_d["V"])
+        params = MichaelisMentenEliminationParams(Vmax, Km, V)
+        return ModelSpec(kind, name, params, doses)
     end
 
     error("Internal error: model kind parsed but not handled")
@@ -109,6 +154,13 @@ function _parse_pd_spec(d::Dict)::PDSpec
         EC50 = Float64(params_d["EC50"])
         params = DirectEmaxParams(E0, Emax, EC50)
         return PDSpec(kind, name, params, input_obs, output_obs)
+    elseif kind isa SigmoidEmax
+        E0 = Float64(params_d["E0"])
+        Emax = Float64(params_d["Emax"])
+        EC50 = Float64(params_d["EC50"])
+        gamma = Float64(params_d["gamma"])
+        params = SigmoidEmaxParams(E0, Emax, EC50, gamma)
+        return PDSpec(kind, name, params, input_obs, output_obs)
     elseif kind isa IndirectResponseTurnover
         Kin = Float64(params_d["Kin"])
         Kout = Float64(params_d["Kout"])
@@ -116,6 +168,13 @@ function _parse_pd_spec(d::Dict)::PDSpec
         Imax = Float64(params_d["Imax"])
         IC50 = Float64(params_d["IC50"])
         params = IndirectResponseTurnoverParams(Kin, Kout, R0, Imax, IC50)
+        return PDSpec(kind, name, params, input_obs, output_obs)
+    elseif kind isa BiophaseEquilibration
+        ke0 = Float64(params_d["ke0"])
+        E0 = Float64(params_d["E0"])
+        Emax = Float64(params_d["Emax"])
+        EC50 = Float64(params_d["EC50"])
+        params = BiophaseEquilibrationParams(ke0, E0, Emax, EC50)
         return PDSpec(kind, name, params, input_obs, output_obs)
     end
 
@@ -165,8 +224,10 @@ function deserialize_execution(artifact::Dict)
     if haskey(artifact, "execution_mode")
         mode = String(artifact["execution_mode"])
     elseif pd_spec !== nothing
-        if pd_spec.kind isa DirectEmax
+        # Direct PD models (pk_then_pd mode)
+        if pd_spec.kind isa DirectEmax || pd_spec.kind isa SigmoidEmax || pd_spec.kind isa BiophaseEquilibration
             mode = "pk_then_pd"
+        # Coupled ODE PD models (pkpd_coupled mode)
         elseif pd_spec.kind isa IndirectResponseTurnover
             mode = "pkpd_coupled"
         end

@@ -21,13 +21,20 @@ include("specs/sensitivity.jl")
 # ------------------------------------------------------------------
 include("models/onecomp_iv_bolus.jl")
 include("models/onecomp_oral_first_order.jl")
+include("models/twocomp_iv_bolus.jl")
+include("models/twocomp_oral.jl")
+include("models/threecomp_iv_bolus.jl")
+include("models/transit_absorption.jl")
+include("models/michaelis_menten.jl")
 include("models/pk_interface.jl")
 
 # ------------------------------------------------------------------
 # PD model definitions
 # ------------------------------------------------------------------
 include("pd/direct_emax.jl")
+include("pd/sigmoid_emax.jl")
 include("pd/indirect_response_turnover.jl")
+include("pd/biophase_equilibration.jl")
 
 # ------------------------------------------------------------------
 # Numerical semantics 

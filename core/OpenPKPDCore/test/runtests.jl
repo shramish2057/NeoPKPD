@@ -976,3 +976,519 @@ end
     # baseline 10: suppression curve is [0,2,1]; AUC = 0.5*(0+2)*1 + 0.5*(2+1)*1 = 1 + 1.5 = 2.5
     @test isapprox(auc_above_baseline(t, y, 10.0), 2.5; atol = 1e-12)
 end
+
+# =====================================================
+# Tests for new PK models
+# =====================================================
+
+@testset "TwoCompIVBolus basic simulation" begin
+    spec = ModelSpec(
+        TwoCompIVBolus(),
+        "2c_iv_bolus",
+        TwoCompIVBolusParams(10.0, 50.0, 5.0, 100.0),  # CL=10, V1=50, Q=5, V2=100
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    grid = SimGrid(0.0, 48.0, collect(0.0:1.0:48.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    res = simulate(spec, grid, solver)
+
+    @test haskey(res.states, :A_central)
+    @test haskey(res.states, :A_peripheral)
+    @test haskey(res.observations, :conc)
+    @test length(res.observations[:conc]) == length(res.t)
+
+    # Initial concentration should be Dose/V1
+    @test isapprox(res.observations[:conc][1], 500.0 / 50.0; rtol=0.01)
+
+    # Concentration should decline over time
+    @test res.observations[:conc][end] < res.observations[:conc][1]
+
+    # Metadata should be correct
+    @test res.metadata["model"] == "TwoCompIVBolus"
+end
+
+@testset "TwoCompIVBolus mass distribution" begin
+    spec = ModelSpec(
+        TwoCompIVBolus(),
+        "2c_iv_mass",
+        TwoCompIVBolusParams(10.0, 50.0, 5.0, 100.0),  # Normal elimination
+        [DoseEvent(0.0, 1000.0)],
+    )
+
+    grid = SimGrid(0.0, 100.0, collect(0.0:1.0:100.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    res = simulate(spec, grid, solver)
+
+    # Total mass should decline over time due to elimination
+    initial_total = res.states[:A_central][1] + res.states[:A_peripheral][1]
+    final_total = res.states[:A_central][end] + res.states[:A_peripheral][end]
+    @test final_total < initial_total
+
+    # Mass should be distributed to peripheral at equilibrium
+    # Initially all drug in central, later some moves to peripheral
+    @test res.states[:A_peripheral][1] ≈ 0.0 atol=1e-10
+    @test res.states[:A_peripheral][10] > 0.0  # After some time, peripheral has drug
+end
+
+@testset "TwoCompOral basic simulation" begin
+    spec = ModelSpec(
+        TwoCompOral(),
+        "2c_oral",
+        TwoCompOralParams(1.0, 10.0, 50.0, 5.0, 100.0),  # Ka=1, CL=10, V1=50, Q=5, V2=100
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    grid = SimGrid(0.0, 48.0, collect(0.0:0.5:48.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    res = simulate(spec, grid, solver)
+
+    @test haskey(res.states, :A_gut)
+    @test haskey(res.states, :A_central)
+    @test haskey(res.states, :A_peripheral)
+    @test haskey(res.observations, :conc)
+
+    # Initial concentration should be zero (drug in gut)
+    @test isapprox(res.observations[:conc][1], 0.0; atol=1e-10)
+
+    # Concentration should rise then fall
+    conc = res.observations[:conc]
+    max_idx = argmax(conc)
+    @test max_idx > 1  # Peak occurs after t=0
+
+    # Metadata should be correct
+    @test res.metadata["model"] == "TwoCompOral"
+end
+
+@testset "ThreeCompIVBolus basic simulation" begin
+    spec = ModelSpec(
+        ThreeCompIVBolus(),
+        "3c_iv_bolus",
+        ThreeCompIVBolusParams(10.0, 50.0, 10.0, 80.0, 2.0, 200.0),  # CL=10, V1=50, Q2=10, V2=80, Q3=2, V3=200
+        [DoseEvent(0.0, 1000.0)],
+    )
+
+    grid = SimGrid(0.0, 72.0, collect(0.0:1.0:72.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    res = simulate(spec, grid, solver)
+
+    @test haskey(res.states, :A_central)
+    @test haskey(res.states, :A_periph1)
+    @test haskey(res.states, :A_periph2)
+    @test haskey(res.observations, :conc)
+
+    # Initial concentration should be Dose/V1
+    @test isapprox(res.observations[:conc][1], 1000.0 / 50.0; rtol=0.01)
+
+    # Metadata should be correct
+    @test res.metadata["model"] == "ThreeCompIVBolus"
+end
+
+@testset "ThreeCompIVBolus shows tri-exponential decline" begin
+    spec = ModelSpec(
+        ThreeCompIVBolus(),
+        "3c_triexp",
+        ThreeCompIVBolusParams(5.0, 50.0, 20.0, 100.0, 1.0, 500.0),
+        [DoseEvent(0.0, 1000.0)],
+    )
+
+    grid = SimGrid(0.0, 200.0, collect(0.0:1.0:200.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    res = simulate(spec, grid, solver)
+
+    conc = res.observations[:conc]
+
+    # Concentration should be monotonically decreasing (or nearly so)
+    for i in 2:length(conc)
+        @test conc[i] <= conc[i-1] + 1e-10
+    end
+end
+
+@testset "TransitAbsorption basic simulation" begin
+    spec = ModelSpec(
+        TransitAbsorption(),
+        "transit_abs",
+        TransitAbsorptionParams(5, 2.0, 1.0, 10.0, 50.0),  # N=5, Ktr=2, Ka=1, CL=10, V=50
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    grid = SimGrid(0.0, 24.0, collect(0.0:0.25:24.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    res = simulate(spec, grid, solver)
+
+    @test haskey(res.states, :A_central)
+    @test haskey(res.states, :Transit_1)
+    @test haskey(res.states, :Transit_5)
+    @test haskey(res.observations, :conc)
+
+    # Initial concentration should be zero
+    @test isapprox(res.observations[:conc][1], 0.0; atol=1e-10)
+
+    # Delayed peak due to transit chain
+    conc = res.observations[:conc]
+    max_idx = argmax(conc)
+    tmax = res.t[max_idx]
+    @test tmax > 0.5  # Peak should be delayed
+
+    # Metadata should be correct
+    @test res.metadata["model"] == "TransitAbsorption"
+    @test res.metadata["N_transit"] == 5
+end
+
+@testset "TransitAbsorption: more compartments delay peak" begin
+    grid = SimGrid(0.0, 24.0, collect(0.0:0.1:24.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    spec_n2 = ModelSpec(
+        TransitAbsorption(),
+        "transit_n2",
+        TransitAbsorptionParams(2, 2.0, 1.0, 10.0, 50.0),
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    spec_n8 = ModelSpec(
+        TransitAbsorption(),
+        "transit_n8",
+        TransitAbsorptionParams(8, 2.0, 1.0, 10.0, 50.0),
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    res_n2 = simulate(spec_n2, grid, solver)
+    res_n8 = simulate(spec_n8, grid, solver)
+
+    tmax_n2 = res_n2.t[argmax(res_n2.observations[:conc])]
+    tmax_n8 = res_n8.t[argmax(res_n8.observations[:conc])]
+
+    # More transit compartments should delay the peak
+    @test tmax_n8 > tmax_n2
+end
+
+@testset "MichaelisMentenElimination basic simulation" begin
+    spec = ModelSpec(
+        MichaelisMentenElimination(),
+        "mm_elim",
+        MichaelisMentenEliminationParams(100.0, 5.0, 50.0),  # Vmax=100, Km=5, V=50
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    grid = SimGrid(0.0, 48.0, collect(0.0:0.5:48.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    res = simulate(spec, grid, solver)
+
+    @test haskey(res.states, :A_central)
+    @test haskey(res.observations, :conc)
+
+    # Initial concentration should be Dose/V
+    @test isapprox(res.observations[:conc][1], 500.0 / 50.0; rtol=0.01)
+
+    # Concentration should decline
+    @test res.observations[:conc][end] < res.observations[:conc][1]
+
+    # Metadata should be correct
+    @test res.metadata["model"] == "MichaelisMentenElimination"
+end
+
+@testset "MichaelisMentenElimination shows nonlinear kinetics" begin
+    grid = SimGrid(0.0, 24.0, collect(0.0:0.5:24.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    # Low dose - approximately linear
+    spec_low = ModelSpec(
+        MichaelisMentenElimination(),
+        "mm_low",
+        MichaelisMentenEliminationParams(100.0, 10.0, 50.0),  # Km=10
+        [DoseEvent(0.0, 50.0)],  # C0 = 1, << Km
+    )
+
+    # High dose - saturated elimination
+    spec_high = ModelSpec(
+        MichaelisMentenElimination(),
+        "mm_high",
+        MichaelisMentenEliminationParams(100.0, 10.0, 50.0),
+        [DoseEvent(0.0, 5000.0)],  # C0 = 100, >> Km
+    )
+
+    res_low = simulate(spec_low, grid, solver)
+    res_high = simulate(spec_high, grid, solver)
+
+    # AUC should increase disproportionately with dose
+    auc_low = auc_trapezoid(res_low.t, res_low.observations[:conc])
+    auc_high = auc_trapezoid(res_high.t, res_high.observations[:conc])
+
+    # AUC ratio should be > dose ratio (100x) due to saturable kinetics
+    @test auc_high / auc_low > 100.0
+end
+
+# =====================================================
+# Tests for new PD models
+# =====================================================
+
+function sigmoid_emax_ref(C::Float64, E0::Float64, Emax::Float64, EC50::Float64, gamma::Float64)
+    if C <= 0.0
+        return E0
+    end
+    return E0 + (Emax * C^gamma) / (EC50^gamma + C^gamma)
+end
+
+@testset "SigmoidEmax basic evaluation" begin
+    pd = PDSpec(
+        SigmoidEmax(),
+        "semax",
+        SigmoidEmaxParams(10.0, 50.0, 1.0, 2.0),  # E0=10, Emax=50, EC50=1, gamma=2
+        :conc,
+        :effect,
+    )
+
+    concentrations = [0.0, 0.5, 1.0, 2.0, 5.0, 10.0]
+    effects = evaluate(pd, concentrations)
+
+    for (i, C) in enumerate(concentrations)
+        e_ref = sigmoid_emax_ref(C, 10.0, 50.0, 1.0, 2.0)
+        @test isapprox(effects[i], e_ref; rtol=1e-10)
+    end
+end
+
+@testset "SigmoidEmax: gamma=1 matches DirectEmax" begin
+    pd_sigmoid = PDSpec(
+        SigmoidEmax(),
+        "semax_g1",
+        SigmoidEmaxParams(10.0, 40.0, 0.8, 1.0),  # gamma=1
+        :conc,
+        :effect,
+    )
+
+    pd_direct = PDSpec(
+        DirectEmax(),
+        "demax",
+        DirectEmaxParams(10.0, 40.0, 0.8),
+        :conc,
+        :effect,
+    )
+
+    concentrations = [0.0, 0.1, 0.5, 1.0, 2.0, 5.0]
+
+    effects_sig = evaluate(pd_sigmoid, concentrations)
+    effects_dir = evaluate(pd_direct, concentrations)
+
+    for i in eachindex(concentrations)
+        @test isapprox(effects_sig[i], effects_dir[i]; rtol=1e-10)
+    end
+end
+
+@testset "SigmoidEmax: higher gamma gives steeper response" begin
+    pd_low = PDSpec(
+        SigmoidEmax(),
+        "semax_low",
+        SigmoidEmaxParams(0.0, 100.0, 5.0, 1.0),  # gamma=1
+        :conc,
+        :effect,
+    )
+
+    pd_high = PDSpec(
+        SigmoidEmax(),
+        "semax_high",
+        SigmoidEmaxParams(0.0, 100.0, 5.0, 4.0),  # gamma=4
+        :conc,
+        :effect,
+    )
+
+    # At EC50, both should give ~50% of Emax
+    effects_low = evaluate(pd_low, [5.0])
+    effects_high = evaluate(pd_high, [5.0])
+    @test isapprox(effects_low[1], 50.0; rtol=0.01)
+    @test isapprox(effects_high[1], 50.0; rtol=0.01)
+
+    # Below EC50, high gamma gives lower effect
+    effects_low_sub = evaluate(pd_low, [2.0])
+    effects_high_sub = evaluate(pd_high, [2.0])
+    @test effects_high_sub[1] < effects_low_sub[1]
+
+    # Above EC50, high gamma gives higher effect
+    effects_low_sup = evaluate(pd_low, [10.0])
+    effects_high_sup = evaluate(pd_high, [10.0])
+    @test effects_high_sup[1] > effects_low_sup[1]
+end
+
+@testset "SigmoidEmax PKPD coupling" begin
+    pk = ModelSpec(
+        OneCompIVBolus(),
+        "pk_semax",
+        OneCompIVBolusParams(5.0, 50.0),
+        [DoseEvent(0.0, 100.0)],
+    )
+
+    grid = SimGrid(0.0, 24.0, collect(0.0:0.5:24.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    pd = PDSpec(
+        SigmoidEmax(),
+        "semax",
+        SigmoidEmaxParams(10.0, 40.0, 0.8, 2.0),
+        :conc,
+        :effect,
+    )
+
+    res = simulate_pkpd(pk, pd, grid, solver)
+
+    @test haskey(res.observations, :conc)
+    @test haskey(res.observations, :effect)
+    @test length(res.observations[:effect]) == length(res.t)
+
+    # Verify effects match expected values
+    for (i, t) in enumerate(res.t)
+        C = res.observations[:conc][i]
+        e_ref = sigmoid_emax_ref(C, 10.0, 40.0, 0.8, 2.0)
+        @test isapprox(res.observations[:effect][i], e_ref; rtol=1e-10)
+    end
+end
+
+@testset "BiophaseEquilibration basic evaluation (quasi-steady state)" begin
+    pd = PDSpec(
+        BiophaseEquilibration(),
+        "biophase",
+        BiophaseEquilibrationParams(0.5, 10.0, 40.0, 0.8),  # ke0=0.5, E0=10, Emax=40, EC50=0.8
+        :conc,
+        :effect,
+    )
+
+    concentrations = [0.0, 0.5, 1.0, 2.0, 5.0]
+    effects = evaluate(pd, concentrations)
+
+    # Quasi-steady state: Ce = Cp, so effect is direct Emax
+    for (i, C) in enumerate(concentrations)
+        e_ref = direct_emax(C, 10.0, 40.0, 0.8)
+        @test isapprox(effects[i], e_ref; rtol=1e-10)
+    end
+end
+
+@testset "BiophaseEquilibration PKPD coupling" begin
+    pk = ModelSpec(
+        OneCompIVBolus(),
+        "pk_biophase",
+        OneCompIVBolusParams(5.0, 50.0),
+        [DoseEvent(0.0, 100.0)],
+    )
+
+    grid = SimGrid(0.0, 24.0, collect(0.0:0.5:24.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    pd = PDSpec(
+        BiophaseEquilibration(),
+        "biophase_test",
+        BiophaseEquilibrationParams(0.5, 10.0, 40.0, 0.8),
+        :conc,
+        :effect,
+    )
+
+    res = simulate_pkpd(pk, pd, grid, solver)
+
+    @test haskey(res.observations, :conc)
+    @test haskey(res.observations, :effect)
+    @test length(res.observations[:effect]) == length(res.t)
+    @test res.metadata["pd_model"] == "BiophaseEquilibration"
+end
+
+# =====================================================
+# Integration tests: New PK models with PD
+# =====================================================
+
+@testset "TwoCompIVBolus with DirectEmax PKPD" begin
+    pk = ModelSpec(
+        TwoCompIVBolus(),
+        "2c_pkpd",
+        TwoCompIVBolusParams(10.0, 50.0, 5.0, 100.0),
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    grid = SimGrid(0.0, 48.0, collect(0.0:1.0:48.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    pd = PDSpec(DirectEmax(), "emax", DirectEmaxParams(0.0, 100.0, 2.0), :conc, :effect)
+
+    res = simulate_pkpd(pk, pd, grid, solver)
+
+    @test haskey(res.observations, :effect)
+    @test length(res.observations[:effect]) == length(res.t)
+
+    # Effect should track concentration
+    for (i, t) in enumerate(res.t)
+        C = res.observations[:conc][i]
+        e_ref = direct_emax(C, 0.0, 100.0, 2.0)
+        @test isapprox(res.observations[:effect][i], e_ref; rtol=1e-10)
+    end
+end
+
+@testset "TransitAbsorption with SigmoidEmax PKPD" begin
+    pk = ModelSpec(
+        TransitAbsorption(),
+        "transit_pkpd",
+        TransitAbsorptionParams(5, 2.0, 1.0, 10.0, 50.0),
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    grid = SimGrid(0.0, 24.0, collect(0.0:0.25:24.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    pd = PDSpec(SigmoidEmax(), "semax", SigmoidEmaxParams(0.0, 100.0, 2.0, 2.0), :conc, :effect)
+
+    res = simulate_pkpd(pk, pd, grid, solver)
+
+    @test haskey(res.observations, :effect)
+
+    # Effect should follow sigmoid Emax of concentration
+    for (i, t) in enumerate(res.t)
+        C = res.observations[:conc][i]
+        e_ref = sigmoid_emax_ref(C, 0.0, 100.0, 2.0, 2.0)
+        @test isapprox(res.observations[:effect][i], e_ref; rtol=1e-10)
+    end
+end
+
+@testset "MichaelisMentenElimination with DirectEmax PKPD" begin
+    pk = ModelSpec(
+        MichaelisMentenElimination(),
+        "mm_pkpd",
+        MichaelisMentenEliminationParams(100.0, 5.0, 50.0),
+        [DoseEvent(0.0, 500.0)],
+    )
+
+    grid = SimGrid(0.0, 24.0, collect(0.0:0.5:24.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    pd = PDSpec(DirectEmax(), "emax", DirectEmaxParams(10.0, 50.0, 3.0), :conc, :effect)
+
+    res = simulate_pkpd(pk, pd, grid, solver)
+
+    @test haskey(res.observations, :effect)
+
+    for (i, t) in enumerate(res.t)
+        C = res.observations[:conc][i]
+        e_ref = direct_emax(C, 10.0, 50.0, 3.0)
+        @test isapprox(res.observations[:effect][i], e_ref; rtol=1e-10)
+    end
+end
+
+@testset "ThreeCompIVBolus with BiophaseEquilibration PKPD" begin
+    pk = ModelSpec(
+        ThreeCompIVBolus(),
+        "3c_biophase",
+        ThreeCompIVBolusParams(10.0, 50.0, 10.0, 80.0, 2.0, 200.0),
+        [DoseEvent(0.0, 1000.0)],
+    )
+
+    grid = SimGrid(0.0, 48.0, collect(0.0:1.0:48.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    pd = PDSpec(BiophaseEquilibration(), "biophase", BiophaseEquilibrationParams(0.5, 0.0, 100.0, 5.0), :conc, :effect)
+
+    res = simulate_pkpd(pk, pd, grid, solver)
+
+    @test haskey(res.observations, :effect)
+    @test length(res.observations[:effect]) == length(res.t)
+end

@@ -191,3 +191,352 @@ function simulate(
 
     return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
 end
+
+# -------------------------
+# TwoCompIVBolus
+# -------------------------
+
+function simulate(
+    spec::ModelSpec{TwoCompIVBolus,TwoCompIVBolusParams}, grid::SimGrid, solver::SolverSpec
+)
+    validate(spec)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+
+    a0_add, dose_times, dose_amounts = normalize_doses_for_sim(spec.doses, grid.t0, grid.t1)
+
+    u0 = [a0_add, 0.0]
+    tspan = (grid.t0, grid.t1)
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, TwoCompIVBolus())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+    )
+
+    A_central = [u[1] for u in sol.u]
+    A_peripheral = [u[2] for u in sol.u]
+    C = [a / p.V1 for a in A_central]
+
+    states = Dict(:A_central => A_central, :A_peripheral => A_peripheral)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "TwoCompIVBolus",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+# -------------------------
+# TwoCompOral
+# -------------------------
+
+function simulate(
+    spec::ModelSpec{TwoCompOral,TwoCompOralParams}, grid::SimGrid, solver::SolverSpec
+)
+    validate(spec)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+
+    a0_add, dose_times, dose_amounts = normalize_doses_for_sim(spec.doses, grid.t0, grid.t1)
+
+    u0 = [a0_add, 0.0, 0.0]  # [A_gut, A_central, A_peripheral]
+    tspan = (grid.t0, grid.t1)
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, TwoCompOral())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]  # Dose goes to gut compartment
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+    )
+
+    A_gut = [u[1] for u in sol.u]
+    A_central = [u[2] for u in sol.u]
+    A_peripheral = [u[3] for u in sol.u]
+    C = [a / p.V1 for a in A_central]
+
+    states = Dict(:A_gut => A_gut, :A_central => A_central, :A_peripheral => A_peripheral)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "TwoCompOral",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+# -------------------------
+# ThreeCompIVBolus
+# -------------------------
+
+function simulate(
+    spec::ModelSpec{ThreeCompIVBolus,ThreeCompIVBolusParams}, grid::SimGrid, solver::SolverSpec
+)
+    validate(spec)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+
+    a0_add, dose_times, dose_amounts = normalize_doses_for_sim(spec.doses, grid.t0, grid.t1)
+
+    u0 = [a0_add, 0.0, 0.0]  # [A_central, A_periph1, A_periph2]
+    tspan = (grid.t0, grid.t1)
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, ThreeCompIVBolus())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+    )
+
+    A_central = [u[1] for u in sol.u]
+    A_periph1 = [u[2] for u in sol.u]
+    A_periph2 = [u[3] for u in sol.u]
+    C = [a / p.V1 for a in A_central]
+
+    states = Dict(:A_central => A_central, :A_periph1 => A_periph1, :A_periph2 => A_periph2)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "ThreeCompIVBolus",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+# -------------------------
+# TransitAbsorption
+# -------------------------
+
+function simulate(
+    spec::ModelSpec{TransitAbsorption,TransitAbsorptionParams}, grid::SimGrid, solver::SolverSpec
+)
+    validate(spec)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+    N = spec.params.N
+
+    a0_add, dose_times, dose_amounts = normalize_doses_for_sim(spec.doses, grid.t0, grid.t1)
+
+    # N transit compartments + 1 central compartment
+    u0 = zeros(N + 1)
+    u0[1] = a0_add  # Initial dose goes to first transit compartment
+
+    tspan = (grid.t0, grid.t1)
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, TransitAbsorption())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]  # Dose goes to first transit
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+    )
+
+    # Extract all transit compartments and central
+    transit_states = Dict{Symbol,Vector{Float64}}()
+    for i in 1:N
+        transit_states[Symbol("Transit_$i")] = [u[i] for u in sol.u]
+    end
+
+    A_central = [u[N+1] for u in sol.u]
+    C = [a / p.V for a in A_central]
+
+    states = merge(transit_states, Dict(:A_central => A_central))
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "TransitAbsorption",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+        "N_transit" => N,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+# -------------------------
+# MichaelisMentenElimination
+# -------------------------
+
+function simulate(
+    spec::ModelSpec{MichaelisMentenElimination,MichaelisMentenEliminationParams}, grid::SimGrid, solver::SolverSpec
+)
+    validate(spec)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+
+    a0_add, dose_times, dose_amounts = normalize_doses_for_sim(spec.doses, grid.t0, grid.t1)
+
+    u0 = [a0_add]
+    tspan = (grid.t0, grid.t1)
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, MichaelisMentenElimination())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    # Use Rosenbrock23 for stiff nonlinear elimination by default
+    alg = solver.alg == :Tsit5 ? Rosenbrock23() : _solver_alg(solver.alg)
+
+    sol = solve(
+        prob,
+        alg;
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+    )
+
+    A = [u[1] for u in sol.u]
+    C = [a / p.V for a in A]
+
+    states = Dict(:A_central => A)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "MichaelisMentenElimination",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end

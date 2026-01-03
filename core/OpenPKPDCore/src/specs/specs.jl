@@ -15,6 +15,10 @@ end
 # -------------------------
 export ModelKind,
     OneCompIVBolus, OneCompOralFirstOrder, OneCompIVBolusParams, OneCompOralFirstOrderParams
+export TwoCompIVBolus, TwoCompIVBolusParams, TwoCompOral, TwoCompOralParams
+export ThreeCompIVBolus, ThreeCompIVBolusParams
+export TransitAbsorption, TransitAbsorptionParams
+export MichaelisMentenElimination, MichaelisMentenEliminationParams
 export DoseEvent, ModelSpec
 export SolverSpec, SimGrid, SimResult
 
@@ -37,6 +41,181 @@ struct OneCompOralFirstOrderParams
     Ka::Float64
     CL::Float64
     V::Float64
+end
+
+# -------------------------
+# Two-compartment PK models
+# -------------------------
+
+"""
+Two-compartment IV bolus PK model.
+
+States:
+- A_central: Amount in central compartment
+- A_peripheral: Amount in peripheral compartment
+
+Parameters:
+- CL: Clearance from central compartment (volume/time)
+- V1: Volume of central compartment
+- Q: Inter-compartmental clearance (volume/time)
+- V2: Volume of peripheral compartment
+
+Micro-constants:
+- k10 = CL/V1 (elimination rate constant)
+- k12 = Q/V1 (central to peripheral rate constant)
+- k21 = Q/V2 (peripheral to central rate constant)
+
+Dynamics:
+dA_central/dt = -k10*A_central - k12*A_central + k21*A_peripheral
+dA_peripheral/dt = k12*A_central - k21*A_peripheral
+"""
+struct TwoCompIVBolus <: ModelKind end
+
+struct TwoCompIVBolusParams
+    CL::Float64   # Clearance
+    V1::Float64   # Central volume
+    Q::Float64    # Inter-compartmental clearance
+    V2::Float64   # Peripheral volume
+end
+
+"""
+Two-compartment oral first-order absorption PK model.
+
+States:
+- A_gut: Amount in gut compartment
+- A_central: Amount in central compartment
+- A_peripheral: Amount in peripheral compartment
+
+Parameters:
+- Ka: Absorption rate constant (1/time)
+- CL: Clearance from central compartment (volume/time)
+- V1: Volume of central compartment
+- Q: Inter-compartmental clearance (volume/time)
+- V2: Volume of peripheral compartment
+
+Dynamics:
+dA_gut/dt = -Ka*A_gut
+dA_central/dt = Ka*A_gut - (CL/V1)*A_central - (Q/V1)*A_central + (Q/V2)*A_peripheral
+dA_peripheral/dt = (Q/V1)*A_central - (Q/V2)*A_peripheral
+"""
+struct TwoCompOral <: ModelKind end
+
+struct TwoCompOralParams
+    Ka::Float64   # Absorption rate constant
+    CL::Float64   # Clearance
+    V1::Float64   # Central volume
+    Q::Float64    # Inter-compartmental clearance
+    V2::Float64   # Peripheral volume
+end
+
+# -------------------------
+# Three-compartment PK model
+# -------------------------
+
+"""
+Three-compartment IV bolus PK model (mammillary).
+
+States:
+- A_central: Amount in central compartment
+- A_periph1: Amount in first peripheral (shallow) compartment
+- A_periph2: Amount in second peripheral (deep) compartment
+
+Parameters:
+- CL: Clearance from central compartment (volume/time)
+- V1: Volume of central compartment
+- Q2: Inter-compartmental clearance to shallow peripheral (volume/time)
+- V2: Volume of shallow peripheral compartment
+- Q3: Inter-compartmental clearance to deep peripheral (volume/time)
+- V3: Volume of deep peripheral compartment
+
+Dynamics:
+dA_central/dt = -(CL/V1)*A_central - (Q2/V1)*A_central + (Q2/V2)*A_periph1
+                - (Q3/V1)*A_central + (Q3/V3)*A_periph2
+dA_periph1/dt = (Q2/V1)*A_central - (Q2/V2)*A_periph1
+dA_periph2/dt = (Q3/V1)*A_central - (Q3/V3)*A_periph2
+"""
+struct ThreeCompIVBolus <: ModelKind end
+
+struct ThreeCompIVBolusParams
+    CL::Float64   # Clearance
+    V1::Float64   # Central volume
+    Q2::Float64   # Inter-compartmental clearance (shallow)
+    V2::Float64   # Shallow peripheral volume
+    Q3::Float64   # Inter-compartmental clearance (deep)
+    V3::Float64   # Deep peripheral volume
+end
+
+# -------------------------
+# Transit absorption model
+# -------------------------
+
+"""
+Transit compartment absorption model.
+
+This model implements a chain of transit compartments before the absorption
+compartment, providing a delayed and more physiological absorption profile.
+Based on Savic et al. (2007) transit compartment model.
+
+States:
+- Transit[1:N]: Amount in each transit compartment
+- A_central: Amount in central compartment
+
+Parameters:
+- N: Number of transit compartments (integer >= 1)
+- Ktr: Transit rate constant (1/time) - same for all transit compartments
+- Ka: Absorption rate constant from last transit to central (1/time)
+- CL: Clearance (volume/time)
+- V: Volume of distribution
+
+Dynamics:
+For i = 1: dTransit[1]/dt = -Ktr * Transit[1]  (receives dose)
+For i > 1: dTransit[i]/dt = Ktr * Transit[i-1] - Ktr * Transit[i]
+dA_central/dt = Ka * Transit[N] - (CL/V) * A_central
+
+Note: Mean transit time (MTT) ≈ (N+1) / Ktr
+"""
+struct TransitAbsorption <: ModelKind end
+
+struct TransitAbsorptionParams
+    N::Int        # Number of transit compartments
+    Ktr::Float64  # Transit rate constant
+    Ka::Float64   # Absorption rate constant
+    CL::Float64   # Clearance
+    V::Float64    # Volume of distribution
+end
+
+# -------------------------
+# Michaelis-Menten elimination model
+# -------------------------
+
+"""
+One-compartment PK model with Michaelis-Menten (saturable) elimination.
+
+This model describes nonlinear pharmacokinetics where the elimination
+pathway becomes saturated at higher concentrations.
+
+States:
+- A_central: Amount in central compartment
+
+Parameters:
+- Vmax: Maximum elimination rate (mass/time)
+- Km: Michaelis constant - concentration at half Vmax (mass/volume)
+- V: Volume of distribution
+
+Dynamics:
+C = A_central / V
+dA_central/dt = -Vmax * C / (Km + C)
+             = -Vmax * A_central / (Km * V + A_central)
+
+At low concentrations (C << Km): Approximates first-order with CL ≈ Vmax/Km
+At high concentrations (C >> Km): Approximates zero-order with rate ≈ Vmax
+"""
+struct MichaelisMentenElimination <: ModelKind end
+
+struct MichaelisMentenEliminationParams
+    Vmax::Float64  # Maximum elimination rate
+    Km::Float64    # Michaelis constant
+    V::Float64     # Volume of distribution
 end
 
 struct ModelSpec{K<:ModelKind,P}
@@ -71,6 +250,8 @@ end
 # -------------------------
 
 export PDModelKind, DirectEmax, DirectEmaxParams, PDSpec
+export SigmoidEmax, SigmoidEmaxParams
+export BiophaseEquilibration, BiophaseEquilibrationParams
 
 abstract type PDModelKind end
 
@@ -85,6 +266,73 @@ struct DirectEmaxParams
     E0::Float64
     Emax::Float64
     EC50::Float64
+end
+
+"""
+Sigmoid Emax PD model (Hill equation).
+
+This model extends the direct Emax model with a Hill coefficient (gamma)
+that controls the steepness of the concentration-effect relationship.
+
+Effect(C) = E0 + (Emax * C^gamma) / (EC50^gamma + C^gamma)
+
+Parameters:
+- E0: Baseline effect (no drug)
+- Emax: Maximum effect above baseline
+- EC50: Concentration at 50% of maximum effect
+- gamma: Hill coefficient (steepness parameter)
+  - gamma = 1: Standard Emax model (hyperbolic)
+  - gamma > 1: Steeper (more switch-like) response
+  - gamma < 1: More gradual response
+
+Note: gamma is also known as the Hill coefficient or slope factor.
+Typical range is 0.5 to 5.
+"""
+struct SigmoidEmax <: PDModelKind end
+
+struct SigmoidEmaxParams
+    E0::Float64      # Baseline effect
+    Emax::Float64    # Maximum effect
+    EC50::Float64    # Concentration at 50% Emax
+    gamma::Float64   # Hill coefficient
+end
+
+"""
+Biophase equilibration (effect compartment) PD model.
+
+This model introduces a hypothetical effect compartment to account for
+temporal delays between plasma concentration and observed effect.
+The effect compartment has no volume (doesn't affect PK) and equilibrates
+with the plasma concentration via first-order kinetics.
+
+States:
+- Ce: Effect site concentration (hypothetical)
+
+Parameters:
+- ke0: Effect site equilibration rate constant (1/time)
+- E0: Baseline effect
+- Emax: Maximum effect
+- EC50: Effect site concentration at 50% Emax
+
+Dynamics:
+dCe/dt = ke0 * (Cp - Ce)
+
+where Cp is plasma concentration (from PK model)
+
+Effect:
+E(Ce) = E0 + (Emax * Ce) / (EC50 + Ce)
+
+Note: t1/2,ke0 = ln(2)/ke0 is the equilibration half-life.
+When ke0 is large, effect follows plasma concentration closely (direct effect).
+When ke0 is small, there is significant hysteresis between PK and PD.
+"""
+struct BiophaseEquilibration <: PDModelKind end
+
+struct BiophaseEquilibrationParams
+    ke0::Float64    # Effect site equilibration rate constant
+    E0::Float64     # Baseline effect
+    Emax::Float64   # Maximum effect
+    EC50::Float64   # Effect site EC50
 end
 
 export IndirectResponseTurnover, IndirectResponseTurnoverParams
