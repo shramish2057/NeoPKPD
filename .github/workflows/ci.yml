@@ -29,5 +29,11 @@ jobs:
         shell: bash
         run: |
           julia validation/scripts/run_golden_validation.jl
+
+      - name: CLI smoke test
+        shell: bash
+        run: |
+          validation/scripts/smoke_cli.sh
+
           
 
