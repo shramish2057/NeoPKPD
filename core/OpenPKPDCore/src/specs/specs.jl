@@ -127,3 +127,64 @@ struct PDSpec{K<:PDModelKind,P}
     input_observation::Symbol
     output_observation::Symbol
 end
+
+# -------------------------
+# Population specifications
+# -------------------------
+
+export RandomEffectKind, LogNormalIIV, IIVSpec, PopulationSpec, IndividualCovariates
+
+abstract type RandomEffectKind end
+
+"""
+Log-normal inter-individual variability (IIV).
+
+Parameter transform:
+theta_i = theta_pop * exp(eta_i)
+
+eta_i ~ Normal(0, omega^2)
+"""
+struct LogNormalIIV <: RandomEffectKind end
+
+"""
+IIV specification for a set of parameters.
+
+omegas:
+- Dict mapping parameter symbol to omega (standard deviation of eta)
+
+seed:
+- deterministic seed for RNG
+
+n:
+- number of individuals
+"""
+struct IIVSpec{K <: RandomEffectKind}
+    kind::K
+    omegas::Dict{Symbol, Float64}
+    seed::UInt64
+    n::Int
+end
+
+"""
+Optional covariates per individual.
+For v1 we keep covariates as a Dict.
+"""
+struct IndividualCovariates
+    values::Dict{Symbol, Float64}
+end
+
+"""
+Population simulation specification.
+
+base_model_spec:
+- the typical value model (population thetas) with doses, grid, solver handled outside
+iiv:
+- optional IIV spec (can be nothing)
+covariates:
+- optional vector aligned with n individuals (can be empty)
+"""
+struct PopulationSpec{MS}
+    base_model_spec::MS
+    iiv::Union{Nothing, IIVSpec}
+    covariates::Vector{IndividualCovariates}
+end

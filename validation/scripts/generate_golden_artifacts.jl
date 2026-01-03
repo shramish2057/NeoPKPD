@@ -99,6 +99,25 @@ function gen_coupled_pkpd_turnover_oral()
     return serialize_execution(model_spec=pk, grid=grid, solver=solver, result=res, pd_spec=pd)
 end
 
+function gen_population_pk_iv()
+    base = ModelSpec(
+        OneCompIVBolus(),
+        "golden_pop_iv",
+        OneCompIVBolusParams(5.0, 50.0),
+        [DoseEvent(0.0, 100.0)],
+    )
+
+    iiv = IIVSpec(LogNormalIIV(), Dict(:CL => 0.2, :V => 0.1), UInt64(7777), 5)
+    pop = PopulationSpec(base, iiv, IndividualCovariates[])
+
+    grid = SimGrid(0.0, 24.0, collect(0.0:1.0:24.0))
+    solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+
+    res = simulate_population(pop, grid, solver)
+
+    return serialize_population_execution(population_spec=pop, grid=grid, solver=solver, result=res)
+end
+
 function main()
     mkpath("validation/golden")
 
@@ -107,6 +126,8 @@ function main()
         "pk_oral.json" => gen_pk_oral(),
         "pk_then_pd_direct_emax.json" => gen_pk_then_pd_direct_emax(),
         "pkpd_coupled_turnover_oral.json" => gen_coupled_pkpd_turnover_oral(),
+        "population_pk_iv.json" => gen_population_pk_iv(),
+
     )
 
     for (fname, art) in artifacts
