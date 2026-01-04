@@ -14,11 +14,11 @@ Examples demonstrating non-linear mixed effects (NLME) parameter estimation.
 
 | Example | Description | Directory |
 |---------|-------------|-----------|
-| FOCE-I Basic | One-compartment estimation | [01_foce_onecomp](01_foce_onecomp/) |
-| SAEM Two-Comp | Two-compartment with SAEM | [02_saem_twocomp](02_saem_twocomp/) |
-| Laplacian | Sparse pediatric data | [03_laplacian_sparse](03_laplacian_sparse/) |
-| Diagnostics | GOF, CWRES, ETAs | [04_estimation_diagnostics](04_estimation_diagnostics/) |
-| Model Comparison | AIC/BIC selection | [05_model_comparison](05_model_comparison/) |
+| FOCE-I Basic | One-compartment estimation | [01_foce_onecomp](01_foce_onecomp/README.md) |
+| SAEM Two-Comp | Two-compartment with SAEM | [02_saem_twocomp](02_saem_twocomp/README.md) |
+| Laplacian | Sparse pediatric data | [03_laplacian_sparse](03_laplacian_sparse/README.md) |
+| Diagnostics | GOF, CWRES, ETAs | [04_estimation_diagnostics](04_estimation_diagnostics/README.md) |
+| Model Comparison | AIC/BIC selection | [05_model_comparison](05_model_comparison/README.md) |
 
 ## Estimation Workflow
 
@@ -109,6 +109,6 @@ Ka          1.42        0.18      12.7      [1.07, 1.77]
 
 ## See Also
 
-- [Population Examples](../population/) - Population simulation
-- [VPC](../vpc/) - Visual Predictive Checks
-- [NCA](../nca/) - Non-compartmental analysis
+- [Population Examples](../population/README.md) - Population simulation
+- [VPC](../vpc/README.md) - Visual Predictive Checks
+- [NCA](../nca/README.md) - Non-compartmental analysis

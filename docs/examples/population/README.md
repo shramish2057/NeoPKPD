@@ -6,11 +6,11 @@ Examples demonstrating inter-individual variability (IIV), inter-occasion variab
 
 | Example | Description | Directory |
 |---------|-------------|-----------|
-| Basic IIV | Log-normal inter-individual variability | [01_basic_iiv](01_basic_iiv/) |
-| IOV | Inter-occasion variability | [02_iov](02_iov/) |
-| Static Covariates | Weight and age effects | [03_static_covariates](03_static_covariates/) |
-| Time-Varying Covariates | Creatinine clearance over time | [04_time_varying_covariates](04_time_varying_covariates/) |
-| Complex Model | Multiple covariates, IIV, correlations | [05_complex_covariate_model](05_complex_covariate_model/) |
+| Basic IIV | Log-normal inter-individual variability | [01_basic_iiv](01_basic_iiv/README.md) |
+| IOV | Inter-occasion variability | [02_iov](02_iov/README.md) |
+| Static Covariates | Weight and age effects | [03_static_covariates](03_static_covariates/README.md) |
+| Time-Varying Covariates | Creatinine clearance over time | [04_time_varying_covariates](04_time_varying_covariates/README.md) |
+| Complex Model | Multiple covariates, IIV, correlations | [05_complex_covariate_model](05_complex_covariate_model/README.md) |
 
 ## Concepts
 
@@ -103,6 +103,6 @@ Note: For log-normal, CV ≈ ω for ω < 0.5
 
 ## See Also
 
-- [Parameter Estimation](../estimation/) - Estimate population parameters
-- [VPC](../vpc/) - Validate population models
-- [Models](../models/) - Available structural models
+- [Parameter Estimation](../estimation/README.md) - Estimate population parameters
+- [VPC](../vpc/README.md) - Validate population models
+- [Models](../models/README.md) - Available structural models

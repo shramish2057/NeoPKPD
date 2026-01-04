@@ -23,8 +23,8 @@ VPC compares simulated data from the model to observed data:
 
 | Example | Description | Directory |
 |---------|-------------|-----------|
-| Standard VPC | Basic implementation | [01_standard_vpc](01_standard_vpc/) |
-| pcVPC | Prediction-corrected | [02_prediction_corrected_vpc](02_prediction_corrected_vpc/) |
+| Standard VPC | Basic implementation | [01_standard_vpc](01_standard_vpc/README.md) |
+| pcVPC | Prediction-corrected | [02_prediction_corrected_vpc](02_prediction_corrected_vpc/README.md) |
 
 ## Usage
 

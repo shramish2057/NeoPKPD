@@ -19,8 +19,8 @@ Examples demonstrating NCA metrics computation from concentration-time data.
 
 | Example | Description | Directory |
 |---------|-------------|-----------|
-| Basic NCA | Single subject NCA | [01_basic_nca](01_basic_nca/) |
-| Population NCA | Summary statistics | [02_population_nca](02_population_nca/) |
+| Basic NCA | Single subject NCA | [01_basic_nca](01_basic_nca/README.md) |
+| Population NCA | Summary statistics | [02_population_nca](02_population_nca/README.md) |
 
 ## Usage
 

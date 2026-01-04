@@ -6,18 +6,18 @@ Comprehensive examples covering all OpenPKPD features across Julia, Python, and 
 
 | Category | Description | Languages |
 |----------|-------------|-----------|
-| [Quickstart](quickstart/) | Get started in 5 minutes | Julia, Python, CLI |
-| [Models](models/) | All 12 PK/PD models | Julia, Python, CLI |
-| [Population](population/) | IIV, IOV, covariates | Julia, Python, CLI |
-| [Estimation](estimation/) | FOCE-I, SAEM, diagnostics | Julia, Python |
-| [NCA](nca/) | Non-compartmental analysis | Julia, Python |
-| [VPC](vpc/) | Visual Predictive Checks | Julia, Python, CLI |
-| [Trial](trial/) | Clinical trial simulation | Julia, Python, CLI |
-| [Import](import/) | NONMEM/Monolix import | Julia, Python, CLI |
-| [Data](data/) | CDISC data import | Julia, Python |
-| [Visualization](visualization/) | Plotting and figures | Python |
-| [Sensitivity](sensitivity/) | Parameter sensitivity | Julia, Python, CLI |
-| [Reproducibility](reproducibility/) | Artifacts and replay | Julia, Python, CLI |
+| [Quickstart](quickstart/README.md) | Get started in 5 minutes | Julia, Python, CLI |
+| [Models](models/README.md) | All 12 PK/PD models | Julia, Python, CLI |
+| [Population](population/README.md) | IIV, IOV, covariates | Julia, Python, CLI |
+| [Estimation](estimation/README.md) | FOCE-I, SAEM, diagnostics | Julia, Python |
+| [NCA](nca/README.md) | Non-compartmental analysis | Julia, Python |
+| [VPC](vpc/README.md) | Visual Predictive Checks | Julia, Python, CLI |
+| [Trial](trial/README.md) | Clinical trial simulation | Julia, Python, CLI |
+| [Import](import/README.md) | NONMEM/Monolix import | Julia, Python, CLI |
+| [Data](data/README.md) | CDISC data import | Julia, Python |
+| [Visualization](visualization/README.md) | Plotting and figures | Python |
+| [Sensitivity](sensitivity/README.md) | Parameter sensitivity | Julia, Python, CLI |
+| [Reproducibility](reproducibility/README.md) | Artifacts and replay | Julia, Python, CLI |
 
 ## End-to-End Use Cases
 
@@ -25,12 +25,12 @@ Complete workflows from data to analysis:
 
 | Use Case | Description |
 |----------|-------------|
-| [FIH Dose Exploration](use_cases/fih_dose_exploration/) | First-in-human dose selection |
-| [PKPD Biomarker](use_cases/pkpd_biomarker_turnover/) | Biomarker turnover modeling |
-| [NONMEM Migration](use_cases/nonmem_migration/) | Migrate NONMEM models to OpenPKPD |
-| [Theophylline Analysis](use_cases/real_world_theophylline/) | Real-world PK analysis |
-| [Bioequivalence Study](use_cases/bioequivalence_study/) | Complete BE workflow |
-| [Population PKPD](use_cases/population_pkpd_analysis/) | Full population analysis |
+| [FIH Dose Exploration](use_cases/fih_dose_exploration/README.md) | First-in-human dose selection |
+| [PKPD Biomarker](use_cases/pkpd_biomarker_turnover/README.md) | Biomarker turnover modeling |
+| [NONMEM Migration](use_cases/nonmem_migration/README.md) | Migrate NONMEM models to OpenPKPD |
+| [Theophylline Analysis](use_cases/real_world_theophylline/README.md) | Real-world PK analysis |
+| [Bioequivalence Study](use_cases/bioequivalence_study/README.md) | Complete BE workflow |
+| [Population PKPD](use_cases/population_pkpd_analysis/README.md) | Full population analysis |
 
 ## Real-World Validation
 
@@ -38,9 +38,9 @@ Validation against published datasets:
 
 | Study | Dataset | Features |
 |-------|---------|----------|
-| [Theophylline SD](real_world_validation/studies/theophylline_theo_sd/) | Single dose PK | NCA, estimation |
-| [Theophylline MD](real_world_validation/studies/theophylline_theo_md/) | Multiple dose PK | Population, VPC |
-| [Warfarin PKPD](real_world_validation/studies/warfarin_pkpd/) | PK/PD model | Indirect response |
+| [Theophylline SD](real_world_validation/studies/theophylline_theo_sd/README.md) | Single dose PK | NCA, estimation |
+| [Theophylline MD](real_world_validation/studies/theophylline_theo_md/README.md) | Multiple dose PK | Population, VPC |
+| [Warfarin PKPD](real_world_validation/studies/warfarin_pkpd/README.md) | PK/PD model | Indirect response |
 
 ---
 
@@ -268,4 +268,4 @@ julia --project=core/OpenPKPDCore docs/examples/validate_outputs.jl
 4. Include a README.md explaining the example
 5. Follow the naming convention: `01_descriptive_name/`
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
+See the [CONTRIBUTING guide](https://github.com/openpkpd/openpkpd/blob/main/CONTRIBUTING.md) for guidelines.
