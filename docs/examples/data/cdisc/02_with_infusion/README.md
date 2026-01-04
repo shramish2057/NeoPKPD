@@ -14,9 +14,10 @@ Import pharmacokinetic data with IV infusion dosing using EXDUR field.
 
 | File | Description |
 |------|-------------|
-| [pc.csv](pc.csv) | PC domain data |
-| [ex.csv](ex.csv) | EX domain with EXDUR |
-| [load.py](load.py) | Python loader |
+| ex.csv | EX domain with EXDUR |
+| load.py | Python loader |
+
+Note: This example reuses PC data from the basic example.
 
 ## Infusion Handling
 

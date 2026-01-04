@@ -6,23 +6,23 @@ Complete examples for all OpenPKPD PK and PK/PD models.
 
 | Model | Description | Directory |
 |-------|-------------|-----------|
-| OneCompIVBolus | One-compartment IV bolus | [01_onecomp_iv_bolus](pk/01_onecomp_iv_bolus/) |
-| OneCompIVInfusion | One-compartment IV infusion | [02_onecomp_iv_infusion](pk/02_onecomp_iv_infusion/) |
-| OneCompOralFirstOrder | One-compartment oral (first-order absorption) | [03_onecomp_oral](pk/03_onecomp_oral/) |
-| TwoCompIVBolus | Two-compartment IV bolus | [04_twocomp_iv](pk/04_twocomp_iv/) |
-| TwoCompOral | Two-compartment oral | [05_twocomp_oral](pk/05_twocomp_oral/) |
-| ThreeCompIVBolus | Three-compartment IV bolus | [06_threecomp_iv](pk/06_threecomp_iv/) |
-| TransitAbsorption | Transit compartment absorption | [07_transit_absorption](pk/07_transit_absorption/) |
-| MichaelisMentenElimination | Saturable (nonlinear) elimination | [08_michaelis_menten](pk/08_michaelis_menten/) |
+| OneCompIVBolus | One-compartment IV bolus | [01_onecomp_iv_bolus](pk/01_onecomp_iv_bolus/README.md) |
+| OneCompIVInfusion | One-compartment IV infusion | [02_onecomp_iv_infusion](pk/02_onecomp_iv_infusion/README.md) |
+| OneCompOralFirstOrder | One-compartment oral (first-order absorption) | [03_onecomp_oral](pk/03_onecomp_oral/README.md) |
+| TwoCompIVBolus | Two-compartment IV bolus | [04_twocomp_iv](pk/04_twocomp_iv/README.md) |
+| TwoCompOral | Two-compartment oral | [05_twocomp_oral](pk/05_twocomp_oral/README.md) |
+| ThreeCompIVBolus | Three-compartment IV bolus | [06_threecomp_iv](pk/06_threecomp_iv/README.md) |
+| TransitAbsorption | Transit compartment absorption | [07_transit_absorption](pk/07_transit_absorption/README.md) |
+| MichaelisMentenElimination | Saturable (nonlinear) elimination | [08_michaelis_menten](pk/08_michaelis_menten/README.md) |
 
 ## PK/PD Models
 
 | Model | Description | Directory |
 |-------|-------------|-----------|
-| DirectEmax | Direct Emax response | [01_direct_emax](pkpd/01_direct_emax/) |
-| SigmoidEmax | Sigmoidal Emax response | [02_sigmoid_emax](pkpd/02_sigmoid_emax/) |
-| BiophaseEquilibration | Effect compartment model | [03_biophase_equilibration](pkpd/03_biophase_equilibration/) |
-| IndirectResponse | Indirect response (turnover) | [04_indirect_response](pkpd/04_indirect_response/) |
+| DirectEmax | Direct Emax response | [01_direct_emax](pkpd/01_direct_emax/README.md) |
+| SigmoidEmax | Sigmoidal Emax response | [02_sigmoid_emax](pkpd/02_sigmoid_emax/README.md) |
+| BiophaseEquilibration | Effect compartment model | [03_biophase_equilibration](pkpd/03_biophase_equilibration/README.md) |
+| IndirectResponse | Indirect response (turnover) | [04_indirect_response](pkpd/04_indirect_response/README.md) |
 
 ## File Structure
 

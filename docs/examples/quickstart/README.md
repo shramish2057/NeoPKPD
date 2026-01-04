@@ -68,7 +68,7 @@ python docs/examples/quickstart/python_first_simulation.py
 
 After completing the quickstart:
 
-1. **Explore Models**: See [models/](../models/) for all available PK/PD models
-2. **Add Variability**: See [population/](../population/) for IIV and covariates
-3. **Fit to Data**: See [estimation/](../estimation/) for parameter estimation
-4. **Real Analysis**: See [use_cases/](../use_cases/) for complete workflows
+1. **Explore Models**: See [models](../models/README.md) for all available PK/PD models
+2. **Add Variability**: See [population](../population/README.md) for IIV and covariates
+3. **Fit to Data**: See [estimation](../estimation/README.md) for parameter estimation
+4. **Real Analysis**: See [use_cases](../use_cases/fih_dose_exploration/README.md) for complete workflows
