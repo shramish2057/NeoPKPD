@@ -207,7 +207,7 @@ Any change to numerical output requires a version bump.
 
 ## Documentation
 
-Full documentation: [openpkpd.github.io/openpkpd](https://openpkpd.github.io/openpkpd/)
+Full documentation: [shramish2057.github.io/OpenPKPD](https://shramish2057.github.io/OpenPKPD/)
 
 | Guide | Description |
 |-------|-------------|

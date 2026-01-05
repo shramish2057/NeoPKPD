@@ -2,8 +2,8 @@ site_name: OpenPKPD
 site_description: Transparent, validated pharmacokinetics and pharmacodynamics modeling infrastructure
 site_author: OpenPKPD contributors
 
-repo_name: openpkpd/openpkpd
-repo_url: https://github.com/openpkpd/openpkpd
+repo_name: shramish2057/OpenPKPD
+repo_url: https://github.com/shramish2057/OpenPKPD
 edit_uri: edit/main/docs/
 
 theme:
@@ -70,4 +70,4 @@ extra_javascript:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/openpkpd/openpkpd
+      link: https://github.com/shramish2057/OpenPKPD

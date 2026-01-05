@@ -268,4 +268,4 @@ julia --project=core/OpenPKPDCore docs/examples/validate_outputs.jl
 4. Include a README.md explaining the example
 5. Follow the naming convention: `01_descriptive_name/`
 
-See the [CONTRIBUTING guide](https://github.com/openpkpd/openpkpd/blob/main/CONTRIBUTING.md) for guidelines.
+See the [CONTRIBUTING guide](https://github.com/shramish2057/OpenPKPD/blob/main/CONTRIBUTING.md) for guidelines.
