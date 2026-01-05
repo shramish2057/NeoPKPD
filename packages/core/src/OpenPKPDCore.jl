@@ -28,6 +28,7 @@ include("models/threecomp_iv_bolus.jl")
 include("models/transit_absorption.jl")
 include("models/michaelis_menten.jl")
 include("models/pk_interface.jl")
+include("models/custom.jl")
 
 # ------------------------------------------------------------------
 # PD model definitions
@@ -118,6 +119,13 @@ include("analysis/vpc.jl")
 # FOCE-I, SAEM, Laplacian methods
 # ------------------------------------------------------------------
 include("estimation/estimation.jl")
+
+# ------------------------------------------------------------------
+# Residuals (CWRES, IWRES, NPDE)
+# Requires estimation module for EstimationResult
+# ------------------------------------------------------------------
+include("analysis/residuals.jl")
+include("analysis/npde.jl")
 
 # ------------------------------------------------------------------
 # NCA (Non-Compartmental Analysis)

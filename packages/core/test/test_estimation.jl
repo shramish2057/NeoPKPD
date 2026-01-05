@@ -21,15 +21,46 @@ using StableRNGs
         end
 
         @testset "SAEMMethod" begin
+            # Test default values
             method = SAEMMethod()
             @test method.n_burn == 300
             @test method.n_iter == 200
             @test method.n_chains == 3
+            @test method.n_mcmc_steps == 100
             @test method.step_size_schedule == :harmonic
+            @test method.adapt_proposal == true
+            @test method.target_acceptance == 0.234
+            @test method.adaptation_interval == 50
+            @test method.track_diagnostics == true
+            @test method.use_all_chains == true
 
-            method2 = SAEMMethod(n_burn=100, n_iter=50, step_size_schedule=:constant)
+            # Test custom values
+            method2 = SAEMMethod(
+                n_burn=100,
+                n_iter=50,
+                n_mcmc_steps=200,
+                step_size_schedule=:constant,
+                adapt_proposal=false,
+                target_acceptance=0.3,
+                adaptation_interval=25,
+                track_diagnostics=false,
+                use_all_chains=false
+            )
             @test method2.n_burn == 100
+            @test method2.n_mcmc_steps == 200
             @test method2.step_size_schedule == :constant
+            @test method2.adapt_proposal == false
+            @test method2.target_acceptance == 0.3
+            @test method2.adaptation_interval == 25
+            @test method2.track_diagnostics == false
+            @test method2.use_all_chains == false
+
+            # Test assertions
+            @test_throws AssertionError SAEMMethod(step_size_schedule=:invalid)
+            @test_throws AssertionError SAEMMethod(n_mcmc_steps=5)  # must be >= 10
+            @test_throws AssertionError SAEMMethod(target_acceptance=0.0)  # must be in (0, 1)
+            @test_throws AssertionError SAEMMethod(target_acceptance=1.0)  # must be in (0, 1)
+            @test_throws AssertionError SAEMMethod(adaptation_interval=0)  # must be positive
         end
 
         @testset "LaplacianMethod" begin
@@ -395,5 +426,8 @@ using StableRNGs
 
     # Include Covariate-IIV and IOV integration tests
     include("estimation/test_covariate_iov.jl")
+
+    # Include SAEM validation tests
+    include("estimation/test_saem_validation.jl")
 
 end

@@ -353,4 +353,69 @@ using StableRNGs
         @test length(vpc_result.bins) > 0
     end
 
+    @testset "VPC Stratification" begin
+        # Test stratified VPC result type
+        @test isdefined(OpenPKPDCore, :StratifiedVPCResult)
+
+        # Create basic VPC config
+        config = VPCConfig(
+            pi_levels=[0.10, 0.50, 0.90],
+            binning=QuantileBinning(4),
+            n_simulations=10,
+            n_bootstrap=100,
+            seed=UInt64(123)
+        )
+
+        @test config.n_simulations == 10
+        @test config.n_bootstrap == 100
+    end
+
+    @testset "BLQ Methods" begin
+        # Test BLQ method enum exists
+        @test isdefined(OpenPKPDCore, :BLQMethod)
+        @test isdefined(OpenPKPDCore, :M1)
+        @test isdefined(OpenPKPDCore, :M4)
+        @test isdefined(OpenPKPDCore, :M7)
+
+        # Test handle_blq function with different methods
+        values = [0.5, 1.0, 2.0, 0.3, 5.0, 0.2]
+        times = [0.5, 1.0, 2.0, 4.0, 8.0, 12.0]
+        lloq = 0.4
+        tmax = 1.0
+
+        # M1: Discard all BLQ (returns NaN for discarded)
+        v1 = handle_blq(values, times, lloq; method=M1)
+        @test length(v1) == 6  # Same length, but some NaN
+        n_valid = count(!isnan, v1)
+        @test n_valid == 4  # 0.5, 1.0, 2.0, 5.0 kept
+
+        # M4: Replace with LLOQ/2
+        v4 = handle_blq(values, times, lloq; method=M4)
+        @test length(v4) == 6  # All kept
+        @test count(v -> v == lloq/2, v4) == 2  # Two values replaced
+
+        # M5: 0 before Tmax, LLOQ/2 after
+        v5 = handle_blq(values, times, lloq; method=M5, tmax=tmax)
+        @test length(v5) == 6
+
+        # M7: 0 before Tmax, discard after (NaN for discarded)
+        v7 = handle_blq(values, times, lloq; method=M7, tmax=tmax)
+        @test length(v7) == 6  # Same length but some NaN
+    end
+
+    @testset "BLQ Bin Stats" begin
+        @test isdefined(OpenPKPDCore, :BLQBinStats)
+
+        # Test computing BLQ stats
+        # Values below LLOQ: 0.1, 0.3 (2 out of 4)
+        values = [0.1, 0.3, 1.0, 2.0]
+        lloq = 0.4
+
+        n_blq = count(v -> v < lloq, values)
+        pct_blq = 100.0 * n_blq / length(values)
+
+        @test n_blq == 2
+        @test pct_blq == 50.0
+    end
+
 end

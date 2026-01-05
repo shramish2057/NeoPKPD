@@ -58,22 +58,45 @@ Fields:
 - n_burn: Number of burn-in iterations (default: 300)
 - n_iter: Number of main iterations after burn-in (default: 200)
 - n_chains: Number of MCMC chains per subject (default: 3)
+- n_mcmc_steps: Number of MCMC steps per E-step iteration (default: 100)
 - step_size_schedule: Step size decay schedule (:harmonic or :constant)
+- adapt_proposal: Whether to adapt MCMC proposal variance (default: true)
+- target_acceptance: Target MCMC acceptance rate for adaptation (default: 0.234)
+- adaptation_interval: How often to adapt proposal (default: 50 iterations)
+- track_diagnostics: Whether to compute convergence diagnostics (default: true)
+- use_all_chains: Whether to use all chains or just first chain (default: true)
 """
 struct SAEMMethod <: EstimationMethod
     n_burn::Int
     n_iter::Int
     n_chains::Int
+    n_mcmc_steps::Int
     step_size_schedule::Symbol
+    adapt_proposal::Bool
+    target_acceptance::Float64
+    adaptation_interval::Int
+    track_diagnostics::Bool
+    use_all_chains::Bool
 
     function SAEMMethod(;
         n_burn::Int=300,
         n_iter::Int=200,
         n_chains::Int=3,
-        step_size_schedule::Symbol=:harmonic
+        n_mcmc_steps::Int=100,
+        step_size_schedule::Symbol=:harmonic,
+        adapt_proposal::Bool=true,
+        target_acceptance::Float64=0.234,
+        adaptation_interval::Int=50,
+        track_diagnostics::Bool=true,
+        use_all_chains::Bool=true
     )
         @assert step_size_schedule in (:harmonic, :constant) "Invalid step size schedule"
-        new(n_burn, n_iter, n_chains, step_size_schedule)
+        @assert n_mcmc_steps >= 10 "n_mcmc_steps must be at least 10"
+        @assert 0.0 < target_acceptance < 1.0 "target_acceptance must be in (0, 1)"
+        @assert adaptation_interval >= 1 "adaptation_interval must be positive"
+        new(n_burn, n_iter, n_chains, n_mcmc_steps, step_size_schedule,
+            adapt_proposal, target_acceptance, adaptation_interval,
+            track_diagnostics, use_all_chains)
     end
 end
 

@@ -115,6 +115,11 @@ include("test_helpers.jl")
         include("test_cdisc.jl")
     end
 
+    # XPT (SAS Transport) Format Support
+    @testset "XPT Reader" begin
+        include("test_xpt.jl")
+    end
+
     # Visual Predictive Check (VPC)
     @testset "VPC" begin
         include("test_vpc.jl")
@@ -123,5 +128,10 @@ include("test_helpers.jl")
     # Parameter Estimation (NLME)
     @testset "Estimation" begin
         include("test_estimation.jl")
+    end
+
+    # Dose Escalation Simulation
+    @testset "Dose Escalation" begin
+        include("test_escalation.jl")
     end
 end

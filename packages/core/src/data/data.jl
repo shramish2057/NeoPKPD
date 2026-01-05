@@ -1,11 +1,23 @@
 # Data Module
-# CDISC/SDTM data format support for OpenPKPD
+# CDISC/SDTM and ADaM data format support for OpenPKPD
 
-# Types for CDISC domains (PC, EX, DM, PP)
+# Types for CDISC SDTM domains (PC, EX, DM, PP)
 include("cdisc_types.jl")
 
-# CSV reader for CDISC data
+# CSV reader for CDISC SDTM data
 include("cdisc_reader.jl")
 
-# Converter from CDISC to OpenPKPD format
+# XPT (SAS Transport) reader for CDISC data
+include("xpt_reader.jl")
+
+# Converter from CDISC SDTM to OpenPKPD format
 include("cdisc_converter.jl")
+
+# ADaM (Analysis Data Model) types
+include("adam_types.jl")
+
+# ADaM CSV reader
+include("adam_reader.jl")
+
+# Converter from ADaM to OpenPKPD format
+include("adam_converter.jl")
