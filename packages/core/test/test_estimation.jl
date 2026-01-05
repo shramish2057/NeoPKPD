@@ -387,4 +387,13 @@ using StableRNGs
         @test OpenPKPDCore._count_sigma_params(combined_spec) == 2
     end
 
+    # Include proper FOCE-I tests
+    include("estimation/test_foce_proper.jl")
+
+    # Include NONMEM Theophylline validation
+    include("estimation/test_nonmem_theophylline.jl")
+
+    # Include Covariate-IIV and IOV integration tests
+    include("estimation/test_covariate_iov.jl")
+
 end

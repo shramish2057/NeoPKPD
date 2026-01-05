@@ -145,14 +145,15 @@ function laplacian_estimate(
 
     return EstimationResult(
         config,
-        theta_current, theta_se, theta_rse, theta_ci_lower, theta_ci_upper,
+        theta_current, theta_se, nothing,  # theta_se_robust = nothing for Laplacian
+        theta_rse, theta_ci_lower, theta_ci_upper,
         omega_current, omega_se, omega_corr,
         sigma_current, sigma_se,
         final_ofv, aic, bic,
         individual_estimates,
         converged, n_iter, final_gradient_norm, condition_num, eigenvalue_ratio,
         covariance_successful,
-        String[],
+        String["Laplacian estimation"],
         elapsed
     )
 end

@@ -208,14 +208,15 @@ function saem_estimate(
 
     return EstimationResult(
         config,
-        theta_current, theta_se, theta_rse, theta_ci_lower, theta_ci_upper,
+        theta_current, theta_se, nothing,  # theta_se_robust = nothing for SAEM
+        theta_rse, theta_ci_lower, theta_ci_upper,
         omega_current, omega_se, omega_corr,
         sigma_current, sigma_se,
         final_ofv, aic, bic,
         individual_estimates,
         converged, n_total_iter, NaN, condition_num, eigenvalue_ratio,
         covariance_successful,
-        String[],
+        String["SAEM estimation"],
         elapsed
     )
 end
@@ -514,7 +515,17 @@ function compute_individual_estimates_saem(
 end
 
 """
-Compute standard errors for SAEM (using Louis' method or Fisher information).
+Compute standard errors for SAEM (using numerical Hessian of complete likelihood).
+
+Computes SE for ALL parameters: theta, omega (diagonal), and sigma.
+Uses finite differences to compute the Hessian of the full objective
+function with respect to all transformed parameters:
+- theta: untransformed
+- omega: log-transformed (diagonal elements)
+- sigma: log-transformed
+
+The delta method is applied to transform SEs from log-scale back to
+original scale: SE(ω) = ω * SE(log(ω))
 """
 function compute_standard_errors_saem(
     theta::Vector{Float64},
@@ -527,45 +538,72 @@ function compute_standard_errors_saem(
     solver::SolverSpec,
     config::EstimationConfig
 )
-    # Use numerical Hessian (similar to Laplacian/FOCE)
     n_theta = length(theta)
-    h = 1e-5
+    n_omega = size(omega, 1)  # Diagonal elements
+    n_sigma = _count_sigma_params(sigma)
+    n_total = n_theta + n_omega + n_sigma
 
-    function ofv_theta(th)
-        return compute_saem_ofv(th, omega, sigma, etas, subjects, model_spec, grid, solver)
+    h = 1e-5  # Step size for finite differences
+
+    # Pack all parameters for Hessian computation
+    # Parameters are: [theta; log(omega_diag); log(sigma_params)]
+    omega_diag = diag(omega)
+    sigma_vals = get_sigma_params(sigma)
+
+    x_current = vcat(theta, log.(omega_diag), log.(sigma_vals))
+
+    # Full objective function over all parameters
+    function ofv_full(x)
+        th = x[1:n_theta]
+        log_omega_diag = x[n_theta+1:n_theta+n_omega]
+        log_sigma_vals = x[n_theta+n_omega+1:end]
+
+        # Transform back to original scale
+        om_diag = exp.(log_omega_diag)
+        sig_vals = exp.(log_sigma_vals)
+
+        # Check validity
+        if any(om_diag .<= 0) || any(sig_vals .<= 0)
+            return Inf
+        end
+
+        om = Diagonal(om_diag) |> Matrix
+        sig = update_sigma_params(sigma, sig_vals)
+
+        return compute_saem_ofv(th, om, sig, etas, subjects, model_spec, grid, solver)
     end
 
-    # Compute Hessian
-    hessian = zeros(n_theta, n_theta)
+    # Compute full Hessian using finite differences
+    hessian = zeros(n_total, n_total)
 
-    for i in 1:n_theta
-        for j in i:n_theta
+    for i in 1:n_total
+        for j in i:n_total
             if i == j
-                theta_plus = copy(theta)
-                theta_minus = copy(theta)
-                theta_plus[i] += h
-                theta_minus[i] -= h
+                x_plus = copy(x_current)
+                x_minus = copy(x_current)
+                x_plus[i] += h
+                x_minus[i] -= h
 
-                f_plus = ofv_theta(theta_plus)
-                f_center = ofv_theta(theta)
-                f_minus = ofv_theta(theta_minus)
+                f_plus = ofv_full(x_plus)
+                f_center = ofv_full(x_current)
+                f_minus = ofv_full(x_minus)
 
                 hessian[i, i] = (f_plus - 2*f_center + f_minus) / h^2
             else
-                theta_pp = copy(theta)
-                theta_pm = copy(theta)
-                theta_mp = copy(theta)
-                theta_mm = copy(theta)
+                x_pp = copy(x_current)
+                x_pm = copy(x_current)
+                x_mp = copy(x_current)
+                x_mm = copy(x_current)
 
-                theta_pp[i] += h; theta_pp[j] += h
-                theta_pm[i] += h; theta_pm[j] -= h
-                theta_mp[i] -= h; theta_mp[j] += h
-                theta_mm[i] -= h; theta_mm[j] -= h
+                x_pp[i] += h; x_pp[j] += h
+                x_pm[i] += h; x_pm[j] -= h
+                x_mp[i] -= h; x_mp[j] += h
+                x_mm[i] -= h; x_mm[j] -= h
 
-                f_pp = ofv_theta(theta_pp)
-                f_pm = ofv_theta(theta_pm)
-                f_mp = ofv_theta(theta_mp)
-                f_mm = ofv_theta(theta_mm)
+                f_pp = ofv_full(x_pp)
+                f_pm = ofv_full(x_pm)
+                f_mp = ofv_full(x_mp)
+                f_mm = ofv_full(x_mm)
 
                 hessian[i, j] = (f_pp - f_pm - f_mp + f_mm) / (4 * h^2)
                 hessian[j, i] = hessian[i, j]
@@ -573,6 +611,7 @@ function compute_standard_errors_saem(
         end
     end
 
+    # Check positive definiteness
     eigenvalues = eigvals(hessian)
     real_eigenvalues = real.(eigenvalues)
 
@@ -591,8 +630,21 @@ function compute_standard_errors_saem(
             return nothing, nothing, nothing, false, condition_num, eigenvalue_ratio
         end
 
-        theta_se = sqrt.(variances)
-        return theta_se, nothing, nothing, true, condition_num, eigenvalue_ratio
+        # Extract SEs for each parameter type
+        theta_var = variances[1:n_theta]
+        log_omega_var = variances[n_theta+1:n_theta+n_omega]
+        log_sigma_var = variances[n_theta+n_omega+1:end]
+
+        # Theta SE (no transformation needed)
+        theta_se = sqrt.(theta_var)
+
+        # Omega SE using delta method: SE(ω) = ω * SE(log(ω))
+        omega_se_diag = omega_diag .* sqrt.(log_omega_var)
+
+        # Sigma SE using delta method: SE(σ) = σ * SE(log(σ))
+        sigma_se_vals = sigma_vals .* sqrt.(log_sigma_var)
+
+        return theta_se, omega_se_diag, sigma_se_vals, true, condition_num, eigenvalue_ratio
     catch e
         return nothing, nothing, nothing, false, condition_num, eigenvalue_ratio
     end

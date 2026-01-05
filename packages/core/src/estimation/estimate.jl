@@ -127,6 +127,35 @@ function extract_subject_data(observed::ObservedData)
 end
 
 """
+Extract subject data with covariates for estimation with covariate effects.
+Returns vector of (subject_id, times, observations, doses, covariates) tuples.
+"""
+function extract_subject_data_with_covariates(observed::ObservedData)
+    return [(s.subject_id, s.times, s.observations, s.doses, s.covariates) for s in observed.subjects]
+end
+
+"""
+Extract occasion indices from subject covariates.
+Looks for :OCC or :OCCASION key in covariates.
+Returns vector of occasion indices (1-indexed), or vector of 1s if no occasion data.
+"""
+function extract_occasion_indices(covariates::Dict{Symbol,Any}, n_obs::Int)::Vector{Int}
+    # Try common occasion variable names
+    for key in [:OCC, :OCCASION, :occ, :occasion]
+        if haskey(covariates, key)
+            occ_data = covariates[key]
+            if occ_data isa Vector
+                return Int.(occ_data)
+            elseif occ_data isa Number
+                return fill(Int(occ_data), n_obs)
+            end
+        end
+    end
+    # Default: all observations on occasion 1
+    return ones(Int, n_obs)
+end
+
+"""
 Create individual predictions given theta, eta, and model.
 """
 function compute_individual_predictions(
@@ -225,7 +254,8 @@ function theta_to_params(theta::Vector{Float64}, model_spec::ModelSpec)
     return ParamType(theta...)
 end
 
-export extract_subject_data, compute_individual_predictions, apply_eta_to_params, theta_to_params
+export extract_subject_data, extract_subject_data_with_covariates, extract_occasion_indices
+export compute_individual_predictions, apply_eta_to_params, theta_to_params
 
 """
 Compute -2 log-likelihood contribution for a single observation.

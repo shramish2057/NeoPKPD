@@ -6,6 +6,7 @@ using LinearAlgebra
 export EstimationMethod, FOCEIMethod, SAEMMethod, LaplacianMethod
 export EstimationConfig, IndividualEstimate, EstimationResult
 export OmegaStructure, DiagonalOmega, BlockOmega
+export CovariateOnIIV, EstimationIOVSpec, OccasionData
 
 # ------------------------------------------------------------------
 # Estimation Methods
@@ -25,19 +26,24 @@ around the conditional mode of the random effects (eta).
 Fields:
 - max_inner_iter: Maximum iterations for finding eta mode (default: 50)
 - inner_tol: Convergence tolerance for inner optimization (default: 1e-6)
-- centered: Use centered differences for FO approximation (default: false)
+- centered: Use centered FO approximation at η=0 instead of η=η* (default: false)
+  - false (FOCE-I): Linearize at conditional mode η* (includes interaction)
+  - true (FOCE): Linearize at population mean η=0 (no interaction)
+- compute_robust_se: Compute sandwich estimator for robust SEs (default: true)
 """
 struct FOCEIMethod <: EstimationMethod
     max_inner_iter::Int
     inner_tol::Float64
     centered::Bool
+    compute_robust_se::Bool
 
     function FOCEIMethod(;
         max_inner_iter::Int=50,
         inner_tol::Float64=1e-6,
-        centered::Bool=false
+        centered::Bool=false,
+        compute_robust_se::Bool=true
     )
-        new(max_inner_iter, inner_tol, centered)
+        new(max_inner_iter, inner_tol, centered, compute_robust_se)
     end
 end
 
@@ -122,6 +128,95 @@ struct FullOmega <: OmegaStructure end
 export FullOmega
 
 # ------------------------------------------------------------------
+# Covariate Effects on IIV (Inter-Individual Variability)
+# ------------------------------------------------------------------
+
+"""
+Specification for covariate effects on inter-individual variability.
+
+This allows variance parameters to depend on covariates:
+    Var(η_i) = ω² * exp(θ_cov * (COV_i - COV_ref))
+
+Example: Weight effect on CL variability
+    CovariateOnIIV(:CL, :WT, 70.0)  # Weight centered on 70 kg
+
+Fields:
+- eta_name: Name of the random effect (e.g., :CL, :V)
+- covariate_name: Name of the covariate (e.g., :WT, :CRCL)
+- reference_value: Reference/centering value for the covariate
+- effect_type: :exponential (default) or :linear
+"""
+struct CovariateOnIIV
+    eta_name::Symbol
+    covariate_name::Symbol
+    reference_value::Float64
+    effect_type::Symbol  # :exponential or :linear
+
+    function CovariateOnIIV(
+        eta_name::Symbol,
+        covariate_name::Symbol,
+        reference_value::Float64=0.0;
+        effect_type::Symbol=:exponential
+    )
+        @assert effect_type in [:exponential, :linear] "effect_type must be :exponential or :linear"
+        new(eta_name, covariate_name, reference_value, effect_type)
+    end
+end
+
+# ------------------------------------------------------------------
+# Inter-Occasion Variability (IOV)
+# ------------------------------------------------------------------
+
+"""
+Specification for inter-occasion variability in estimation.
+
+IOV allows random effects to vary across occasions within a subject:
+    η_total = η_IIV + η_IOV_occasion
+
+Example: Drug absorption varies between study visits
+    EstimationIOVSpec(:ka, [:V1, :V2, :V3])  # IOV on ka across 3 visits
+
+Fields:
+- eta_name: Name of the random effect with IOV
+- occasion_names: Names/labels for each occasion
+- omega_iov: Variance of IOV (separate from IIV variance)
+"""
+struct EstimationIOVSpec
+    eta_name::Symbol
+    occasion_names::Vector{Symbol}
+    omega_iov::Float64
+
+    function EstimationIOVSpec(
+        eta_name::Symbol,
+        occasion_names::Vector{Symbol};
+        omega_iov::Float64=0.04  # Default 20% CV
+    )
+        @assert length(occasion_names) >= 2 "Need at least 2 occasions for IOV"
+        @assert omega_iov >= 0.0 "omega_iov must be non-negative"
+        new(eta_name, occasion_names, omega_iov)
+    end
+end
+
+"""
+Subject occasion data for IOV models.
+
+Maps observations to occasions for IOV computation.
+
+Fields:
+- subject_id: Subject identifier
+- occasion_indices: Vector mapping each observation to an occasion (1-indexed)
+"""
+struct OccasionData
+    subject_id::String
+    occasion_indices::Vector{Int}
+
+    function OccasionData(subject_id::String, occasion_indices::Vector{Int})
+        @assert all(occasion_indices .>= 1) "Occasion indices must be >= 1"
+        new(subject_id, occasion_indices)
+    end
+end
+
+# ------------------------------------------------------------------
 # Estimation Configuration
 # ------------------------------------------------------------------
 
@@ -145,6 +240,8 @@ Fields:
 - ci_level: Confidence level (default: 0.95)
 - verbose: Print progress during estimation
 - seed: Random seed for reproducibility
+- covariate_on_iiv: Covariate effects on IIV (optional)
+- iov_specs: Inter-occasion variability specifications (optional)
 """
 struct EstimationConfig{M<:EstimationMethod}
     method::M
@@ -163,6 +260,8 @@ struct EstimationConfig{M<:EstimationMethod}
     ci_level::Float64
     verbose::Bool
     seed::UInt64
+    covariate_on_iiv::Vector{CovariateOnIIV}
+    iov_specs::Vector{EstimationIOVSpec}
 
     function EstimationConfig(
         method::M;
@@ -180,7 +279,9 @@ struct EstimationConfig{M<:EstimationMethod}
         compute_ci::Bool=false,
         ci_level::Float64=0.95,
         verbose::Bool=false,
-        seed::UInt64=UInt64(12345)
+        seed::UInt64=UInt64(12345),
+        covariate_on_iiv::Vector{CovariateOnIIV}=CovariateOnIIV[],
+        iov_specs::Vector{EstimationIOVSpec}=EstimationIOVSpec[]
     ) where {M<:EstimationMethod}
         n_theta = length(theta_init)
         n_eta = size(omega_init, 1)
@@ -204,7 +305,8 @@ struct EstimationConfig{M<:EstimationMethod}
         new{M}(
             method, theta_init, theta_lower, theta_upper, theta_names,
             omega_init, omega_structure, omega_names, sigma_init,
-            max_iter, tol, compute_se, compute_ci, ci_level, verbose, seed
+            max_iter, tol, compute_se, compute_ci, ci_level, verbose, seed,
+            covariate_on_iiv, iov_specs
         )
     end
 end
@@ -249,7 +351,8 @@ Result of parameter estimation.
 Fields:
 - config: EstimationConfig used
 - theta: Estimated fixed effects
-- theta_se: Standard errors of theta
+- theta_se: Standard errors of theta (from Hessian)
+- theta_se_robust: Robust standard errors (sandwich estimator)
 - theta_rse: Relative standard errors (CV%)
 - theta_ci_lower: Lower confidence bounds
 - theta_ci_upper: Upper confidence bounds
@@ -277,6 +380,7 @@ struct EstimationResult{M<:EstimationMethod}
     # Fixed effects
     theta::Vector{Float64}
     theta_se::Union{Nothing,Vector{Float64}}
+    theta_se_robust::Union{Nothing,Vector{Float64}}  # Sandwich estimator SEs
     theta_rse::Union{Nothing,Vector{Float64}}
     theta_ci_lower::Union{Nothing,Vector{Float64}}
     theta_ci_upper::Union{Nothing,Vector{Float64}}
