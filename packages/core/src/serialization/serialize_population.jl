@@ -4,12 +4,25 @@ function _serialize_iiv(iiv::Union{Nothing,IIVSpec})
     if iiv === nothing
         return nothing
     end
-    return Dict(
+
+    result = Dict(
         "kind" => string(typeof(iiv.kind)),
         "omegas" => Dict(String(k) => v for (k, v) in iiv.omegas),
         "seed" => Int(iiv.seed),
         "n" => iiv.n,
     )
+
+    # Serialize full covariance matrix if present
+    if iiv.omega_matrix !== nothing
+        om = iiv.omega_matrix
+        result["omega_matrix"] = Dict(
+            "param_names" => [String(p) for p in om.param_names],
+            "matrix" => [om.matrix[i, j] for i in 1:size(om.matrix, 1), j in 1:size(om.matrix, 2)] |> vec,
+            "n_params" => length(om.param_names),
+        )
+    end
+
+    return result
 end
 
 function _serialize_time_varying(tvc::Union{Nothing,TimeVaryingCovariates})

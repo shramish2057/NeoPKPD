@@ -98,7 +98,6 @@ docs/examples/real_world_validation/studies/*/output/*
 *.temp
 *.bak
 *.orig
-.claude
 # Test artifacts (don't commit generated test files)
 *.test.json
 test_output/

@@ -2,7 +2,7 @@
 # Structures for representing parsed .mlxtran files
 
 export MonolixProject, MonolixDataset, MonolixParameter, MonolixObservation
-export MonolixModelType, MonolixStructuralModel
+export MonolixModelType, MonolixStructuralModel, UnsupportedMonolixConstruct
 
 """
 Monolix model type specification.
@@ -204,4 +204,61 @@ function get_monolix_model_mapping(model_name::String)
     return nothing
 end
 
-export MONOLIX_MODEL_MAP, get_monolix_model_mapping
+# ============================================================================
+# Unsupported Construct Detection
+# ============================================================================
+
+"""
+Represents an unsupported Monolix construct detected during parsing.
+
+Fields:
+- construct: Name of the unsupported construct (e.g., "Custom ODE", "Mixture model")
+- location: Where it was found ("<MODEL>", "<COVARIATE>", etc.)
+- line: The offending line of code
+- message: Human-readable error message
+"""
+struct UnsupportedMonolixConstruct
+    construct::String
+    location::String
+    line::String
+    message::String
+
+    # 3-argument constructor with auto-generated message
+    UnsupportedMonolixConstruct(construct, location, line) = new(
+        construct, location, line,
+        "$construct in $location is not supported: $line"
+    )
+
+    # 4-argument constructor with custom message
+    UnsupportedMonolixConstruct(construct, location, line, message) = new(
+        construct, location, line, message
+    )
+end
+
+# Supported Monolix model patterns
+const SUPPORTED_MONOLIX_PATTERNS = [
+    r"oral.*1cpt"i,
+    r"oral.*2cpt"i,
+    r"bolus.*1cpt"i,
+    r"bolus.*2cpt"i,
+    r"bolus.*3cpt"i,
+    r"infusion.*1cpt"i,
+    r"infusion.*2cpt"i,
+    r"mm"i,
+    r"michaelis"i,
+]
+
+# Unsupported Monolix features
+const UNSUPPORTED_MONOLIX_FEATURES = [
+    (r"PD"i, "PD model", "Pharmacodynamic models are not yet supported"),
+    (r"turnover"i, "Turnover model", "Turnover models require custom ODE support"),
+    (r"transit"i, "Transit compartment", "Transit compartment models are not yet supported"),
+    (r"mixture"i, "Mixture model", "Mixture models are not supported"),
+    (r"markov"i, "Markov model", "Markov chain models are not supported"),
+    (r"tte"i, "Time-to-event", "Time-to-event models are not supported"),
+    (r"count"i, "Count data", "Count data models are not supported"),
+    (r"categorical"i, "Categorical", "Categorical response models are not supported"),
+    (r"ordered"i, "Ordered categorical", "Ordered categorical models are not supported"),
+]
+
+export MONOLIX_MODEL_MAP, get_monolix_model_mapping, SUPPORTED_MONOLIX_PATTERNS, UNSUPPORTED_MONOLIX_FEATURES

@@ -1,4 +1,7 @@
 # Specifications are pure data. No solver logic and no hidden defaults.
+
+using LinearAlgebra
+
 # -------------------------
 # Shared validation helpers
 # -------------------------
@@ -440,6 +443,8 @@ end
 # -------------------------
 
 export RandomEffectKind, LogNormalIIV, IIVSpec, PopulationSpec, IndividualCovariates
+export OmegaMatrix, ensure_positive_definite_omega
+export get_diagonal_omegas, get_correlation_matrix, has_correlations, get_omega_matrix
 
 abstract type RandomEffectKind end
 
@@ -454,10 +459,139 @@ eta_i ~ Normal(0, omega^2)
 struct LogNormalIIV <: RandomEffectKind end
 
 """
+Full covariance matrix for random effects with parameter ordering.
+
+Supports:
+- Full covariance matrix with correlations between all random effects
+- Positive definiteness enforcement
+- Cholesky decomposition for efficient sampling
+"""
+struct OmegaMatrix
+    # Parameter names in order (corresponds to matrix rows/columns)
+    param_names::Vector{Symbol}
+
+    # Full covariance matrix (n_params x n_params)
+    # Diagonal elements are variances, off-diagonal are covariances
+    matrix::Matrix{Float64}
+
+    # Cholesky factor (lower triangular) for efficient sampling
+    # η = L * z where z ~ N(0, I)
+    cholesky_L::Matrix{Float64}
+
+    function OmegaMatrix(param_names::Vector{Symbol}, matrix::Matrix{Float64})
+        n = length(param_names)
+        if size(matrix) != (n, n)
+            error("Matrix dimensions $(size(matrix)) don't match parameter count $n")
+        end
+
+        # Ensure symmetric
+        matrix_sym = (matrix + matrix') / 2
+
+        # Ensure positive definite
+        matrix_pd = _ensure_pd(matrix_sym)
+
+        # Compute Cholesky decomposition
+        L = try
+            cholesky(Symmetric(matrix_pd)).L |> Matrix
+        catch e
+            # Fallback: use eigendecomposition for numerical stability
+            eig = eigen(Symmetric(matrix_pd))
+            vals = max.(eig.values, 1e-10)
+            sqrt_cov = eig.vectors * Diagonal(sqrt.(vals))
+            sqrt_cov
+        end
+
+        new(param_names, matrix_pd, L)
+    end
+end
+
+"""
+Ensure a matrix is positive definite by adding a small ridge if needed.
+"""
+function _ensure_pd(matrix::Matrix{Float64}; min_eigenvalue::Float64=1e-8)::Matrix{Float64}
+    eigenvalues = eigvals(Symmetric(matrix))
+    min_eig = minimum(real.(eigenvalues))
+
+    if min_eig <= 0
+        # Add ridge to make positive definite
+        ridge = abs(min_eig) + min_eigenvalue
+        return matrix + ridge * I
+    end
+
+    return matrix
+end
+
+"""
+Public function to ensure positive definiteness of omega matrix.
+"""
+function ensure_positive_definite_omega(matrix::Matrix{Float64}; min_eigenvalue::Float64=1e-8)::Matrix{Float64}
+    return _ensure_pd(matrix; min_eigenvalue=min_eigenvalue)
+end
+
+"""
+Create OmegaMatrix from diagonal variances (backward compatibility).
+"""
+function OmegaMatrix(omegas::Dict{Symbol,Float64})
+    param_names = collect(keys(omegas))
+    sort!(param_names)  # Ensure consistent ordering
+    n = length(param_names)
+
+    # Create diagonal covariance matrix (variances on diagonal)
+    matrix = zeros(n, n)
+    for (i, p) in enumerate(param_names)
+        # omegas stores standard deviations, so square for variance
+        matrix[i, i] = omegas[p]^2
+    end
+
+    return OmegaMatrix(param_names, matrix)
+end
+
+"""
+Get diagonal elements (standard deviations) as a Dict for backward compatibility.
+"""
+function get_diagonal_omegas(omega::OmegaMatrix)::Dict{Symbol,Float64}
+    result = Dict{Symbol,Float64}()
+    for (i, p) in enumerate(omega.param_names)
+        result[p] = sqrt(omega.matrix[i, i])
+    end
+    return result
+end
+
+"""
+Get correlation matrix from OmegaMatrix.
+"""
+function get_correlation_matrix(omega::OmegaMatrix)::Matrix{Float64}
+    n = length(omega.param_names)
+    corr = zeros(n, n)
+    sds = sqrt.(diag(omega.matrix))
+
+    for i in 1:n
+        for j in 1:n
+            if sds[i] > 1e-12 && sds[j] > 1e-12
+                corr[i, j] = omega.matrix[i, j] / (sds[i] * sds[j])
+            elseif i == j
+                corr[i, j] = 1.0
+            end
+        end
+    end
+
+    return corr
+end
+
+"""
 IIV specification for a set of parameters.
+
+Supports both:
+1. Diagonal-only IIV (backward compatible): omegas Dict{Symbol,Float64}
+2. Full covariance IIV: omega_matrix OmegaMatrix
 
 omegas:
 - Dict mapping parameter symbol to omega (standard deviation of eta)
+- Used for diagonal-only IIV (backward compatible)
+
+omega_matrix:
+- Full covariance matrix with correlations
+- If provided, omegas is derived from diagonal for compatibility
 
 seed:
 - deterministic seed for RNG
@@ -467,9 +601,37 @@ n:
 """
 struct IIVSpec{K<:RandomEffectKind}
     kind::K
-    omegas::Dict{Symbol,Float64}
+    omegas::Dict{Symbol,Float64}  # Backward compatible: diagonal elements (SDs)
+    omega_matrix::Union{Nothing,OmegaMatrix}  # Full covariance (optional)
     seed::UInt64
     n::Int
+
+    # Constructor with full covariance matrix
+    function IIVSpec(kind::K, omega_matrix::OmegaMatrix, seed::UInt64, n::Int) where K<:RandomEffectKind
+        omegas = get_diagonal_omegas(omega_matrix)
+        new{K}(kind, omegas, omega_matrix, seed, n)
+    end
+
+    # Constructor with diagonal-only (backward compatible)
+    function IIVSpec(kind::K, omegas::Dict{Symbol,Float64}, seed::UInt64, n::Int) where K<:RandomEffectKind
+        new{K}(kind, omegas, nothing, seed, n)
+    end
+end
+
+"""
+Check if IIV has correlations (full covariance matrix).
+"""
+has_correlations(iiv::IIVSpec)::Bool = iiv.omega_matrix !== nothing
+
+"""
+Get the effective OmegaMatrix (creates one from diagonal if needed).
+"""
+function get_omega_matrix(iiv::IIVSpec)::OmegaMatrix
+    if iiv.omega_matrix !== nothing
+        return iiv.omega_matrix
+    else
+        return OmegaMatrix(iiv.omegas)
+    end
 end
 
 export IOVSpec, OccasionDefinition

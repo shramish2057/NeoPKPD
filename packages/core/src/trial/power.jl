@@ -1,6 +1,8 @@
 # Power Analysis
 # Power calculation, sample size estimation, and alpha spending
 
+using SpecialFunctions: erf, erfinv
+
 export estimate_power, estimate_sample_size, alpha_spending_function
 export estimate_power_analytical, incremental_alpha
 export PowerResult, SampleSizeResult
@@ -463,24 +465,4 @@ function conditional_power(z_current::Float64, information_fraction::Float64,
     cp = 0.5 * (1 + erf((mean_z_final - z_final) / (sd_z_final * sqrt(2))))
 
     return clamp(cp, 0.0, 1.0)
-end
-
-
-# Helper function: error function approximation
-function erf(x::Float64)
-    # Approximation of error function
-    a1 =  0.254829592
-    a2 = -0.284496736
-    a3 =  1.421413741
-    a4 = -1.453152027
-    a5 =  1.061405429
-    p  =  0.3275911
-
-    sign = x >= 0 ? 1 : -1
-    x = abs(x)
-
-    t = 1.0 / (1.0 + p * x)
-    y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * exp(-x * x)
-
-    return sign * y
 end

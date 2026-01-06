@@ -760,3 +760,242 @@ struct TrialResult
     n_replicates::Int
     seed::UInt64
 end
+
+# ============================================================================
+# Validation Functions
+# ============================================================================
+
+export validate_trial_spec, validate_trial_spec!, TrialValidationResult
+
+"""
+    TrialValidationResult
+
+Result of trial specification validation.
+
+# Fields
+- `valid::Bool`: Whether the specification is valid
+- `errors::Vector{String}`: List of validation errors
+- `warnings::Vector{String}`: List of validation warnings
+"""
+struct TrialValidationResult
+    valid::Bool
+    errors::Vector{String}
+    warnings::Vector{String}
+end
+
+"""
+    validate_trial_spec(spec::TrialSpec; strict::Bool=false)
+
+Validate a trial specification for completeness and supported features.
+
+# Arguments
+- `spec`: Trial specification to validate
+- `strict`: If true, treat warnings as errors
+
+# Returns
+- `TrialValidationResult` with validation status, errors, and warnings
+
+# Notes
+This function checks for:
+- Missing pk_model_spec in treatment arms (required for real simulation)
+- Unsupported adaptive design features
+- Invalid endpoint configurations
+"""
+function validate_trial_spec(spec::TrialSpec; strict::Bool = false)::TrialValidationResult
+    errors = String[]
+    warnings = String[]
+
+    # Check that all treatment arms have a pk_model_spec
+    for arm in spec.arms
+        if arm.pk_model_spec === nothing
+            push!(errors, "TreatmentArm '$(arm.name)' has no pk_model_spec. " *
+                          "All arms require a ModelSpec for real PK simulation.")
+        end
+    end
+
+    # Check for unsupported adaptive design features
+    if spec.design isa AdaptiveDesign
+        adaptation_rules = spec.design.adaptation_rules
+
+        # Response-adaptive randomization not implemented
+        if haskey(adaptation_rules, :response_adaptive_randomization) ||
+           haskey(adaptation_rules, :rar) ||
+           get(adaptation_rules, :adaptive_randomization, false) == true
+            push!(errors, "Response-adaptive randomization is not implemented. " *
+                          "Please use fixed randomization ratios.")
+        end
+
+        # Sample size re-estimation not fully implemented
+        if haskey(adaptation_rules, :sample_size_reestimation) ||
+           haskey(adaptation_rules, :ssr)
+            push!(warnings, "Sample size re-estimation is partially implemented. " *
+                            "Results should be verified manually.")
+        end
+
+        # Information adaptive designs
+        if haskey(adaptation_rules, :information_adaptive)
+            push!(errors, "Information-adaptive designs are not implemented.")
+        end
+
+        # Treatment selection (drop arms)
+        if haskey(adaptation_rules, :drop_arms) ||
+           haskey(adaptation_rules, :treatment_selection)
+            push!(errors, "Treatment selection (adaptive arm dropping) is not implemented.")
+        end
+
+        # Enrichment designs
+        if haskey(adaptation_rules, :enrichment) ||
+           haskey(adaptation_rules, :biomarker_enrichment)
+            push!(errors, "Enrichment designs are not implemented.")
+        end
+
+        # Validate alpha spending function
+        valid_spending = [:obrien_fleming, :pocock, :haybittle_peto, :linear, :none]
+        if !(spec.design.alpha_spending in valid_spending)
+            push!(warnings, "Unknown alpha spending function '$(spec.design.alpha_spending)'. " *
+                            "Defaulting to O'Brien-Fleming. Valid options: $(valid_spending)")
+        end
+
+        # Check interim analyses are reasonable
+        for ia in spec.design.interim_analyses
+            if ia <= 0.1
+                push!(warnings, "Interim analysis at $(ia*100)% information may have unreliable estimates.")
+            end
+        end
+    end
+
+    # Check BioequivalenceDesign requirements
+    if spec.design isa BioequivalenceDesign
+        # Check for appropriate endpoints
+        has_pk_endpoint = any(ep -> ep isa PKEndpoint, spec.endpoints)
+        if !has_pk_endpoint
+            push!(errors, "BioequivalenceDesign requires at least one PKEndpoint.")
+        end
+
+        # Check for log_transform on PK endpoints
+        for ep in spec.endpoints
+            if ep isa PKEndpoint && !ep.log_transform
+                push!(warnings, "PKEndpoint '$(ep.name)' should use log_transform=true for BE analysis.")
+            end
+        end
+
+        # Check number of arms
+        if length(spec.arms) != 2
+            push!(errors, "BioequivalenceDesign requires exactly 2 treatment arms " *
+                          "(Reference and Test), got $(length(spec.arms)).")
+        end
+    end
+
+    # Check CrossoverDesign requirements
+    if spec.design isa CrossoverDesign
+        if length(spec.arms) < 2
+            push!(errors, "CrossoverDesign requires at least 2 treatment arms, got $(length(spec.arms)).")
+        end
+
+        # Warn if n_subjects is odd (can't balance sequences)
+        total_subjects = sum(arm.n_subjects for arm in spec.arms)
+        if spec.design.n_sequences > 1 && total_subjects % spec.design.n_sequences != 0
+            push!(warnings, "Total subjects ($total_subjects) not evenly divisible by sequences " *
+                            "($(spec.design.n_sequences)). Sequences may be unbalanced.")
+        end
+    end
+
+    # Check DoseEscalationDesign requirements
+    if spec.design isa DoseEscalationDesign
+        if length(spec.arms) != 1
+            push!(warnings, "DoseEscalationDesign typically uses a single arm definition. " *
+                            "Multiple arms may cause unexpected behavior.")
+        end
+
+        # Check that dose_levels are unique
+        if length(spec.design.dose_levels) != length(unique(spec.design.dose_levels))
+            push!(errors, "DoseEscalationDesign dose_levels must be unique.")
+        end
+
+        # Validate CRM skeleton
+        if spec.design.escalation_rule isa CRM
+            skeleton = spec.design.escalation_rule.skeleton
+            if length(skeleton) != length(spec.design.dose_levels)
+                push!(errors, "CRM skeleton length ($(length(skeleton))) must match " *
+                              "dose_levels length ($(length(spec.design.dose_levels))).")
+            end
+            if !issorted(skeleton)
+                push!(errors, "CRM skeleton probabilities must be monotonically increasing.")
+            end
+        end
+    end
+
+    # Check endpoints
+    if isempty(spec.endpoints)
+        push!(warnings, "No endpoints defined. Trial simulation will not produce endpoint analyses.")
+    end
+
+    # Check for duplicate endpoint names
+    endpoint_names = [ep.name for ep in spec.endpoints]
+    if length(endpoint_names) != length(unique(endpoint_names))
+        push!(errors, "Endpoint names must be unique.")
+    end
+
+    # Check trial duration
+    if spec.duration_days <= 0
+        push!(errors, "Trial duration must be positive, got $(spec.duration_days) days.")
+    end
+
+    # Check sampling times
+    if isempty(spec.pk_sampling_times)
+        push!(warnings, "No PK sampling times defined. Using default times.")
+    else
+        if any(t -> t < 0, spec.pk_sampling_times)
+            push!(errors, "PK sampling times cannot be negative.")
+        end
+        if any(t -> t > spec.duration_days * 24, spec.pk_sampling_times)
+            push!(warnings, "Some PK sampling times exceed trial duration.")
+        end
+    end
+
+    # Determine validity
+    is_valid = isempty(errors)
+    if strict
+        is_valid = isempty(errors) && isempty(warnings)
+    end
+
+    return TrialValidationResult(is_valid, errors, warnings)
+end
+
+"""
+    validate_trial_spec!(spec::TrialSpec; strict::Bool=false)
+
+Validate a trial specification and throw an error if invalid.
+
+# Arguments
+- `spec`: Trial specification to validate
+- `strict`: If true, treat warnings as errors
+
+# Throws
+- `ArgumentError`: If validation fails
+"""
+function validate_trial_spec!(spec::TrialSpec; strict::Bool = false)
+    result = validate_trial_spec(spec; strict = strict)
+
+    if !result.valid
+        error_msg = "Trial specification validation failed:\n"
+        for err in result.errors
+            error_msg *= "  - ERROR: $err\n"
+        end
+        if strict
+            for warn in result.warnings
+                error_msg *= "  - WARNING: $warn\n"
+            end
+        end
+        throw(ArgumentError(error_msg))
+    end
+
+    # Print warnings even if valid
+    if !isempty(result.warnings) && !strict
+        for warn in result.warnings
+            @warn "Trial validation warning: $warn"
+        end
+    end
+
+    return result
+end

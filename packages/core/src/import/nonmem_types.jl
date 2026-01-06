@@ -3,6 +3,8 @@
 
 export NONMEMControlFile, THETASpec, OMEGABlock, SIGMABlock
 export SubroutineSpec, DataSpec, InputColumn
+export PKCovariateEffect, PKAssignment, ScalingFactor, PKBlock
+export ErrorBlock, UnsupportedConstruct
 
 """
 Specification for a single THETA parameter.
@@ -137,6 +139,165 @@ struct InputColumn
     InputColumn(name::String) = new(name, false, "")
     InputColumn(name::String, drop::Bool) = new(name, drop, "")
     InputColumn(name::String, drop::Bool, alias::String) = new(name, drop, alias)
+end
+
+# ============================================================================
+# $PK Block Parsing Types
+# ============================================================================
+
+"""
+Covariate effect extracted from \$PK block.
+
+Represents covariate relationships like:
+- Power: `TVCL * (WT/70)**THETA(3)`
+- Linear: `TVCL * (1 + THETA(3)*(AGE-40))`
+- Exponential: `TVCL * EXP(THETA(3)*(CRCL-100))`
+
+Fields:
+- covariate: Covariate name (WT, AGE, CRCL, etc.)
+- theta_index: THETA index for the coefficient
+- effect_type: :power, :linear, or :exponential
+- reference: Reference value (70 for WT, 40 for AGE, etc.)
+"""
+struct PKCovariateEffect
+    covariate::Symbol
+    theta_index::Int
+    effect_type::Symbol
+    reference::Float64
+
+    function PKCovariateEffect(covariate::Symbol, theta_index::Int, effect_type::Symbol, reference::Float64=0.0)
+        effect_type in (:power, :linear, :exponential) || error("Invalid effect_type: $effect_type")
+        theta_index > 0 || error("THETA index must be positive")
+        new(covariate, theta_index, effect_type, reference)
+    end
+end
+
+"""
+Parameter assignment extracted from \$PK block.
+
+Represents assignments like:
+- `TVCL = THETA(1)` (typical value definition)
+- `CL = TVCL * EXP(ETA(1))` (individual parameter with IIV)
+- `CL = TVCL + ETA(1)` (additive random effect)
+
+Fields:
+- target: Parameter name (CL, V, KA, etc.)
+- tv_theta: THETA index for typical value (nothing if not directly from THETA)
+- eta_index: ETA index for IIV (nothing if no IIV)
+- transformation: :exponential, :additive, or :none
+- covariate_effects: Vector of covariate effects on this parameter
+"""
+struct PKAssignment
+    target::Symbol
+    tv_theta::Union{Int,Nothing}
+    eta_index::Union{Int,Nothing}
+    transformation::Symbol
+    covariate_effects::Vector{PKCovariateEffect}
+
+    function PKAssignment(
+        target::Symbol,
+        tv_theta::Union{Int,Nothing}=nothing,
+        eta_index::Union{Int,Nothing}=nothing,
+        transformation::Symbol=:none,
+        covariate_effects::Vector{PKCovariateEffect}=PKCovariateEffect[]
+    )
+        transformation in (:exponential, :additive, :proportional, :none) || error("Invalid transformation: $transformation")
+        new(target, tv_theta, eta_index, transformation, covariate_effects)
+    end
+end
+
+"""
+Scaling factor from \$PK block (S1 = V, S2 = V1, etc.).
+
+Fields:
+- compartment: Compartment number (1, 2, etc.)
+- parameter: Parameter symbol it maps to (V, V1, etc.)
+"""
+struct ScalingFactor
+    compartment::Int
+    parameter::Symbol
+
+    function ScalingFactor(compartment::Int, parameter::Symbol)
+        compartment > 0 || error("Compartment must be positive")
+        new(compartment, parameter)
+    end
+end
+
+"""
+Parsed \$PK block.
+
+Fields:
+- tv_definitions: Map from TV name to THETA index (e.g., :TVCL => 1)
+- assignments: Parameter assignments with ETA and covariate info
+- scaling: Scaling factors (S1, S2, etc.)
+- raw_code: Original lines from \$PK block
+- unsupported_lines: Lines containing unsupported constructs
+"""
+struct PKBlock
+    tv_definitions::Dict{Symbol,Int}
+    assignments::Vector{PKAssignment}
+    scaling::Vector{ScalingFactor}
+    raw_code::Vector{String}
+    unsupported_lines::Vector{String}
+
+    PKBlock() = new(Dict{Symbol,Int}(), PKAssignment[], ScalingFactor[], String[], String[])
+    PKBlock(tv_defs, assignments, scaling, raw, unsupported) = new(tv_defs, assignments, scaling, raw, unsupported)
+end
+
+# ============================================================================
+# $ERROR Block Parsing Types
+# ============================================================================
+
+"""
+Parsed \$ERROR block.
+
+Fields:
+- error_type: Detected error model type (:proportional, :additive, :combined, :exponential, :unknown)
+- theta_indices: THETA indices used in error model
+- sigma_fixed_to_1: Whether SIGMA is fixed to 1 (common pattern)
+- raw_code: Original lines from \$ERROR block
+- unsupported_lines: Lines containing unsupported constructs
+"""
+struct ErrorBlock
+    error_type::Symbol
+    theta_indices::Vector{Int}
+    sigma_fixed_to_1::Bool
+    raw_code::Vector{String}
+    unsupported_lines::Vector{String}
+
+    ErrorBlock() = new(:unknown, Int[], false, String[], String[])
+    ErrorBlock(error_type, theta_indices, sigma_fixed, raw, unsupported) = new(error_type, theta_indices, sigma_fixed, raw, unsupported)
+end
+
+# ============================================================================
+# Unsupported Construct Detection
+# ============================================================================
+
+"""
+Represents an unsupported NONMEM construct detected during parsing.
+
+Fields:
+- construct: Name of the unsupported construct (e.g., "IF statement", "ALAG")
+- location: Where it was found ("\$PK", "\$ERROR", etc.)
+- line: The offending line of code
+- message: Human-readable error message
+"""
+struct UnsupportedConstruct
+    construct::String
+    location::String
+    line::String
+    message::String
+
+    # 3-argument constructor with auto-generated message
+    UnsupportedConstruct(construct, location, line) = new(
+        construct, location, line,
+        "$construct in $location is not supported: $line"
+    )
+
+    # 4-argument constructor with custom message
+    UnsupportedConstruct(construct, location, line, message) = new(
+        construct, location, line, message
+    )
 end
 
 """

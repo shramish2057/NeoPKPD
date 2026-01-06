@@ -1,6 +1,8 @@
 # Trial Endpoints
 # Endpoint calculation and analysis
 
+using SpecialFunctions: erf, erfinv
+
 export calculate_endpoint, analyze_endpoint, compare_arms
 export extract_pk_endpoint, extract_pd_endpoint, evaluate_safety_endpoint
 export responder_analysis
@@ -286,15 +288,22 @@ end
 Compare endpoint values between two arms.
 
 # Arguments
-- `values1::Vector{Float64}`: Values from arm 1
-- `values2::Vector{Float64}`: Values from arm 2
+- `values1::Vector{Float64}`: Values from arm 1 (or period 1 for crossover)
+- `values2::Vector{Float64}`: Values from arm 2 (or period 2 for crossover)
 
 # Keyword Arguments
 - `test::Symbol`: Statistical test (:ttest, :wilcoxon, :ratio)
-- `paired::Bool`: Whether comparison is paired (crossover)
+- `paired::Bool`: Whether comparison is paired (crossover). When true, uses paired t-test.
 
 # Returns
-- `Dict{Symbol, Any}`: Comparison results
+- `Dict{Symbol, Any}`: Comparison results including:
+  - :test_type - :paired_ttest, :welch_ttest, or :ratio
+  - :t_statistic, :df, :p_value - test statistics
+  - :ci_lower, :ci_upper - 95% confidence interval
+  - :difference or :geometric_mean_ratio - effect estimate
+
+# Notes
+For paired analysis, values1 and values2 must have equal length and be matched by subject.
 """
 function compare_arms(values1::Vector{Float64}, values2::Vector{Float64};
                       test::Symbol = :ttest, paired::Bool = false)
@@ -305,6 +314,11 @@ function compare_arms(values1::Vector{Float64}, values2::Vector{Float64};
 
     if n1 < 2 || n2 < 2
         return Dict{Symbol, Any}(:error => "Insufficient data")
+    end
+
+    # For paired analysis, we need matched data
+    if paired && n1 != n2
+        return Dict{Symbol, Any}(:error => "Paired analysis requires equal sample sizes. Got $(n1) vs $(n2)")
     end
 
     mean1, mean2 = sum(v1)/n1, sum(v2)/n2
@@ -319,22 +333,71 @@ function compare_arms(values1::Vector{Float64}, values2::Vector{Float64};
     )
 
     if test == :ttest
-        # Welch's t-test (unequal variances)
-        se = sqrt(var1/n1 + var2/n2)
-        t_stat = (mean2 - mean1) / se
+        if paired
+            # PAIRED T-TEST
+            # Calculate paired differences
+            differences = v2 .- v1
+            n = length(differences)
+            mean_diff = sum(differences) / n
+            var_diff = sum((differences .- mean_diff).^2) / (n - 1)
+            sd_diff = sqrt(var_diff)
+            se_diff = sd_diff / sqrt(n)
 
-        # Degrees of freedom (Welch-Satterthwaite)
-        df = (var1/n1 + var2/n2)^2 /
-             ((var1/n1)^2/(n1-1) + (var2/n2)^2/(n2-1))
+            # T-statistic for paired test
+            t_stat = mean_diff / se_diff
+            df = n - 1
 
-        result[:t_statistic] = t_stat
-        result[:df] = df
-        result[:se] = se
+            # Two-tailed p-value using t-distribution approximation
+            # Using the approximation: p ≈ 2 * (1 - Φ(|t| * √(df/(df-2)))) for large df
+            # For small df, use more accurate approximation
+            p_value = _approximate_t_pvalue(abs(t_stat), df)
 
-        # 95% CI for difference (approximate)
-        t_crit = 1.96  # Approximate for large df
-        result[:ci_lower] = mean2 - mean1 - t_crit * se
-        result[:ci_upper] = mean2 - mean1 + t_crit * se
+            # 95% CI for mean difference
+            t_crit = _trial_t_critical(df, 0.025)  # Two-tailed 95% CI
+            ci_lower = mean_diff - t_crit * se_diff
+            ci_upper = mean_diff + t_crit * se_diff
+
+            result[:test_type] = :paired_ttest
+            result[:t_statistic] = t_stat
+            result[:df] = df
+            result[:se] = se_diff
+            result[:p_value] = p_value
+            result[:ci_lower] = ci_lower
+            result[:ci_upper] = ci_upper
+            result[:mean_diff] = mean_diff
+            result[:sd_diff] = sd_diff
+
+            # Correlation between paired samples
+            if var1 > 0 && var2 > 0
+                covariance = sum((v1 .- mean1) .* (v2 .- mean2)) / (n - 1)
+                correlation = covariance / (sqrt(var1) * sqrt(var2))
+                result[:correlation] = correlation
+            end
+        else
+            # UNPAIRED (WELCH'S) T-TEST
+            se = sqrt(var1/n1 + var2/n2)
+            t_stat = (mean2 - mean1) / se
+
+            # Degrees of freedom (Welch-Satterthwaite)
+            df = (var1/n1 + var2/n2)^2 /
+                 ((var1/n1)^2/(n1-1) + (var2/n2)^2/(n2-1))
+
+            # Two-tailed p-value
+            p_value = _approximate_t_pvalue(abs(t_stat), df)
+
+            # 95% CI for difference
+            t_crit = _trial_t_critical(df, 0.025)
+            ci_lower = (mean2 - mean1) - t_crit * se
+            ci_upper = (mean2 - mean1) + t_crit * se
+
+            result[:test_type] = :welch_ttest
+            result[:t_statistic] = t_stat
+            result[:df] = df
+            result[:se] = se
+            result[:p_value] = p_value
+            result[:ci_lower] = ci_lower
+            result[:ci_upper] = ci_upper
+        end
 
     elseif test == :ratio
         # Geometric mean ratio (for log-normal data)
@@ -342,22 +405,108 @@ function compare_arms(values1::Vector{Float64}, values2::Vector{Float64};
         pos_v2 = filter(v -> v > 0, v2)
 
         if length(pos_v1) >= 2 && length(pos_v2) >= 2
-            log_mean1 = sum(log.(pos_v1)) / length(pos_v1)
-            log_mean2 = sum(log.(pos_v2)) / length(pos_v2)
+            if paired && length(pos_v1) == length(pos_v2)
+                # Paired ratio analysis (log difference)
+                log_ratios = log.(pos_v2) .- log.(pos_v1)
+                n = length(log_ratios)
+                mean_log_ratio = sum(log_ratios) / n
+                var_log_ratio = sum((log_ratios .- mean_log_ratio).^2) / (n - 1)
+                se_log = sqrt(var_log_ratio / n)
 
-            log_var1 = sum((log.(pos_v1) .- log_mean1).^2) / (length(pos_v1) - 1)
-            log_var2 = sum((log.(pos_v2) .- log_mean2).^2) / (length(pos_v2) - 1)
+                gmr = exp(mean_log_ratio)
+                t_crit = _trial_t_critical(n - 1, 0.05)  # 90% CI for BE
 
-            gmr = exp(log_mean2 - log_mean1)
-            se_log = sqrt(log_var1/length(pos_v1) + log_var2/length(pos_v2))
+                result[:test_type] = :paired_ratio
+                result[:geometric_mean_ratio] = gmr
+                result[:ci_lower_ratio] = exp(mean_log_ratio - t_crit * se_log)
+                result[:ci_upper_ratio] = exp(mean_log_ratio + t_crit * se_log)
+            else
+                # Unpaired ratio analysis
+                log_mean1 = sum(log.(pos_v1)) / length(pos_v1)
+                log_mean2 = sum(log.(pos_v2)) / length(pos_v2)
 
-            result[:geometric_mean_ratio] = gmr
-            result[:ci_lower_ratio] = exp(log(gmr) - 1.96 * se_log)
-            result[:ci_upper_ratio] = exp(log(gmr) + 1.96 * se_log)
+                log_var1 = sum((log.(pos_v1) .- log_mean1).^2) / (length(pos_v1) - 1)
+                log_var2 = sum((log.(pos_v2) .- log_mean2).^2) / (length(pos_v2) - 1)
+
+                gmr = exp(log_mean2 - log_mean1)
+                se_log = sqrt(log_var1/length(pos_v1) + log_var2/length(pos_v2))
+
+                result[:test_type] = :unpaired_ratio
+                result[:geometric_mean_ratio] = gmr
+                result[:ci_lower_ratio] = exp(log(gmr) - 1.96 * se_log)
+                result[:ci_upper_ratio] = exp(log(gmr) + 1.96 * se_log)
+            end
         end
     end
 
     return result
+end
+
+"""
+Approximate t-distribution critical value using Wilson-Hilferty transformation.
+For a given df and alpha (one-tailed), returns the critical t-value.
+Used internally by trial endpoint analysis (separate from NCA bioequivalence).
+"""
+function _trial_t_critical(df::Float64, alpha::Float64)
+    # For large df, use normal approximation
+    if df > 100
+        # Standard normal critical values
+        if alpha ≈ 0.025
+            return 1.96
+        elseif alpha ≈ 0.05
+            return 1.645
+        else
+            # Use inverse normal approximation
+            return sqrt(2) * erfinv(1 - 2*alpha)
+        end
+    end
+
+    # For smaller df, use approximation
+    # Based on Gleason (1988) approximation
+    z = sqrt(2) * erfinv(1 - 2*alpha)  # Normal quantile
+    g1 = (z^3 + z) / 4
+    g2 = (5*z^5 + 16*z^3 + 3*z) / 96
+    g3 = (3*z^7 + 19*z^5 + 17*z^3 - 15*z) / 384
+
+    return z + g1/df + g2/df^2 + g3/df^3
+end
+
+function _trial_t_critical(df::Int, alpha::Float64)
+    return _trial_t_critical(Float64(df), alpha)
+end
+
+"""
+Approximate two-tailed p-value for t-distribution.
+"""
+function _approximate_t_pvalue(t_abs::Float64, df::Int)
+    return _approximate_t_pvalue(t_abs, Float64(df))
+end
+
+function _approximate_t_pvalue(t_abs::Float64, df::Float64)
+    # For large df, use normal approximation
+    if df > 100
+        # Using standard normal CDF approximation
+        z = t_abs
+        # Approximation of 2*(1 - Φ(z))
+        return 2 * (1 - 0.5 * (1 + erf(z / sqrt(2))))
+    end
+
+    # For smaller df, use approximation based on incomplete beta function
+    # p = 2 * (1 - F_t(|t|, df)) where F_t is t-distribution CDF
+    # Using the relationship with incomplete beta: F_t = 1 - 0.5*I_x(df/2, 1/2) where x = df/(df + t^2)
+    x = df / (df + t_abs^2)
+
+    # Approximation of incomplete beta function for this case
+    # For t >> 1, p ≈ 2 * df^(df/2) * |t|^(-df) / B(df/2, 1/2)
+    if t_abs > 3 && df > 2
+        # Use asymptotic approximation
+        log_p = (df/2) * log(df / (df + t_abs^2)) + 0.5 * log(df / (df + t_abs^2))
+        return 2 * exp(log_p) / sqrt(π * df)
+    else
+        # Use normal approximation with finite df correction
+        z = t_abs * sqrt((df - 2) / df)
+        return 2 * (1 - 0.5 * (1 + erf(z / sqrt(2))))
+    end
 end
 
 

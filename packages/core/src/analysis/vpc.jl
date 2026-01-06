@@ -229,6 +229,14 @@ end
 Run simulations for prediction-corrected VPC (pcVPC).
 
 Applies the same prediction correction to simulated data.
+
+The prediction correction formula (Bergstrand et al., 2011):
+  pcDV_ij = DV_ij * PRED_bin / PRED_ij
+
+where:
+- DV_ij is the (simulated) observation for subject i at time j
+- PRED_ij is the typical (population) prediction at time j
+- PRED_bin is the median typical prediction for the bin containing time j
 """
 function _run_simulations_for_pcvpc(
     population_spec::PopulationSpec,
@@ -240,8 +248,6 @@ function _run_simulations_for_pcvpc(
     error_spec::Union{Nothing,ResidualErrorSpec},
     rng
 )::Dict{Int,Dict{Float64,Vector{Float64}}}
-    n_bins = length(bin_defs)
-
     # Initialize storage
     result = Dict{Int,Dict{Float64,Vector{Float64}}}()
     for bin_def in bin_defs
@@ -253,6 +259,42 @@ function _run_simulations_for_pcvpc(
 
     # Get base model for typical predictions
     base_model_spec = population_spec.base_model_spec
+
+    # Pre-compute base model predictions at all grid times ONCE
+    # This is the key optimization - avoid repeated ODE solves
+    base_result = simulate(base_model_spec, grid, solver)
+    base_times = base_result.t
+    base_preds = base_result.observations[:conc]
+
+    # Build interpolation lookup for base predictions
+    # For efficiency, we create a sorted lookup table
+    function interpolate_base_pred(t::Float64)
+        # Find the closest time point in base_times
+        idx = argmin(abs.(base_times .- t))
+
+        # If exact match or only one point, return directly
+        if abs(base_times[idx] - t) < 1e-10 || length(base_times) == 1
+            return base_preds[idx]
+        end
+
+        # Linear interpolation between bracketing points
+        if base_times[idx] > t && idx > 1
+            # t is between idx-1 and idx
+            t1, t2 = base_times[idx-1], base_times[idx]
+            c1, c2 = base_preds[idx-1], base_preds[idx]
+        elseif base_times[idx] < t && idx < length(base_times)
+            # t is between idx and idx+1
+            t1, t2 = base_times[idx], base_times[idx+1]
+            c1, c2 = base_preds[idx], base_preds[idx+1]
+        else
+            # Edge case - return nearest
+            return base_preds[idx]
+        end
+
+        # Linear interpolation
+        frac = (t - t1) / (t2 - t1)
+        return c1 + frac * (c2 - c1)
+    end
 
     # Run simulations
     for sim_idx in 1:config.n_simulations
@@ -280,7 +322,7 @@ function _run_simulations_for_pcvpc(
         # Run population simulation (with IIV)
         pop_result = simulate_population(pop_spec_sim, grid, solver)
 
-        # Also compute typical predictions for each individual's times
+        # Collect simulation data and compute predictions efficiently
         sim_times = Float64[]
         sim_values = Float64[]
         sim_preds = Float64[]  # Typical predictions
@@ -290,12 +332,10 @@ function _run_simulations_for_pcvpc(
             append!(sim_times, individual.t)
             append!(sim_values, individual.observations[:conc])
 
-            # Compute typical predictions at same times
+            # Compute typical predictions at same times using pre-computed base model
             for t in individual.t
-                idx = argmin(abs.(grid.saveat .- t))
-                # Use base model prediction
-                base_result = simulate(base_model_spec, SimGrid(grid.t0, grid.t1, [t]), solver)
-                push!(sim_preds, base_result.observations[:conc][1])
+                pred = interpolate_base_pred(t)
+                push!(sim_preds, pred)
             end
         end
 

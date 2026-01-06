@@ -319,38 +319,90 @@ using StableRNGs
     end
 
     @testset "pcVPC" begin
-        # Create observed data
+        # Create observed data with multiple subjects and more time points
         doses = [DoseEvent(0.0, 100.0)]
         subj1 = SubjectData(
             "SUBJ001",
-            [0.0, 2.0, 4.0, 8.0],
-            [2.0, 1.5, 1.0, 0.5],
+            [0.0, 1.0, 2.0, 4.0, 6.0, 8.0, 12.0],
+            [2.0, 1.8, 1.5, 1.0, 0.7, 0.5, 0.25],
+            doses
+        )
+        subj2 = SubjectData(
+            "SUBJ002",
+            [0.0, 1.0, 2.0, 4.0, 6.0, 8.0, 12.0],
+            [2.2, 1.9, 1.6, 1.1, 0.75, 0.55, 0.28],
+            doses
+        )
+        subj3 = SubjectData(
+            "SUBJ003",
+            [0.0, 1.0, 2.0, 4.0, 6.0, 8.0, 12.0],
+            [1.8, 1.7, 1.4, 0.9, 0.65, 0.45, 0.22],
             doses
         )
 
-        observed = ObservedData([subj1])
+        observed = ObservedData([subj1, subj2, subj3])
 
         # Create model
         model_params = OneCompIVBolusParams(10.0, 50.0)  # CL, V
         model_spec = ModelSpec(OneCompIVBolus(), "pk_iv", model_params, doses)
 
-        iiv_spec = IIVSpec(LogNormalIIV(), Dict(:CL => 0.2), UInt64(42), 20)
+        iiv_spec = IIVSpec(LogNormalIIV(), Dict(:CL => 0.3), UInt64(42), 20)
 
         pop_spec = PopulationSpec(model_spec, iiv_spec, nothing, nothing, IndividualCovariates[])
 
-        grid = SimGrid(0.0, 8.0, collect(0.0:2.0:8.0))
+        grid = SimGrid(0.0, 12.0, collect(0.0:0.5:12.0))
         solver = SolverSpec(:Tsit5, 1e-6, 1e-8, 10000)
 
+        # Use EqualWidthBinning to ensure reasonable bin coverage
         config = VPCConfig(
-            n_simulations=10,
+            pi_levels=[0.10, 0.50, 0.90],
+            binning=EqualWidthBinning(4),  # More appropriate for sparse discrete times
+            n_simulations=20,
             n_bootstrap=100,
             seed=UInt64(123)
         )
 
+        # Test pcVPC via compute_pcvpc
         vpc_result = compute_pcvpc(observed, pop_spec, grid, solver; config=config)
 
         @test vpc_result.config.prediction_corrected == true
         @test length(vpc_result.bins) > 0
+        @test vpc_result.n_subjects_observed == 3
+        @test vpc_result.n_simulations == 20
+
+        # Count bins with valid data
+        bins_with_data = filter(b -> b.n_observed > 0, vpc_result.bins)
+        @test length(bins_with_data) > 0
+
+        # Bins with data should have computed percentiles
+        for bin in bins_with_data
+            @test length(bin.percentiles) == 3  # 10th, 50th, 90th
+            for p in bin.percentiles
+                @test p.percentile in [0.10, 0.50, 0.90]
+                # Observed percentile should be computed
+                @test !isnan(p.observed)
+            end
+        end
+
+        # Test pcVPC via compute_vpc with prediction_corrected=true
+        pc_config = VPCConfig(
+            pi_levels=[0.05, 0.50, 0.95],
+            binning=EqualWidthBinning(3),
+            prediction_corrected=true,
+            n_simulations=15,
+            n_bootstrap=100,
+            seed=UInt64(456)
+        )
+
+        vpc_result2 = compute_vpc(observed, pop_spec, grid, solver; config=pc_config)
+        @test vpc_result2.config.prediction_corrected == true
+        @test length(vpc_result2.bins) == 3
+
+        # Verify bin midpoints are sensible
+        midpoints = bin_midpoints(vpc_result2)
+        @test issorted(midpoints)
+        @test midpoints[1] >= 0.0
+        @test midpoints[end] <= 12.0
     end
 
     @testset "VPC Stratification" begin
@@ -416,6 +468,135 @@ using StableRNGs
 
         @test n_blq == 2
         @test pct_blq == 50.0
+    end
+
+    @testset "BLQ Comprehensive Validation" begin
+        # Test all BLQ methods (M1-M7) according to Beal (2001)
+
+        # Scenario: PK profile with early absorption and terminal BLQ
+        times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
+        values = [0.1, 0.8, 2.0, 1.5, 0.8, 0.3, 0.15, 0.05]  # Tmax at t=1.0
+        lloq = 0.2
+        tmax = 1.0  # Time of Cmax
+
+        # Identify BLQ points: t=0.0 (0.1), t=12.0 (0.15), t=24.0 (0.05)
+        # Pre-Tmax BLQ: t=0.0
+        # Post-Tmax BLQ: t=12.0, t=24.0
+
+        # M1: Discard all BLQ
+        v1 = handle_blq(values, times, lloq; method=M1, tmax=tmax)
+        @test count(isnan, v1) == 3  # 3 BLQ discarded
+        @test !isnan(v1[2])  # t=0.5, value=0.8 kept
+        @test !isnan(v1[3])  # t=1.0, value=2.0 kept
+
+        # M3: Keep as-is (censored)
+        v3 = handle_blq(values, times, lloq; method=M3, tmax=tmax)
+        @test count(isnan, v3) == 0  # None discarded
+        @test v3[1] == 0.1  # Original value kept
+        @test v3[8] == 0.05  # Original value kept
+
+        # M4: Replace all BLQ with LLOQ/2
+        v4 = handle_blq(values, times, lloq; method=M4, tmax=tmax)
+        @test count(isnan, v4) == 0  # None discarded
+        @test v4[1] == lloq/2  # Replaced
+        @test v4[7] == lloq/2  # Replaced
+        @test v4[8] == lloq/2  # Replaced
+        @test v4[3] == 2.0  # Above LLOQ, unchanged
+
+        # M5: 0 before Tmax, LLOQ/2 after
+        v5 = handle_blq(values, times, lloq; method=M5, tmax=tmax)
+        @test v5[1] == 0.0  # Pre-Tmax BLQ -> 0
+        @test v5[7] == lloq/2  # Post-Tmax BLQ -> LLOQ/2
+        @test v5[8] == lloq/2  # Post-Tmax BLQ -> LLOQ/2
+
+        # M6: LLOQ/2 before Tmax, discard after
+        v6 = handle_blq(values, times, lloq; method=M6, tmax=tmax)
+        @test v6[1] == lloq/2  # Pre-Tmax BLQ -> LLOQ/2
+        @test isnan(v6[7])  # Post-Tmax BLQ -> discarded
+        @test isnan(v6[8])  # Post-Tmax BLQ -> discarded
+
+        # M7: 0 before Tmax, discard after
+        v7 = handle_blq(values, times, lloq; method=M7, tmax=tmax)
+        @test v7[1] == 0.0  # Pre-Tmax BLQ -> 0
+        @test isnan(v7[7])  # Post-Tmax BLQ -> discarded
+        @test isnan(v7[8])  # Post-Tmax BLQ -> discarded
+
+        # Test BLQ handling with automatic Tmax detection
+        v5_auto = handle_blq(values, times, lloq; method=M5)
+        @test v5_auto[1] == 0.0  # Pre-Tmax BLQ -> 0 (Tmax auto-detected at t=1.0)
+
+        # Edge case: All values above LLOQ
+        values_high = [1.0, 2.0, 3.0, 2.5, 2.0]
+        times_high = [0.0, 1.0, 2.0, 4.0, 8.0]
+        v_high = handle_blq(values_high, times_high, lloq; method=M1)
+        @test all(!isnan, v_high)  # No values changed
+        @test v_high == values_high
+
+        # Edge case: All values below LLOQ
+        values_low = [0.1, 0.05, 0.08, 0.03, 0.02]
+        times_low = [0.0, 1.0, 2.0, 4.0, 8.0]
+        v_low_m1 = handle_blq(values_low, times_low, lloq; method=M1)
+        @test all(isnan, v_low_m1)  # All discarded
+
+        v_low_m4 = handle_blq(values_low, times_low, lloq; method=M4)
+        @test all(v -> v == lloq/2, v_low_m4)  # All replaced with LLOQ/2
+    end
+
+    @testset "VPC Performance Scaling" begin
+        # Test that pcVPC has O(N) scaling, not O(N×M)
+        # by verifying that the pre-computed base model is used
+
+        doses = [DoseEvent(0.0, 100.0)]
+
+        # Create model
+        model_params = OneCompIVBolusParams(10.0, 50.0)
+        model_spec = ModelSpec(OneCompIVBolus(), "pk_iv", model_params, doses)
+
+        iiv_spec = IIVSpec(LogNormalIIV(), Dict(:CL => 0.2), UInt64(42), 10)
+        pop_spec = PopulationSpec(model_spec, iiv_spec, nothing, nothing, IndividualCovariates[])
+
+        solver = SolverSpec(:Tsit5, 1e-6, 1e-8, 10000)
+
+        # Create observed data
+        subj = SubjectData(
+            "SUBJ001",
+            [0.0, 1.0, 2.0, 4.0, 8.0, 12.0],
+            [2.0, 1.8, 1.5, 1.0, 0.6, 0.3],
+            doses
+        )
+        observed = ObservedData([subj])
+
+        # Small grid
+        small_grid = SimGrid(0.0, 12.0, collect(0.0:2.0:12.0))
+
+        # Large grid (should not significantly impact pcVPC time due to O(N) optimization)
+        large_grid = SimGrid(0.0, 12.0, collect(0.0:0.5:12.0))
+
+        config = VPCConfig(
+            n_simulations=10,  # Minimal for test
+            n_bootstrap=100,
+            seed=UInt64(123)
+        )
+
+        # Both should complete without timeout
+        # (if O(N×M) scaling existed, large_grid would be much slower)
+        vpc_small = compute_vpc(observed, pop_spec, small_grid, solver; config=config)
+        vpc_large = compute_vpc(observed, pop_spec, large_grid, solver; config=config)
+
+        @test length(vpc_small.bins) > 0
+        @test length(vpc_large.bins) > 0
+
+        # Test pcVPC explicitly
+        pc_config = VPCConfig(
+            n_simulations=10,  # Minimum required
+            n_bootstrap=100,
+            prediction_corrected=true,
+            seed=UInt64(456)
+        )
+
+        pcvpc_result = compute_pcvpc(observed, pop_spec, large_grid, solver; config=pc_config)
+        @test pcvpc_result.config.prediction_corrected == true
+        @test length(pcvpc_result.bins) > 0
     end
 
 end

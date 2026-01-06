@@ -70,10 +70,10 @@ function simulate_trial(trial_spec::TrialSpec; grid = nothing, solver = nothing)
         arm_results[arm.name] = arm_result
     end
 
-    # Analyze endpoints
+    # Analyze endpoints - pass design for paired detection (crossover)
     endpoint_analyses = Dict{Symbol, Dict{Symbol, Any}}()
     for endpoint in trial_spec.endpoints
-        endpoint_analyses[endpoint.name] = analyze_trial_endpoint(arm_results, endpoint)
+        endpoint_analyses[endpoint.name] = analyze_trial_endpoint(arm_results, endpoint, trial_spec.design)
     end
 
     # Power estimates (if replicates > 1)
@@ -174,7 +174,7 @@ end
     simulate_individual(arm::TreatmentArm, covariates::VirtualSubject,
                         observation_duration::Float64, sampling_times::Vector{Float64}; kwargs...)
 
-Simulate an individual subject.
+Simulate an individual subject using the real PK engine.
 """
 function simulate_individual(arm::TreatmentArm,
                               covariates::VirtualSubject,
@@ -187,29 +187,125 @@ function simulate_individual(arm::TreatmentArm,
     dose_times = dose_event_times(arm.regimen)
     dose_amounts = generate_doses(arm.regimen; rng = rng)
 
-    # Filter to observation duration
-    valid_doses = [(t, d) for (t, d) in zip(dose_times, dose_amounts) if t <= observation_duration]
+    # Filter to observation duration and convert to DoseEvent objects
+    dose_events = DoseEvent[]
+    for (t, d) in zip(dose_times, dose_amounts)
+        if t <= observation_duration && d > 0
+            push!(dose_events, DoseEvent(t, d))
+        end
+    end
 
     # Create time grid for simulation
     max_time = min(observation_duration, maximum(sampling_times))
-    t_grid = sort(unique(vcat(sampling_times, [t for (t, _) in valid_doses])))
+    t_grid = sort(unique(vcat(sampling_times, [d.time for d in dose_events])))
     t_grid = filter(t -> t <= max_time, t_grid)
 
     if isempty(t_grid)
         t_grid = [0.0]
     end
 
-    # Placeholder simulation result
-    # In full implementation, this would call the actual PK/PD simulation engine
-    result = create_placeholder_simulation(t_grid, arm, covariates, valid_doses, rng)
+    # Check if we have a valid model spec to use the real PK engine
+    if arm.pk_model_spec !== nothing && arm.pk_model_spec isa ModelSpec
+        # Use the real PK simulation engine
+        result = simulate_with_real_engine(arm.pk_model_spec, covariates, dose_events, t_grid, rng; grid=grid, solver=solver)
+    else
+        # Fallback to placeholder simulation when no model spec provided
+        # This maintains backward compatibility
+        valid_doses = [(d.time, d.amount) for d in dose_events]
+        result = create_placeholder_simulation(t_grid, arm, covariates, valid_doses, rng)
+    end
 
     return result
 end
 
+"""
+    simulate_with_real_engine(model_spec, subject, dose_events, observation_times, rng; grid, solver)
+
+Simulate using the real PK engine and return results in the expected Dict format.
+"""
+function simulate_with_real_engine(
+    model_spec::ModelSpec,
+    subject::VirtualSubject,
+    dose_events::Vector{DoseEvent},
+    observation_times::Vector{Float64},
+    rng::AbstractRNG;
+    grid = nothing,
+    solver = nothing
+)
+    # Generate random effects for IIV
+    n_params = get_n_params(model_spec.kind)
+    eta = 0.3 .* randn(rng, n_params)  # 30% CV for IIV
+
+    # Store eta in subject's other dict for IIV application
+    subject_with_eta = if hasfield(typeof(subject), :other)
+        # Create a copy with eta
+        VirtualSubject(
+            subject.id,
+            subject.age,
+            subject.weight,
+            subject.sex,
+            subject.race,
+            subject.disease_severity,
+            subject.baseline_biomarker,
+            merge(subject.other, Dict(:eta => eta))
+        )
+    else
+        subject
+    end
+
+    # Call the real simulation
+    exposure = simulate_subject_exposure(
+        model_spec,
+        subject_with_eta,
+        dose_events,
+        observation_times;
+        grid = grid,
+        solver = solver,
+        include_iiv = true
+    )
+
+    # Convert SubjectExposure to Dict format for compatibility with existing endpoint code
+    return Dict{String, Any}(
+        "t" => exposure.times,
+        "observations" => Dict{String, Vector{Float64}}(
+            "conc" => exposure.concentrations,
+            "effect" => exposure.pd_response !== nothing ? exposure.pd_response : zeros(length(exposure.times))
+        ),
+        "covariates" => Dict{Symbol, Any}(
+            :weight => subject.weight,
+            :age => subject.age,
+            :sex => subject.sex
+        ),
+        "pk_metrics" => exposure.pk_metrics
+    )
+end
+
+"""
+Get the number of parameters for a model type (for IIV generation).
+"""
+function get_n_params(::OneCompIVBolus)
+    return 2  # CL, V
+end
+
+function get_n_params(::OneCompOralFirstOrder)
+    return 3  # Ka, CL, V
+end
+
+function get_n_params(::TwoCompIVBolus)
+    return 4  # CL, V1, Q, V2
+end
+
+function get_n_params(::TwoCompOral)
+    return 5  # Ka, CL, V1, Q, V2
+end
+
+function get_n_params(::ModelKind)
+    return 3  # Default fallback
+end
 
 """
 Create a placeholder simulation result for testing.
-In full implementation, this integrates with the actual simulation engine.
+Used when no ModelSpec is provided (backward compatibility).
 """
 function create_placeholder_simulation(t_grid::Vector{Float64},
                                         arm::TreatmentArm,
@@ -320,14 +416,35 @@ end
 
 
 """
-    analyze_trial_endpoint(arm_results::Dict{String, ArmResult}, endpoint::EndpointSpec)
+    analyze_trial_endpoint(arm_results::Dict{String, ArmResult}, endpoint::EndpointSpec, design=nothing)
 
-Analyze an endpoint across all arms.
+Analyze an endpoint across all arms, with automatic paired analysis detection for crossover designs.
+
+# Arguments
+- `arm_results`: Results by arm name
+- `endpoint`: Endpoint specification
+- `design`: Study design (optional). If CrossoverDesign, uses paired analysis.
+
+# Returns
+- Dict with summary statistics and comparisons (paired if crossover)
 """
 function analyze_trial_endpoint(arm_results::Dict{String, ArmResult},
-                                  endpoint::EndpointSpec)
+                                  endpoint::EndpointSpec,
+                                  design::Union{Nothing, StudyDesignKind} = nothing)
 
     result = Dict{Symbol, Any}()
+
+    # Auto-detect if this is a crossover design requiring paired analysis
+    is_crossover = design isa CrossoverDesign
+    is_be_design = design isa BioequivalenceDesign
+
+    result[:design_type] = if is_crossover
+        :crossover
+    elseif is_be_design
+        :bioequivalence
+    else
+        :parallel
+    end
 
     arm_names = collect(keys(arm_results))
 
@@ -347,29 +464,52 @@ function analyze_trial_endpoint(arm_results::Dict{String, ArmResult},
         result[:by_arm][name] = analyze_endpoint(values, endpoint)
     end
 
-    # Pairwise comparisons
-    if length(arm_names) >= 2
+    # For crossover designs, use specialized crossover analysis
+    if (is_crossover || is_be_design) && length(arm_names) == 2
+        # Use crossover-specific analysis with paired comparisons
+        crossover_design = is_crossover ? design : design.crossover
+        result[:crossover_analysis] = analyze_crossover_endpoint(arm_results, endpoint, crossover_design)
+        result[:is_paired] = true
+
+        # Also include standard comparison format for backward compatibility
+        name1, name2 = arm_names[1], arm_names[2]
+        key = "$(name1)_vs_$(name2)"
         result[:comparisons] = Dict{String, Dict{Symbol, Any}}()
 
-        for i in 1:(length(arm_names)-1)
-            for j in (i+1):length(arm_names)
-                name1, name2 = arm_names[i], arm_names[j]
-                key = "$(name1)_vs_$(name2)"
+        test_type = endpoint isa PKEndpoint && endpoint.log_transform ? :ratio : :ttest
 
-                test_type = endpoint isa PKEndpoint && endpoint.log_transform ?
-                    :ratio : :ttest
+        result[:comparisons][key] = compare_arms(
+            arm_values[name1], arm_values[name2];
+            test = test_type,
+            paired = true  # Use paired analysis for crossover
+        )
+    else
+        # Standard parallel group analysis
+        result[:is_paired] = false
 
-                result[:comparisons][key] = compare_arms(
-                    arm_values[name1], arm_values[name2];
-                    test = test_type
-                )
+        if length(arm_names) >= 2
+            result[:comparisons] = Dict{String, Dict{Symbol, Any}}()
+
+            for i in 1:(length(arm_names)-1)
+                for j in (i+1):length(arm_names)
+                    name1, name2 = arm_names[i], arm_names[j]
+                    key = "$(name1)_vs_$(name2)"
+
+                    test_type = endpoint isa PKEndpoint && endpoint.log_transform ?
+                        :ratio : :ttest
+
+                    result[:comparisons][key] = compare_arms(
+                        arm_values[name1], arm_values[name2];
+                        test = test_type,
+                        paired = false
+                    )
+                end
             end
         end
     end
 
     return result
 end
-
 
 """
     run_bioequivalence_analysis(arm_results::Dict{String, ArmResult},

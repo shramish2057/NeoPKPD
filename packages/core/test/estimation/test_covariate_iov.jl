@@ -166,7 +166,7 @@ using LinearAlgebra
             covariate_on_iiv=[wt_effect]
         )
 
-        result = estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = OpenPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test isfinite(result.ofv)
@@ -216,7 +216,7 @@ using LinearAlgebra
             iov_specs=[iov_cl]
         )
 
-        result = estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = OpenPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test isfinite(result.ofv)
@@ -254,7 +254,7 @@ using LinearAlgebra
             compute_se=false
         )
 
-        result = estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = OpenPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test isfinite(result.ofv)

@@ -46,8 +46,8 @@ function validate(iiv::IIVSpec{LogNormalIIV})
 end
 
 """
-Sample eta values for IIV. These are sampled once per individual and applied
-to all segments.
+Sample eta values for IIV using diagonal (independent) omegas.
+Backward compatible - samples from independent Normal distributions.
 """
 function _sample_etas_log_normal(base_params, omegas::Dict{Symbol,Float64}, rng)
     T = typeof(base_params)
@@ -61,6 +61,54 @@ function _sample_etas_log_normal(base_params, omegas::Dict{Symbol,Float64}, rng)
         end
     end
     return etas
+end
+
+"""
+Sample correlated eta values using full covariance matrix.
+
+Uses Cholesky decomposition: η = L * z where z ~ N(0, I)
+This properly samples from the multivariate normal distribution.
+"""
+function _sample_etas_correlated(omega_matrix::OmegaMatrix, rng)
+    n = length(omega_matrix.param_names)
+
+    # Sample from standard normal
+    z = randn(rng, n)
+
+    # Transform to correlated etas using Cholesky factor
+    eta_vec = omega_matrix.cholesky_L * z
+
+    # Convert to Dict
+    etas = Dict{Symbol,Float64}()
+    for (i, p) in enumerate(omega_matrix.param_names)
+        etas[p] = eta_vec[i]
+    end
+
+    return etas
+end
+
+"""
+Sample etas from IIVSpec - uses correlated sampling if available.
+"""
+function _sample_etas_from_iiv(iiv::IIVSpec{LogNormalIIV}, base_params, rng)
+    if iiv.omega_matrix !== nothing
+        # Use correlated sampling with full covariance matrix
+        return _sample_etas_correlated(iiv.omega_matrix, rng)
+    else
+        # Fall back to independent sampling
+        return _sample_etas_log_normal(base_params, iiv.omegas, rng)
+    end
+end
+
+"""
+Sample etas as a vector (ordered by param_names) for estimation.
+Returns (eta_vector, param_names).
+"""
+function sample_eta_vector(omega_matrix::OmegaMatrix, rng)::Tuple{Vector{Float64}, Vector{Symbol}}
+    n = length(omega_matrix.param_names)
+    z = randn(rng, n)
+    eta_vec = omega_matrix.cholesky_L * z
+    return (eta_vec, omega_matrix.param_names)
 end
 
 """
@@ -86,6 +134,14 @@ end
 # Keep the old function for backward compatibility with existing code paths
 function _realize_params_log_normal(base_params, omegas::Dict{Symbol,Float64}, rng)
     etas = _sample_etas_log_normal(base_params, omegas, rng)
+    return _apply_etas_log_normal(base_params, etas)
+end
+
+"""
+Realize parameters with full IIV support (including correlations).
+"""
+function _realize_params_with_iiv(base_params, iiv::IIVSpec{LogNormalIIV}, rng)
+    etas = _sample_etas_from_iiv(iiv, base_params, rng)
     return _apply_etas_log_normal(base_params, etas)
 end
 
@@ -292,10 +348,11 @@ function simulate_population(
         end
 
         # Sample etas once per individual (constant across segments)
+        # Use _sample_etas_from_iiv to support both diagonal and correlated sampling
         etas = if pop.iiv === nothing
             Dict{Symbol,Float64}()
         else
-            _sample_etas_log_normal(base.params, omegas, rng)
+            _sample_etas_from_iiv(pop.iiv, base.params, rng)
         end
 
         # Precompute IOV occasions and kappas for this individual

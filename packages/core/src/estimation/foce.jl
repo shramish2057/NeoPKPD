@@ -774,7 +774,9 @@ function foce_estimate(
     omega_current = copy(config.omega_init)
     sigma_current = config.sigma_init
 
-    n_omega_params = n_eta
+    # Determine omega parameterization based on structure
+    use_full_omega = config.omega_structure isa FullOmega
+    n_omega_params = use_full_omega ? n_eta * (n_eta + 1) ÷ 2 : n_eta
     n_sigma_params = _count_sigma_params(sigma_current)
 
     # Storage for per-subject quantities
@@ -784,28 +786,70 @@ function foce_estimate(
     prior_per_subject = zeros(n_subj)
 
     # Pack/unpack with proper scaling
-    # Use log-transform for omega to ensure positivity
-    # Use Cholesky-based parameterization for better stability
+    # For full omega: use Cholesky parameterization L where Omega = L*L'
+    # For diagonal: use log-transform for positivity
     function pack_params(theta, omega, sigma)
-        omega_diag = diag(omega)
-        # Clip omega to avoid log of very small numbers
-        omega_diag = max.(omega_diag, 1e-10)
         sigma_vals = get_sigma_params(sigma)
         sigma_vals = max.(sigma_vals, 1e-10)
-        return vcat(theta, log.(omega_diag), log.(sigma_vals))
+
+        if use_full_omega
+            # Cholesky parameterization: pack lower triangular elements
+            # Ensure positive definiteness
+            omega_pd = ensure_positive_definite_omega(omega)
+            L = cholesky(omega_pd).L
+            # Pack: log of diagonal elements, raw off-diagonal
+            omega_packed = Float64[]
+            for j in 1:n_eta
+                for i in j:n_eta
+                    if i == j
+                        # Diagonal: log-transform for positivity
+                        push!(omega_packed, log(max(L[i, j], 1e-10)))
+                    else
+                        # Off-diagonal: raw value
+                        push!(omega_packed, L[i, j])
+                    end
+                end
+            end
+            return vcat(theta, omega_packed, log.(sigma_vals))
+        else
+            # Diagonal-only
+            omega_diag = diag(omega)
+            omega_diag = max.(omega_diag, 1e-10)
+            return vcat(theta, log.(omega_diag), log.(sigma_vals))
+        end
     end
 
     function unpack_params(x)
         theta = x[1:n_theta]
-        omega_log_diag = x[n_theta+1:n_theta+n_omega_params]
+        omega_packed = x[n_theta+1:n_theta+n_omega_params]
         sigma_log = x[n_theta+n_omega_params+1:end]
-
-        # Constrain omega to reasonable range
-        omega_diag = exp.(clamp.(omega_log_diag, -10.0, 5.0))
         sigma_vals = exp.(clamp.(sigma_log, -10.0, 5.0))
 
-        omega = Diagonal(omega_diag) |> Matrix
-        return theta, omega, sigma_vals
+        if use_full_omega
+            # Reconstruct L from packed elements
+            L = zeros(n_eta, n_eta)
+            idx = 1
+            for j in 1:n_eta
+                for i in j:n_eta
+                    if i == j
+                        # Diagonal: exp-transform back
+                        L[i, j] = exp(clamp(omega_packed[idx], -10.0, 5.0))
+                    else
+                        # Off-diagonal: clamp to reasonable range
+                        L[i, j] = clamp(omega_packed[idx], -10.0, 10.0)
+                    end
+                    idx += 1
+                end
+            end
+            # Reconstruct omega = L * L'
+            omega = L * L'
+            return theta, omega, sigma_vals
+        else
+            # Diagonal-only
+            omega_diag = exp.(clamp.(omega_packed, -10.0, 5.0))
+            omega = Diagonal(omega_diag) |> Matrix
+            return theta, omega, sigma_vals
+        end
     end
 
     x_init = pack_params(theta_current, omega_current, sigma_current)
@@ -1083,6 +1127,7 @@ end
 
 """
 Compute standard errors using the marginal likelihood Hessian.
+Supports both diagonal and full omega structures.
 """
 function compute_standard_errors_foce(
     theta::Vector{Float64},
@@ -1094,27 +1139,70 @@ function compute_standard_errors_foce(
     config::EstimationConfig
 )
     n_theta = length(theta)
-    n_omega = size(omega, 1)
+    n_eta = size(omega, 1)
     n_sigma = _count_sigma_params(sigma)
-    n_total = n_theta + n_omega + n_sigma
 
-    omega_diag = diag(omega)
+    # Determine omega parameterization based on structure
+    use_full_omega = config.omega_structure isa FullOmega
+    n_omega_params = use_full_omega ? n_eta * (n_eta + 1) ÷ 2 : n_eta
+    n_total = n_theta + n_omega_params + n_sigma
+
     sigma_vals = get_sigma_params(sigma)
 
-    x_current = vcat(theta, log.(omega_diag), log.(sigma_vals))
+    # Pack parameters
+    function pack_omega_for_se(om)
+        if use_full_omega
+            om_pd = ensure_positive_definite_omega(om)
+            L = cholesky(om_pd).L
+            omega_packed = Float64[]
+            for j in 1:n_eta
+                for i in j:n_eta
+                    if i == j
+                        push!(omega_packed, log(max(L[i, j], 1e-10)))
+                    else
+                        push!(omega_packed, L[i, j])
+                    end
+                end
+            end
+            return omega_packed
+        else
+            return log.(max.(diag(om), 1e-10))
+        end
+    end
+
+    function unpack_omega_for_se(omega_packed)
+        if use_full_omega
+            L = zeros(n_eta, n_eta)
+            idx = 1
+            for j in 1:n_eta
+                for i in j:n_eta
+                    if i == j
+                        L[i, j] = exp(clamp(omega_packed[idx], -10.0, 5.0))
+                    else
+                        L[i, j] = clamp(omega_packed[idx], -10.0, 10.0)
+                    end
+                    idx += 1
+                end
+            end
+            return L * L'
+        else
+            return Diagonal(exp.(clamp.(omega_packed, -10.0, 5.0))) |> Matrix
+        end
+    end
+
+    omega_packed = pack_omega_for_se(omega)
+    x_current = vcat(theta, omega_packed, log.(max.(sigma_vals, 1e-10)))
 
     # Adaptive step sizes
     h = max.(abs.(x_current) .* 1e-4, 1e-6)
 
     function ofv_full(x)
         th = x[1:n_theta]
-        log_omega_diag = x[n_theta+1:n_theta+n_omega]
-        log_sigma_vals = x[n_theta+n_omega+1:end]
+        omega_packed_x = x[n_theta+1:n_theta+n_omega_params]
+        log_sigma_vals = x[n_theta+n_omega_params+1:end]
 
-        om_diag = exp.(clamp.(log_omega_diag, -10.0, 5.0))
+        om = unpack_omega_for_se(omega_packed_x)
         sig_vals = exp.(clamp.(log_sigma_vals, -10.0, 5.0))
-
-        om = Diagonal(om_diag) |> Matrix
         sig = update_sigma_params(sigma, sig_vals)
 
         ofv = 0.0
@@ -1197,15 +1285,72 @@ function compute_standard_errors_foce(
         end
 
         theta_se = sqrt.(variances[1:n_theta])
-        # omega_se should be a Matrix (diagonal matrix of SEs)
-        omega_se_vec = omega_diag .* sqrt.(variances[n_theta+1:n_theta+n_omega])
-        omega_se = Diagonal(omega_se_vec) |> Matrix
-        sigma_se = sigma_vals .* sqrt.(variances[n_theta+n_omega+1:end])
+
+        # Compute omega SE - handle both diagonal and full cases
+        omega_se = if use_full_omega
+            # For full omega, we need to transform SEs from Cholesky to omega space
+            # Use delta method: SE(omega) ≈ |J| * SE(L)
+            # For simplicity, return the full covariance matrix of omega elements
+            omega_cov = cov_matrix[n_theta+1:n_theta+n_omega_params, n_theta+1:n_theta+n_omega_params]
+            # Transform to omega space using numerical delta method
+            _cholesky_to_omega_se(omega, omega_cov, n_eta)
+        else
+            # Diagonal case: use delta method SE(ω) = ω * SE(log(ω))
+            omega_diag = diag(omega)
+            omega_se_vec = omega_diag .* sqrt.(variances[n_theta+1:n_theta+n_omega_params])
+            Diagonal(omega_se_vec) |> Matrix
+        end
+
+        sigma_se = sigma_vals .* sqrt.(variances[n_theta+n_omega_params+1:end])
 
         return theta_se, omega_se, sigma_se, true, cond_num, eig_ratio
     catch
         return nothing, nothing, nothing, false, cond_num, eig_ratio
     end
+end
+
+"""
+Transform SE from Cholesky parameterization to omega matrix space using delta method.
+Returns a matrix of SEs for omega elements.
+"""
+function _cholesky_to_omega_se(omega::Matrix{Float64}, chol_cov::Matrix{Float64}, n_eta::Int)::Matrix{Float64}
+    # Compute omega SE using delta method
+    # omega = L * L', so d(omega[i,j])/d(L[k,l]) = L[i,l]*δ(j,k) + L[j,l]*δ(i,k)
+    # For diagonal: omega[i,i] = sum_k L[i,k]^2
+    # For simplicity, return diagonal SEs using approximation
+
+    omega_se = zeros(n_eta, n_eta)
+    omega_pd = ensure_positive_definite_omega(omega)
+    L = cholesky(omega_pd).L
+
+    # For each omega element, compute SE using delta method
+    for i in 1:n_eta
+        for j in 1:i
+            # omega[i,j] = sum_k L[i,k] * L[j,k]
+            # Compute gradient of omega[i,j] w.r.t. L elements
+            grad = zeros(n_eta * (n_eta + 1) ÷ 2)
+
+            idx = 1
+            for col in 1:n_eta
+                for row in col:n_eta
+                    if row == i && col <= j
+                        grad[idx] += L[j, col]
+                    end
+                    if row == j && col <= i
+                        grad[idx] += L[i, col]
+                    end
+                    idx += 1
+                end
+            end
+
+            # SE(omega[i,j]) = sqrt(grad' * chol_cov * grad)
+            variance_ij = dot(grad, chol_cov * grad)
+            omega_se[i, j] = variance_ij > 0 ? sqrt(variance_ij) : 0.0
+            omega_se[j, i] = omega_se[i, j]
+        end
+    end
+
+    return omega_se
 end
 
 # ============================================================================
@@ -1221,6 +1366,7 @@ where:
 - S: Outer product of individual score contributions
 
 This provides SEs that are robust to model misspecification.
+Supports both diagonal and full omega structures.
 """
 function compute_robust_se_foce(
     theta::Vector{Float64},
@@ -1231,17 +1377,60 @@ function compute_robust_se_foce(
     model_spec::ModelSpec,
     config::EstimationConfig,
     n_theta::Int,
-    n_omega::Int,
+    n_omega_params::Int,
     n_sigma::Int
 )::Union{Nothing, Vector{Float64}}
-    n_total = n_theta + n_omega + n_sigma
+    n_total = n_theta + n_omega_params + n_sigma
     n_subj = length(subjects)
+    n_eta = size(omega, 1)
 
-    omega_diag = diag(omega)
+    # Determine omega parameterization based on structure
+    use_full_omega = config.omega_structure isa FullOmega
     sigma_vals = get_sigma_params(sigma)
 
-    # Current packed parameter values
-    x_current = vcat(theta, log.(max.(omega_diag, 1e-10)), log.(max.(sigma_vals, 1e-10)))
+    # Pack omega based on structure
+    function pack_omega_robust(om)
+        if use_full_omega
+            om_pd = ensure_positive_definite_omega(om)
+            L = cholesky(om_pd).L
+            omega_packed = Float64[]
+            for j in 1:n_eta
+                for i in j:n_eta
+                    if i == j
+                        push!(omega_packed, log(max(L[i, j], 1e-10)))
+                    else
+                        push!(omega_packed, L[i, j])
+                    end
+                end
+            end
+            return omega_packed
+        else
+            return log.(max.(diag(om), 1e-10))
+        end
+    end
+
+    function unpack_omega_robust(omega_packed)
+        if use_full_omega
+            L = zeros(n_eta, n_eta)
+            idx = 1
+            for j in 1:n_eta
+                for i in j:n_eta
+                    if i == j
+                        L[i, j] = exp(clamp(omega_packed[idx], -10.0, 5.0))
+                    else
+                        L[i, j] = clamp(omega_packed[idx], -10.0, 10.0)
+                    end
+                    idx += 1
+                end
+            end
+            return L * L'
+        else
+            return Diagonal(exp.(clamp.(omega_packed, -10.0, 5.0))) |> Matrix
+        end
+    end
+
+    omega_packed = pack_omega_robust(omega)
+    x_current = vcat(theta, omega_packed, log.(max.(sigma_vals, 1e-10)))
 
     # Adaptive step sizes for numerical gradient
     h = max.(abs.(x_current) .* 1e-5, 1e-7)
@@ -1252,13 +1441,11 @@ function compute_robust_se_foce(
 
         function ind_ofv(x)
             th = x[1:n_theta]
-            log_omega_diag = x[n_theta+1:n_theta+n_omega]
-            log_sigma_vals = x[n_theta+n_omega+1:end]
+            omega_packed_x = x[n_theta+1:n_theta+n_omega_params]
+            log_sigma_vals = x[n_theta+n_omega_params+1:end]
 
-            om_diag = exp.(clamp.(log_omega_diag, -10.0, 5.0))
+            om = unpack_omega_robust(omega_packed_x)
             sig_vals = exp.(clamp.(log_sigma_vals, -10.0, 5.0))
-
-            om = Diagonal(om_diag) |> Matrix
             sig = update_sigma_params(sigma, sig_vals)
 
             eta_mode, H_eta, ll_contrib, prior_contrib = find_eta_mode_with_hessian(

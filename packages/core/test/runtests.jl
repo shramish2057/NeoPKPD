@@ -5,6 +5,7 @@
 
 using Test
 using OpenPKPDCore
+using StableRNGs
 
 # Include test helper functions
 include("test_helpers.jl")
@@ -123,6 +124,11 @@ include("test_helpers.jl")
     # Visual Predictive Check (VPC)
     @testset "VPC" begin
         include("test_vpc.jl")
+    end
+
+    # NPDE (Normalized Prediction Distribution Errors)
+    @testset "NPDE" begin
+        include("test_npde.jl")
     end
 
     # Parameter Estimation (NLME)

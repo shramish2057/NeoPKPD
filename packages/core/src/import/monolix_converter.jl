@@ -1,7 +1,7 @@
 # Monolix to OpenPKPD Converter
 # Converts parsed Monolix projects to OpenPKPD model specifications
 
-export convert_monolix_to_openpkpd, MonolixConversionResult
+export convert_monolix_to_openpkpd, MonolixConversionResult, check_unsupported_monolix_constructs
 
 """
 Result of converting a Monolix project file to OpenPKPD format.
@@ -13,6 +13,7 @@ Fields:
 - warnings: Any warnings generated during conversion
 - errors: Any errors that prevented conversion
 - parameter_mapping: Mapping from Monolix parameters to OpenPKPD parameters
+- unsupported: List of unsupported constructs detected
 """
 struct MonolixConversionResult
     model_spec::Union{Nothing,ModelSpec}
@@ -21,6 +22,134 @@ struct MonolixConversionResult
     warnings::Vector{String}
     errors::Vector{String}
     parameter_mapping::Dict{String,Symbol}
+    unsupported::Vector{UnsupportedMonolixConstruct}
+end
+
+# Backward compatible constructor without unsupported field
+function MonolixConversionResult(
+    model_spec, iiv_spec, error_spec, warnings, errors, parameter_mapping
+)
+    MonolixConversionResult(model_spec, iiv_spec, error_spec, warnings, errors, parameter_mapping, UnsupportedMonolixConstruct[])
+end
+
+"""
+    check_unsupported_monolix_constructs(mlx::MonolixProject) -> Vector{UnsupportedMonolixConstruct}
+
+Check a Monolix project for unsupported constructs.
+
+Returns a vector of UnsupportedMonolixConstruct describing each unsupported feature found.
+"""
+function check_unsupported_monolix_constructs(mlx::MonolixProject)::Vector{UnsupportedMonolixConstruct}
+    unsupported = UnsupportedMonolixConstruct[]
+
+    # Check model type for unsupported features
+    if mlx.model !== nothing && mlx.model.model_type !== nothing
+        model_name = mlx.model.model_type.model
+
+        # Check against unsupported feature patterns
+        for (pattern, name, message) in UNSUPPORTED_MONOLIX_FEATURES
+            if occursin(pattern, model_name)
+                push!(unsupported, UnsupportedMonolixConstruct(
+                    name,
+                    "<MODEL>",
+                    "lib:$(model_name)",
+                    message
+                ))
+            end
+        end
+
+        # Check if model is in supported list
+        is_supported = any(p -> occursin(p, model_name), SUPPORTED_MONOLIX_PATTERNS)
+        if !is_supported && isempty(unsupported)
+            # Check if we can at least identify it
+            mapping = get_monolix_model_mapping(model_name)
+            if mapping === nothing
+                push!(unsupported, UnsupportedMonolixConstruct(
+                    "Unknown model",
+                    "<MODEL>",
+                    "lib:$(model_name)",
+                    "Model '$model_name' is not recognized. Supported: 1/2/3-compartment PK with bolus, oral, or infusion administration"
+                ))
+            end
+        end
+    end
+
+    # Check for lag time (Tlag) - supported with warning
+    if mlx.model !== nothing && mlx.model.has_lag
+        push!(unsupported, UnsupportedMonolixConstruct(
+            "Lag time (Tlag)",
+            "<MODEL>",
+            "Tlag parameter detected",
+            "Lag time (Tlag) is not yet implemented - model will be imported without lag time"
+        ))
+    end
+
+    # Check for bioavailability fraction
+    if mlx.model !== nothing && mlx.model.has_bioavailability
+        push!(unsupported, UnsupportedMonolixConstruct(
+            "Bioavailability (F)",
+            "<MODEL>",
+            "Bioavailability parameter detected",
+            "Bioavailability fraction is not yet implemented - model will assume F=1"
+        ))
+    end
+
+    # Check observations for unsupported types
+    for obs in mlx.observations
+        if obs.type != "continuous"
+            push!(unsupported, UnsupportedMonolixConstruct(
+                "Non-continuous observation",
+                "<MODEL>[LONGITUDINAL]",
+                "type=$(obs.type)",
+                "Only continuous observations are supported. Found: $(obs.type)"
+            ))
+        end
+    end
+
+    # Check raw text for advanced features
+    raw_text = mlx.raw_text
+
+    # Check for covariates (complex covariate models)
+    if occursin(r"<COVARIATE>"i, raw_text) || occursin(r"\[COVARIATE\]"i, raw_text)
+        push!(unsupported, UnsupportedMonolixConstruct(
+            "Covariate model",
+            "<COVARIATE>",
+            "Covariate block detected",
+            "Complex covariate models are not yet imported automatically"
+        ))
+    end
+
+    # Check for custom ODE/PK equations
+    if occursin(r"EQUATION:"i, raw_text) || occursin(r"ode\s*="i, raw_text)
+        push!(unsupported, UnsupportedMonolixConstruct(
+            "Custom ODE",
+            "<MODEL>",
+            "EQUATION block detected",
+            "Custom differential equations are not supported - use library models"
+        ))
+    end
+
+    # Check for inter-occasion variability (IOV)
+    if occursin(r"occasion"i, raw_text) || occursin(r"\biov\b"i, raw_text)
+        push!(unsupported, UnsupportedMonolixConstruct(
+            "Inter-occasion variability",
+            "<MODEL>",
+            "IOV detected",
+            "Inter-occasion variability is detected but not automatically imported"
+        ))
+    end
+
+    # Check for correlation structures
+    if occursin(r"correlation"i, raw_text) && occursin(r"block"i, raw_text)
+        push!(unsupported, UnsupportedMonolixConstruct(
+            "Omega correlation",
+            "<MODEL>[INDIVIDUAL]",
+            "Correlation block detected",
+            "Correlated random effects (block omega) are not yet supported"
+        ))
+    end
+
+    return unsupported
 end
 
 """
@@ -30,6 +159,7 @@ Arguments:
 - mlx: Parsed MonolixProject
 - doses: Vector of DoseEvent (required, as Monolix data is external)
 - name: Model name (optional, defaults to description)
+- strict: If true, errors on unsupported constructs; if false, adds warnings (default: false)
 
 Returns:
 - MonolixConversionResult containing converted specs and diagnostics
@@ -37,11 +167,30 @@ Returns:
 function convert_monolix_to_openpkpd(
     mlx::MonolixProject;
     doses::Vector{DoseEvent}=DoseEvent[],
-    name::String=""
+    name::String="",
+    strict::Bool=false
 )::MonolixConversionResult
     warnings = String[]
     errors = String[]
     parameter_mapping = Dict{String,Symbol}()
+
+    # Check for unsupported constructs
+    unsupported = check_unsupported_monolix_constructs(mlx)
+
+    # Handle unsupported constructs based on strict mode
+    for u in unsupported
+        if strict
+            # In strict mode, blocking unsupported features cause errors
+            if u.construct in ["Unknown model", "Custom ODE", "Non-continuous observation",
+                              "Mixture model", "PD model", "Markov model"]
+                push!(errors, u.message)
+            else
+                push!(warnings, u.message)
+            end
+        else
+            push!(warnings, u.message)
+        end
+    end
 
     # Use description as name if not provided
     if isempty(name)
@@ -51,7 +200,7 @@ function convert_monolix_to_openpkpd(
     # Check for structural model
     if mlx.model === nothing
         push!(errors, "No structural model found in project")
-        return MonolixConversionResult(nothing, nothing, nothing, warnings, errors, parameter_mapping)
+        return MonolixConversionResult(nothing, nothing, nothing, warnings, errors, parameter_mapping, unsupported)
     end
 
     # Determine OpenPKPD model kind
@@ -67,7 +216,7 @@ function convert_monolix_to_openpkpd(
 
     if model_kind_sym === nothing
         push!(errors, "Could not determine model type from Monolix project")
-        return MonolixConversionResult(nothing, nothing, nothing, warnings, errors, parameter_mapping)
+        return MonolixConversionResult(nothing, nothing, nothing, warnings, errors, parameter_mapping, unsupported)
     end
 
     # Build parameter mapping from Monolix parameters
@@ -123,16 +272,16 @@ function convert_monolix_to_openpkpd(
 
     if model_spec === nothing
         push!(errors, "Failed to create model spec for $(model_kind_sym)")
-        return MonolixConversionResult(nothing, nothing, nothing, warnings, errors, parameter_mapping)
+        return MonolixConversionResult(nothing, nothing, nothing, warnings, errors, parameter_mapping, unsupported)
     end
 
     # Convert IIV to IIVSpec
     iiv_spec = _convert_monolix_iiv(mlx.parameters, warnings)
 
     # Convert error model to ResidualErrorSpec
-    error_spec = _convert_monolix_error(mlx.observations, warnings)
+    error_spec = _convert_monolix_error(mlx.observations, mlx.parameters, warnings)
 
-    return MonolixConversionResult(model_spec, iiv_spec, error_spec, warnings, errors, parameter_mapping)
+    return MonolixConversionResult(model_spec, iiv_spec, error_spec, warnings, errors, parameter_mapping, unsupported)
 end
 
 """
@@ -272,6 +421,7 @@ Convert Monolix observation error model to ResidualErrorSpec.
 """
 function _convert_monolix_error(
     observations::Vector{MonolixObservation},
+    parameters::Vector{MonolixParameter},
     warnings::Vector{String}
 )::Union{Nothing,ResidualErrorSpec}
     if isempty(observations)
@@ -280,43 +430,79 @@ function _convert_monolix_error(
 
     # Use first observation's error model
     obs = observations[1]
+    error_model = obs.error_model
 
-    if obs.error_model == "additive"
-        sigma = length(obs.error_params) >= 1 ? obs.error_params[1] : 0.1
+    # Use error params from observation if available, otherwise find from parameter list
+    error_param_a = 0.1  # Default additive
+    error_param_b = 0.1  # Default proportional
+
+    # First try to use the extracted error_params from the observation
+    if !isempty(obs.error_params)
+        if error_model in ["constant", "additive"]
+            error_param_a = obs.error_params[1]
+        elseif error_model == "proportional"
+            error_param_b = obs.error_params[1]
+        elseif error_model == "combined"
+            if length(obs.error_params) >= 2
+                error_param_a = obs.error_params[1]
+                error_param_b = obs.error_params[2]
+            elseif length(obs.error_params) >= 1
+                error_param_a = obs.error_params[1]
+            end
+        elseif error_model == "exponential"
+            error_param_b = obs.error_params[1]
+        end
+    else
+        # Fallback: Try to find error parameters from the parameter list
+        for p in parameters
+            name_lower = lowercase(p.name)
+            if name_lower in ["a", "a1", "sigma_a", "sigma_add"]
+                error_param_a = p.value
+            elseif name_lower in ["b", "b1", "sigma_b", "sigma_prop"]
+                error_param_b = p.value
+            elseif name_lower in ["sigma", "sigma1"]
+                # Could be either depending on model
+                if error_model in ["additive", "constant"]
+                    error_param_a = p.value
+                else
+                    error_param_b = p.value
+                end
+            end
+        end
+    end
+
+    # Map error model names (constant is the same as additive)
+    if error_model in ["additive", "constant"]
         return ResidualErrorSpec(
             AdditiveError(),
-            AdditiveErrorParams(sigma),
+            AdditiveErrorParams(error_param_a),
             :conc,
             UInt64(12345)
         )
-    elseif obs.error_model == "proportional"
-        sigma = length(obs.error_params) >= 1 ? obs.error_params[1] : 0.1
+    elseif error_model == "proportional"
         return ResidualErrorSpec(
             ProportionalError(),
-            ProportionalErrorParams(sigma),
+            ProportionalErrorParams(error_param_b),
             :conc,
             UInt64(12345)
         )
-    elseif obs.error_model == "combined"
-        sigma_add = length(obs.error_params) >= 1 ? obs.error_params[1] : 0.1
-        sigma_prop = length(obs.error_params) >= 2 ? obs.error_params[2] : 0.1
+    elseif error_model == "combined"
         return ResidualErrorSpec(
             CombinedError(),
-            CombinedErrorParams(sigma_add, sigma_prop),
+            CombinedErrorParams(error_param_a, error_param_b),
             :conc,
             UInt64(12345)
         )
-    elseif obs.error_model == "exponential"
-        sigma = length(obs.error_params) >= 1 ? obs.error_params[1] : 0.1
+    elseif error_model == "exponential"
         return ResidualErrorSpec(
             ExponentialError(),
-            ExponentialErrorParams(sigma),
+            ExponentialErrorParams(error_param_b),
             :conc,
             UInt64(12345)
         )
     end
 
-    push!(warnings, "Unknown error model $(obs.error_model) - using combined error with default parameters")
+    push!(warnings, "Unknown error model $(error_model) - using combined error with default parameters")
     return ResidualErrorSpec(
         CombinedError(),
         CombinedErrorParams(0.1, 0.1),

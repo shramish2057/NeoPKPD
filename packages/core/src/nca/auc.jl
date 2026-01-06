@@ -373,10 +373,13 @@ function auc_partial(
     t_partial = Float64[]
     c_partial = Float64[]
 
-    # Interpolate start point if necessary
+    # Interpolate start point if necessary - respect config.method
     if t[idx_start] > t_start && idx_start > 1
-        c_interp = _interpolate_concentration(t[idx_start-1], t[idx_start],
-                                               c[idx_start-1], c[idx_start], t_start)
+        c_interp = _interpolate_concentration(
+            t[idx_start-1], t[idx_start],
+            c[idx_start-1], c[idx_start],
+            t_start, config.method
+        )
         push!(t_partial, t_start)
         push!(c_partial, c_interp)
     end
@@ -387,10 +390,13 @@ function auc_partial(
         push!(c_partial, c[i])
     end
 
-    # Interpolate end point if necessary
+    # Interpolate end point if necessary - respect config.method
     if t[idx_end] < t_end && idx_end < length(t)
-        c_interp = _interpolate_concentration(t[idx_end], t[idx_end+1],
-                                               c[idx_end], c[idx_end+1], t_end)
+        c_interp = _interpolate_concentration(
+            t[idx_end], t[idx_end+1],
+            c[idx_end], c[idx_end+1],
+            t_end, config.method
+        )
         push!(t_partial, t_end)
         push!(c_partial, c_interp)
     end
@@ -399,23 +405,70 @@ function auc_partial(
 end
 
 """
-    _interpolate_concentration(t1, t2, c1, c2, t_target)
+    _interpolate_concentration(t1, t2, c1, c2, t_target, method)
 
-Interpolate concentration at target time.
-Uses log-linear interpolation if both concentrations positive and decreasing,
-otherwise linear interpolation.
+Interpolate concentration at target time using specified method.
+
+# Arguments
+- `t1, t2::Float64`: Bounding time points
+- `c1, c2::Float64`: Concentrations at t1 and t2
+- `t_target::Float64`: Target time for interpolation
+- `method::NCAMethod`: Interpolation method to use
+
+# Returns
+- `Float64`: Interpolated concentration at t_target
 """
 function _interpolate_concentration(
     t1::Float64, t2::Float64,
     c1::Float64, c2::Float64,
-    t_target::Float64
+    t_target::Float64,
+    method::NCAMethod = LinLogMixedMethod()
 )
-    if c1 > 0.0 && c2 > 0.0 && c2 < c1
+    return _interpolate_concentration_dispatch(t1, t2, c1, c2, t_target, method)
+end
+
+# Linear method: always use linear interpolation
+function _interpolate_concentration_dispatch(
+    t1::Float64, t2::Float64,
+    c1::Float64, c2::Float64,
+    t_target::Float64,
+    ::LinearMethod
+)
+    slope = (c2 - c1) / (t2 - t1)
+    return c1 + slope * (t_target - t1)
+end
+
+# Log-linear method: use log-linear if both positive, else linear
+function _interpolate_concentration_dispatch(
+    t1::Float64, t2::Float64,
+    c1::Float64, c2::Float64,
+    t_target::Float64,
+    ::LogLinearMethod
+)
+    if c1 > 0.0 && c2 > 0.0
         # Log-linear interpolation
         k = log(c1 / c2) / (t2 - t1)
         return c1 * exp(-k * (t_target - t1))
     else
-        # Linear interpolation
+        # Fall back to linear if not both positive
+        slope = (c2 - c1) / (t2 - t1)
+        return c1 + slope * (t_target - t1)
+    end
+end
+
+# Lin-Log Mixed method: use log-linear for descending, linear for ascending
+function _interpolate_concentration_dispatch(
+    t1::Float64, t2::Float64,
+    c1::Float64, c2::Float64,
+    t_target::Float64,
+    ::LinLogMixedMethod
+)
+    if c1 > 0.0 && c2 > 0.0 && c2 < c1
+        # Descending and both positive: use log-linear interpolation
+        k = log(c1 / c2) / (t2 - t1)
+        return c1 * exp(-k * (t_target - t1))
+    else
+        # Ascending or zero/negative: use linear interpolation
         slope = (c2 - c1) / (t2 - t1)
         return c1 + slope * (t_target - t1)
     end

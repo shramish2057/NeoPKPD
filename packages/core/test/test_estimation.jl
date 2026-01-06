@@ -314,7 +314,7 @@ using StableRNGs
         )
 
         # Run estimation
-        result = estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = OpenPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test length(result.theta) == 2
@@ -361,7 +361,7 @@ using StableRNGs
             verbose=false
         )
 
-        result = estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = OpenPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         # Check individual estimates
         @test length(result.individuals) == 1
@@ -429,5 +429,11 @@ using StableRNGs
 
     # Include SAEM validation tests
     include("estimation/test_saem_validation.jl")
+
+    # Include Standard Errors tests
+    include("estimation/test_standard_errors.jl")
+
+    # Include SE Benchmark tests
+    include("estimation/test_se_benchmark.jl")
 
 end

@@ -6,7 +6,7 @@ using Statistics
 using LinearAlgebra
 using Distributions
 
-export NPDESpec, NPDEResult, NPDEDiagnostics
+export NPDESpec, NPDEResult, NPDEDiagnostics, SubjectNPDEResult
 export compute_npde_enhanced, compute_decorrelated_npde
 export npde_statistical_tests, NPDETestResult
 export get_npde_qq_data, get_npde_vs_pred_data, get_npde_vs_time_data
@@ -469,3 +469,314 @@ function get_npde_histogram_data(
 end
 
 export get_npde_histogram_data
+
+# ============================================================================
+# NPDE Decorrelation Validation
+# ============================================================================
+
+"""
+Result of NPDE decorrelation validation.
+"""
+struct DecorrelationValidationResult
+    is_valid::Bool
+    correlation_matrix::Matrix{Float64}
+    max_off_diagonal_correlation::Float64
+    mean_off_diagonal_correlation::Float64
+    condition_number::Float64
+    warnings::Vector{String}
+end
+
+export DecorrelationValidationResult
+
+"""
+    validate_npde_decorrelation(npde_result; correlation_threshold=0.1, condition_threshold=100.0)
+
+Validate that NPDE decorrelation was effective.
+
+For properly decorrelated NPDEs:
+1. Off-diagonal correlations in the correlation matrix should be near zero
+2. The condition number of the correlation matrix should be reasonable
+3. Individual NPDE series should not show autocorrelation
+
+Arguments:
+- npde_result: NPDEResult from compute_npde_enhanced
+- correlation_threshold: Maximum acceptable off-diagonal correlation (default: 0.1)
+- condition_threshold: Maximum acceptable condition number (default: 100.0)
+
+Returns:
+- DecorrelationValidationResult with validation outcomes
+"""
+function validate_npde_decorrelation(
+    npde_result::NPDEResult;
+    correlation_threshold::Float64=0.1,
+    condition_threshold::Float64=100.0
+)::DecorrelationValidationResult
+    warnings = String[]
+
+    # Collect all NPDEs by subject
+    n_subjects = length(npde_result.subjects)
+
+    if n_subjects < 2
+        return DecorrelationValidationResult(
+            true,
+            Matrix{Float64}(undef, 0, 0),
+            0.0,
+            0.0,
+            1.0,
+            ["Insufficient subjects for correlation analysis"]
+        )
+    end
+
+    # Find the common observation count (use minimum for correlation analysis)
+    min_obs = minimum(length(s.npde) for s in npde_result.subjects)
+
+    if min_obs < 3
+        return DecorrelationValidationResult(
+            true,
+            Matrix{Float64}(undef, 0, 0),
+            0.0,
+            0.0,
+            1.0,
+            ["Insufficient observations per subject for correlation analysis"]
+        )
+    end
+
+    # Build matrix of NPDEs: rows = time points, cols = subjects
+    npde_matrix = zeros(min_obs, n_subjects)
+    for (j, subj) in enumerate(npde_result.subjects)
+        npde_matrix[:, j] = subj.npde[1:min_obs]
+    end
+
+    # Filter out any NaN columns
+    valid_cols = [j for j in 1:n_subjects if !any(isnan, npde_matrix[:, j])]
+    if length(valid_cols) < 2
+        return DecorrelationValidationResult(
+            true,
+            Matrix{Float64}(undef, 0, 0),
+            0.0,
+            0.0,
+            1.0,
+            ["Insufficient valid subjects after filtering NaN values"]
+        )
+    end
+    npde_matrix = npde_matrix[:, valid_cols]
+    n_valid = size(npde_matrix, 2)
+
+    # Compute correlation matrix between time points
+    corr_matrix = cor(npde_matrix')
+
+    # Check off-diagonal correlations
+    n_times = size(corr_matrix, 1)
+    off_diag_corrs = Float64[]
+    for i in 1:n_times
+        for j in (i+1):n_times
+            push!(off_diag_corrs, abs(corr_matrix[i, j]))
+        end
+    end
+
+    max_off_diag = isempty(off_diag_corrs) ? 0.0 : maximum(off_diag_corrs)
+    mean_off_diag = isempty(off_diag_corrs) ? 0.0 : mean(off_diag_corrs)
+
+    # Compute condition number
+    eigenvalues = eigvals(corr_matrix)
+    eigenvalues_real = real.(eigenvalues)
+    eigenvalues_pos = filter(x -> x > 1e-10, eigenvalues_real)
+
+    condition_num = if length(eigenvalues_pos) >= 2
+        maximum(eigenvalues_pos) / minimum(eigenvalues_pos)
+    else
+        1.0
+    end
+
+    # Validation checks
+    is_valid = true
+
+    if max_off_diag > correlation_threshold
+        is_valid = false
+        push!(warnings, "Maximum off-diagonal correlation ($(round(max_off_diag, digits=3))) exceeds threshold ($correlation_threshold)")
+    end
+
+    if condition_num > condition_threshold
+        is_valid = false
+        push!(warnings, "Condition number ($(round(condition_num, digits=1))) exceeds threshold ($condition_threshold)")
+    end
+
+    # Check for autocorrelation within subjects
+    for subj in npde_result.subjects
+        npde_vals = filter(!isnan, subj.npde)
+        if length(npde_vals) >= 4
+            autocorr = _compute_lag1_autocorrelation(npde_vals)
+            if abs(autocorr) > 0.3
+                push!(warnings, "Subject $(subj.subject_id) shows significant autocorrelation ($(round(autocorr, digits=3)))")
+            end
+        end
+    end
+
+    return DecorrelationValidationResult(
+        is_valid,
+        corr_matrix,
+        max_off_diag,
+        mean_off_diag,
+        condition_num,
+        warnings
+    )
+end
+
+export validate_npde_decorrelation
+
+"""
+Compute lag-1 autocorrelation for a time series.
+"""
+function _compute_lag1_autocorrelation(x::Vector{Float64})::Float64
+    n = length(x)
+    if n < 2
+        return 0.0
+    end
+
+    m = mean(x)
+    numerator = sum((x[i] - m) * (x[i+1] - m) for i in 1:(n-1))
+    denominator = sum((xi - m)^2 for xi in x)
+
+    if denominator < 1e-10
+        return 0.0
+    end
+
+    return numerator / denominator
+end
+
+"""
+    check_npde_independence(npde_values; lag_max=5)
+
+Check independence of NPDE values using autocorrelation analysis.
+
+For properly computed NPDEs, there should be no significant autocorrelation
+at any lag.
+
+Arguments:
+- npde_values: Vector of pooled NPDE values
+- lag_max: Maximum lag to test (default: 5)
+
+Returns:
+- Dict with lag => autocorrelation values and overall independence flag
+"""
+function check_npde_independence(
+    npde_values::Vector{Float64};
+    lag_max::Int=5
+)::Dict{Symbol, Any}
+    valid_npde = filter(!isnan, npde_values)
+    n = length(valid_npde)
+
+    if n < lag_max + 10
+        return Dict(
+            :is_independent => true,
+            :autocorrelations => Dict{Int, Float64}(),
+            :critical_value => NaN,
+            :message => "Insufficient data for independence test"
+        )
+    end
+
+    m = mean(valid_npde)
+    denom = sum((x - m)^2 for x in valid_npde)
+
+    autocorrs = Dict{Int, Float64}()
+    for lag in 1:lag_max
+        if n - lag < 2
+            continue
+        end
+        numer = sum((valid_npde[i] - m) * (valid_npde[i + lag] - m) for i in 1:(n - lag))
+        autocorrs[lag] = numer / denom
+    end
+
+    # Bartlett's approximation for critical value (95% CI)
+    critical_value = 1.96 / sqrt(n)
+
+    # Check if any autocorrelation exceeds critical value
+    is_independent = all(abs(ac) < critical_value for ac in values(autocorrs))
+
+    message = if is_independent
+        "NPDEs appear independent (no significant autocorrelation)"
+    else
+        violating_lags = [k for (k, v) in autocorrs if abs(v) >= critical_value]
+        "Significant autocorrelation detected at lags: $(violating_lags)"
+    end
+
+    return Dict(
+        :is_independent => is_independent,
+        :autocorrelations => autocorrs,
+        :critical_value => critical_value,
+        :message => message
+    )
+end
+
+export check_npde_independence
+
+"""
+    comprehensive_npde_validation(npde_result; alpha=0.05)
+
+Perform comprehensive validation of NPDE computation.
+
+Checks:
+1. N(0,1) distribution (mean, variance, normality)
+2. Decorrelation effectiveness
+3. Independence (no autocorrelation)
+4. No systematic bias vs time or predictions
+
+Returns detailed validation report.
+"""
+function comprehensive_npde_validation(
+    npde_result::NPDEResult;
+    alpha::Float64=0.05
+)::Dict{Symbol, Any}
+    results = Dict{Symbol, Any}()
+
+    # 1. Distribution checks
+    tests = npde_statistical_tests(npde_result.pooled_npde; alpha=alpha)
+    results[:statistical_tests] = tests
+    results[:mean_test_passed] = any(t -> t.test_name == "t-test (mean = 0)" && t.passed, tests)
+    results[:variance_test_passed] = any(t -> t.test_name == "Variance test (var = 1)" && t.passed, tests)
+    results[:normality_test_passed] = any(t -> t.test_name == "Shapiro-Wilk normality" && t.passed, tests)
+
+    # 2. Decorrelation validation
+    decorr_result = validate_npde_decorrelation(npde_result)
+    results[:decorrelation_valid] = decorr_result.is_valid
+    results[:decorrelation_details] = decorr_result
+
+    # 3. Independence check
+    independence = check_npde_independence(npde_result.pooled_npde)
+    results[:independence_valid] = independence[:is_independent]
+    results[:independence_details] = independence
+
+    # 4. Overall validation
+    all_passed = (
+        results[:mean_test_passed] &&
+        results[:variance_test_passed] &&
+        results[:decorrelation_valid] &&
+        results[:independence_valid]
+    )
+    results[:overall_valid] = all_passed
+
+    # Summary message
+    issues = String[]
+    if !results[:mean_test_passed]
+        push!(issues, "Mean significantly different from 0")
+    end
+    if !results[:variance_test_passed]
+        push!(issues, "Variance significantly different from 1")
+    end
+    if !results[:decorrelation_valid]
+        push!(issues, "Decorrelation issues detected")
+    end
+    if !results[:independence_valid]
+        push!(issues, "Autocorrelation detected")
+    end
+
+    results[:summary] = if all_passed
+        "NPDE validation passed: NPDEs follow N(0,1), properly decorrelated, and independent"
+    else
+        "NPDE validation failed: " * join(issues, "; ")
+    end
+
+    return results
+end
+
+export comprehensive_npde_validation

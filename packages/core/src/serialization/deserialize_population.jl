@@ -14,15 +14,29 @@ function _parse_iiv(d)::Union{Nothing,IIVSpec}
         error("Unsupported IIV kind in artifact: $(kind_str)")
     end
 
-    omegas = Dict{Symbol,Float64}()
-    for (k, v) in d["omegas"]
-        omegas[Symbol(String(k))] = Float64(v)
-    end
-
     seed = UInt64(Int(d["seed"]))
-    n = Int(d["n"])
+    n_ind = Int(d["n"])
 
-    return IIVSpec(kind, omegas, seed, n)
+    # Check if full covariance matrix is present
+    if haskey(d, "omega_matrix") && d["omega_matrix"] !== nothing
+        om_data = d["omega_matrix"]
+        param_names = [Symbol(String(p)) for p in om_data["param_names"]]
+        n_params = Int(om_data["n_params"])
+
+        # Reconstruct matrix from flattened vector
+        matrix_vec = [Float64(v) for v in om_data["matrix"]]
+        matrix = reshape(matrix_vec, n_params, n_params)
+
+        omega_matrix = OmegaMatrix(param_names, matrix)
+        return IIVSpec(kind, omega_matrix, seed, n_ind)
+    else
+        # Fall back to diagonal-only (backward compatible)
+        omegas = Dict{Symbol,Float64}()
+        for (k, v) in d["omegas"]
+            omegas[Symbol(String(k))] = Float64(v)
+        end
+        return IIVSpec(kind, omegas, seed, n_ind)
+    end
 end
 
 function _parse_time_varying(d)::Union{Nothing,TimeVaryingCovariates}

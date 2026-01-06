@@ -2,6 +2,7 @@
 # Parses .ctl files into NONMEMControlFile structures
 
 export parse_nonmem_control, read_nonmem_control
+export parse_pk_block, parse_error_block, check_unsupported_constructs
 
 """
 Read and parse a NONMEM control file from disk.
@@ -461,4 +462,426 @@ function _parse_tables(lines::Vector{String})::Vector{Dict{String,Any}}
     push!(tables, Dict{String,Any}("raw" => join(lines, " ")))
 
     return tables
+end
+
+# ============================================================================
+# $PK Block Parser
+# ============================================================================
+
+"""
+Parse \$PK block to extract parameter assignments, ETA relationships, and covariates.
+
+Returns a PKBlock containing:
+- tv_definitions: Mapping from TV names to THETA indices
+- assignments: Parameter assignments with ETA and covariate info
+- scaling: Scaling factors (S1, S2, etc.)
+- unsupported_lines: Lines that couldn't be parsed
+"""
+function parse_pk_block(lines::Vector{String})::PKBlock
+    if isempty(lines)
+        return PKBlock()
+    end
+
+    tv_definitions = Dict{Symbol,Int}()
+    assignments = PKAssignment[]
+    scaling = ScalingFactor[]
+    unsupported_lines = String[]
+
+    # Track intermediate values for two-pass processing
+    tv_to_theta = Dict{Symbol,Int}()  # TVCL => 1
+    tv_covariates = Dict{Symbol,Vector{PKCovariateEffect}}()  # TVCL => [covariates]
+
+    for line in lines
+        line_upper = uppercase(strip(line))
+        if isempty(line_upper)
+            continue
+        end
+
+        # Check for unsupported constructs first
+        if _is_unsupported_pk_line(line_upper)
+            push!(unsupported_lines, line)
+            continue
+        end
+
+        # Try to parse the line
+        parsed = false
+
+        # Pattern 1: TV definition with covariates
+        # TVCL = THETA(1) * (WT/70)**THETA(3)
+        m = match(r"^(TV\w+)\s*=\s*THETA\((\d+)\)(.*)$"i, line_upper)
+        if m !== nothing
+            tv_name = Symbol(m.captures[1])
+            theta_idx = parse(Int, m.captures[2])
+            rest = m.captures[3]
+
+            tv_definitions[tv_name] = theta_idx
+            tv_to_theta[tv_name] = theta_idx
+
+            # Check for covariate effects in the rest
+            covariates = _extract_covariates_from_expression(rest)
+            if !isempty(covariates)
+                tv_covariates[tv_name] = covariates
+            end
+            parsed = true
+        end
+
+        # Pattern 2: Parameter with exponential ETA
+        # CL = TVCL * EXP(ETA(1))
+        if !parsed
+            m = match(r"^(\w+)\s*=\s*(TV\w+)\s*\*\s*EXP\s*\(\s*ETA\s*\(\s*(\d+)\s*\)\s*\)"i, line_upper)
+            if m !== nothing
+                param = Symbol(m.captures[1])
+                tv_name = Symbol(m.captures[2])
+                eta_idx = parse(Int, m.captures[3])
+
+                # Get THETA index from TV definition
+                theta_idx = get(tv_to_theta, tv_name, nothing)
+                covs = get(tv_covariates, tv_name, PKCovariateEffect[])
+
+                push!(assignments, PKAssignment(param, theta_idx, eta_idx, :exponential, covs))
+                parsed = true
+            end
+        end
+
+        # Pattern 3: Parameter with additive ETA
+        # CL = TVCL + ETA(1)
+        if !parsed
+            m = match(r"^(\w+)\s*=\s*(TV\w+)\s*\+\s*ETA\s*\(\s*(\d+)\s*\)"i, line_upper)
+            if m !== nothing
+                param = Symbol(m.captures[1])
+                tv_name = Symbol(m.captures[2])
+                eta_idx = parse(Int, m.captures[3])
+
+                theta_idx = get(tv_to_theta, tv_name, nothing)
+                covs = get(tv_covariates, tv_name, PKCovariateEffect[])
+
+                push!(assignments, PKAssignment(param, theta_idx, eta_idx, :additive, covs))
+                parsed = true
+            end
+        end
+
+        # Pattern 4: Direct parameter from THETA with ETA
+        # CL = THETA(1) * EXP(ETA(1))
+        if !parsed
+            m = match(r"^(\w+)\s*=\s*THETA\s*\(\s*(\d+)\s*\)\s*\*\s*EXP\s*\(\s*ETA\s*\(\s*(\d+)\s*\)\s*\)"i, line_upper)
+            if m !== nothing
+                param = Symbol(m.captures[1])
+                theta_idx = parse(Int, m.captures[2])
+                eta_idx = parse(Int, m.captures[3])
+
+                push!(assignments, PKAssignment(param, theta_idx, eta_idx, :exponential, PKCovariateEffect[]))
+                parsed = true
+            end
+        end
+
+        # Pattern 5: Scaling factor
+        # S1 = V, S2 = V1
+        if !parsed
+            m = match(r"^S(\d+)\s*=\s*(\w+)$"i, line_upper)
+            if m !== nothing
+                comp = parse(Int, m.captures[1])
+                param = Symbol(m.captures[2])
+                push!(scaling, ScalingFactor(comp, param))
+                parsed = true
+            end
+        end
+
+        # Pattern 6: Simple TV = THETA assignment (already handled in pattern 1)
+
+        # If not parsed and not a comment/empty, log as potentially important
+        if !parsed && !startswith(line_upper, ";") && !isempty(line_upper)
+            # Some lines are OK to skip (like intermediate calculations)
+            # but track ones that look like assignments
+            if contains(line_upper, "=")
+                # Could be an intermediate variable - that's OK
+            end
+        end
+    end
+
+    return PKBlock(tv_definitions, assignments, scaling, lines, unsupported_lines)
+end
+
+"""
+Extract covariate effects from an expression like `* (WT/70)**THETA(3)`.
+"""
+function _extract_covariates_from_expression(expr::AbstractString)::Vector{PKCovariateEffect}
+    effects = PKCovariateEffect[]
+
+    # Power covariate: * (COV/REF)**THETA(n)
+    for m in eachmatch(r"\*\s*\(\s*(\w+)\s*/\s*([\d.]+)\s*\)\s*\*\*\s*THETA\s*\(\s*(\d+)\s*\)"i, expr)
+        cov = Symbol(m.captures[1])
+        ref = parse(Float64, m.captures[2])
+        theta_idx = parse(Int, m.captures[3])
+        push!(effects, PKCovariateEffect(cov, theta_idx, :power, ref))
+    end
+
+    # Linear covariate: * (1 + THETA(n)*(COV-REF))
+    for m in eachmatch(r"\*\s*\(\s*1\s*\+\s*THETA\s*\(\s*(\d+)\s*\)\s*\*\s*\(\s*(\w+)\s*-\s*([\d.]+)\s*\)\s*\)"i, expr)
+        theta_idx = parse(Int, m.captures[1])
+        cov = Symbol(m.captures[2])
+        ref = parse(Float64, m.captures[3])
+        push!(effects, PKCovariateEffect(cov, theta_idx, :linear, ref))
+    end
+
+    # Exponential covariate: * EXP(THETA(n)*(COV-REF))
+    for m in eachmatch(r"\*\s*EXP\s*\(\s*THETA\s*\(\s*(\d+)\s*\)\s*\*\s*\(\s*(\w+)\s*-\s*([\d.]+)\s*\)\s*\)"i, expr)
+        theta_idx = parse(Int, m.captures[1])
+        cov = Symbol(m.captures[2])
+        ref = parse(Float64, m.captures[3])
+        push!(effects, PKCovariateEffect(cov, theta_idx, :exponential, ref))
+    end
+
+    return effects
+end
+
+"""
+Check if a \$PK line contains unsupported constructs.
+"""
+function _is_unsupported_pk_line(line::AbstractString)::Bool
+    # IF statements (conditional logic)
+    if occursin(r"\bIF\s*\("i, line)
+        return true
+    end
+
+    # ALAG (absorption lag time)
+    if occursin(r"\bALAG\d"i, line)
+        return true
+    end
+
+    # F1, F2, etc. (bioavailability fractions)
+    if occursin(r"\bF\d\s*="i, line)
+        return true
+    end
+
+    # MTIME (model event time)
+    if occursin(r"\bMTIME"i, line)
+        return true
+    end
+
+    # R1, R2 (infusion rates)
+    if occursin(r"\bR\d\s*="i, line)
+        return true
+    end
+
+    # D1, D2 (infusion durations)
+    if occursin(r"\bD\d\s*="i, line)
+        return true
+    end
+
+    return false
+end
+
+# ============================================================================
+# $ERROR Block Parser
+# ============================================================================
+
+"""
+Parse \$ERROR block to extract error model type and THETA indices.
+
+Returns an ErrorBlock containing:
+- error_type: :proportional, :additive, :combined, :exponential, or :unknown
+- theta_indices: THETA indices used in the error model
+- sigma_fixed_to_1: Whether SIGMA appears to be fixed to 1
+"""
+function parse_error_block(lines::Vector{String})::ErrorBlock
+    if isempty(lines)
+        return ErrorBlock()
+    end
+
+    text = uppercase(join(lines, " "))
+    theta_indices = Int[]
+    unsupported_lines = String[]
+    error_type = :unknown
+
+    # Check for unsupported constructs
+    for line in lines
+        line_upper = uppercase(strip(line))
+        if _is_unsupported_error_line(line_upper)
+            push!(unsupported_lines, line)
+        end
+    end
+
+    # Extract all THETA references in error block
+    for m in eachmatch(r"THETA\s*\(\s*(\d+)\s*\)", text)
+        theta_idx = parse(Int, m.captures[1])
+        if !(theta_idx in theta_indices)
+            push!(theta_indices, theta_idx)
+        end
+    end
+
+    # Detect error model type based on W definition patterns
+
+    # Combined error with SQRT: W = SQRT(THETA(n)**2 + (THETA(m)*IPRED)**2)
+    if occursin(r"W\s*=\s*SQRT\s*\(.*THETA.*\*\*\s*2.*THETA.*IPRED"i, text) ||
+       occursin(r"W\s*=\s*SQRT\s*\(.*THETA.*\+.*THETA.*IPRED"i, text)
+        error_type = :combined
+
+    # Combined error additive form: W = THETA(n) + THETA(m)*IPRED
+    elseif occursin(r"W\s*=\s*THETA\s*\(\d+\)\s*\+\s*THETA\s*\(\d+\)\s*\*\s*(?:IPRED|F)"i, text)
+        error_type = :combined
+
+    # Proportional error: W = IPRED * THETA(n) or W = F * THETA(n)
+    elseif occursin(r"W\s*=\s*(?:IPRED|F)\s*\*\s*THETA\s*\(\d+\)"i, text)
+        error_type = :proportional
+
+    # Additive error: W = THETA(n) (not followed by *)
+    elseif occursin(r"W\s*=\s*THETA\s*\(\d+\)\s*$"i, text) ||
+           occursin(r"W\s*=\s*THETA\s*\(\d+\)\s+[^*]"i, text)
+        error_type = :additive
+
+    # Exponential error: Y = F * EXP(ERR(1))
+    elseif occursin(r"Y\s*=\s*(?:IPRED|F)\s*\*\s*EXP\s*\(.*ERR"i, text)
+        error_type = :exponential
+
+    # Simple case where error is purely from SIGMA (no THETA in W)
+    elseif isempty(theta_indices) && (occursin(r"Y\s*=.*ERR"i, text) || occursin(r"W\s*="i, text))
+        # Check what W is set to
+        if occursin(r"W\s*=\s*(?:IPRED|F)"i, text)
+            error_type = :proportional
+        elseif occursin(r"W\s*=\s*1\b"i, text) || occursin(r"W\s*=\s*\d"i, text)
+            error_type = :additive
+        end
+    end
+
+    # Check if SIGMA is fixed to 1 (common pattern when error is parameterized via THETA)
+    sigma_fixed_to_1 = !isempty(theta_indices) && error_type != :unknown
+
+    return ErrorBlock(error_type, theta_indices, sigma_fixed_to_1, lines, unsupported_lines)
+end
+
+"""
+Check if a \$ERROR line contains unsupported constructs.
+"""
+function _is_unsupported_error_line(line::AbstractString)::Bool
+    # IF statements
+    if occursin(r"\bIF\s*\("i, line)
+        return true
+    end
+
+    # CALL statements
+    if occursin(r"\bCALL\b"i, line)
+        return true
+    end
+
+    return false
+end
+
+# ============================================================================
+# Unsupported Construct Detection
+# ============================================================================
+
+"""
+Check a NONMEM control file for unsupported constructs.
+
+Returns a vector of UnsupportedConstruct for each unsupported feature found.
+"""
+function check_unsupported_constructs(ctl::NONMEMControlFile)::Vector{UnsupportedConstruct}
+    unsupported = UnsupportedConstruct[]
+
+    # Check ADVAN number
+    if ctl.subroutines !== nothing
+        advan = ctl.subroutines.advan
+        if advan in [5, 6, 7, 8, 9, 12, 13]
+            push!(unsupported, UnsupportedConstruct(
+                "ADVAN$advan",
+                "\$SUBROUTINES",
+                "ADVAN$advan",
+                "ADVAN$advan (general linear/nonlinear ODE) is not supported. Only ADVAN1-4, 10, 11 with predefined models are supported."
+            ))
+        end
+    end
+
+    # Check $PK block
+    for line in ctl.pk_code
+        line_upper = uppercase(strip(line))
+
+        if occursin(r"\bIF\s*\("i, line_upper)
+            push!(unsupported, UnsupportedConstruct("IF statement", "\$PK", line))
+        end
+
+        if occursin(r"\bALAG\d"i, line_upper)
+            push!(unsupported, UnsupportedConstruct("Absorption lag time (ALAG)", "\$PK", line))
+        end
+
+        if occursin(r"\bF\d\s*="i, line_upper)
+            push!(unsupported, UnsupportedConstruct("Bioavailability fraction (Fn)", "\$PK", line))
+        end
+
+        if occursin(r"\bMTIME"i, line_upper)
+            push!(unsupported, UnsupportedConstruct("Model event time (MTIME)", "\$PK", line))
+        end
+
+        if occursin(r"\bR\d\s*="i, line_upper)
+            push!(unsupported, UnsupportedConstruct("Infusion rate (Rn)", "\$PK", line))
+        end
+
+        if occursin(r"\bD\d\s*="i, line_upper)
+            push!(unsupported, UnsupportedConstruct("Infusion duration (Dn)", "\$PK", line))
+        end
+    end
+
+    # Check $ERROR block
+    for line in ctl.error_code
+        line_upper = uppercase(strip(line))
+
+        if occursin(r"\bIF\s*\("i, line_upper)
+            push!(unsupported, UnsupportedConstruct("IF statement", "\$ERROR", line))
+        end
+
+        if occursin(r"\bCALL\b"i, line_upper)
+            push!(unsupported, UnsupportedConstruct("CALL statement", "\$ERROR", line))
+        end
+    end
+
+    # Check for $DES, $MODEL, $MIX sections (detected by checking raw text)
+    raw_upper = uppercase(ctl.raw_text)
+
+    if occursin(r"\$DES\b", raw_upper)
+        push!(unsupported, UnsupportedConstruct(
+            "Custom differential equations (\$DES)",
+            "\$DES",
+            "",
+            "Custom differential equations (\$DES) are not supported. Use predefined ADVAN models."
+        ))
+    end
+
+    if occursin(r"\$MODEL\b", raw_upper)
+        push!(unsupported, UnsupportedConstruct(
+            "Custom compartment model (\$MODEL)",
+            "\$MODEL",
+            "",
+            "Custom compartment models (\$MODEL) are not supported. Use predefined ADVAN models."
+        ))
+    end
+
+    if occursin(r"\$MIX\b", raw_upper)
+        push!(unsupported, UnsupportedConstruct(
+            "Mixture model (\$MIX)",
+            "\$MIX",
+            "",
+            "Mixture models (\$MIX) are not supported."
+        ))
+    end
+
+    # Check for SAME in OMEGA
+    for line in get(Dict("OMEGA" => String[]), "OMEGA", ctl.raw_text)
+        if occursin(r"\bSAME\b"i, line)
+            push!(unsupported, UnsupportedConstruct("SAME omega structure", "\$OMEGA", line))
+            break
+        end
+    end
+    # Also check in raw text for SAME
+    if occursin(r"\$OMEGA[^\$]*\bSAME\b"i, raw_upper)
+        # Only add if not already added
+        if !any(u -> u.construct == "SAME omega structure" for u in unsupported)
+            push!(unsupported, UnsupportedConstruct(
+                "SAME omega structure",
+                "\$OMEGA",
+                "",
+                "SAME omega structure is not supported."
+            ))
+        end
+    end
+
+    return unsupported
 end
