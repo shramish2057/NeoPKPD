@@ -21,15 +21,15 @@ include("specs/tmdd_specs.jl")
 # ------------------------------------------------------------------
 # PK model definitions
 # ------------------------------------------------------------------
-include("models/onecomp_iv_bolus.jl")
-include("models/onecomp_oral_first_order.jl")
-include("models/twocomp_iv_bolus.jl")
-include("models/twocomp_oral.jl")
-include("models/threecomp_iv_bolus.jl")
-include("models/transit_absorption.jl")
-include("models/michaelis_menten.jl")
-include("models/pk_interface.jl")
-include("models/custom.jl")
+include("pk/onecomp_iv_bolus.jl")
+include("pk/onecomp_oral_first_order.jl")
+include("pk/twocomp_iv_bolus.jl")
+include("pk/twocomp_oral.jl")
+include("pk/threecomp_iv_bolus.jl")
+include("pk/transit_absorption.jl")
+include("pk/michaelis_menten.jl")
+include("pk/pk_interface.jl")
+include("pk/custom.jl")
 
 # ------------------------------------------------------------------
 # PD model definitions
