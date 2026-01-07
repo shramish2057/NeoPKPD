@@ -71,6 +71,7 @@ include("engine/sensitivity_population.jl")
 include("engine/events.jl")
 include("engine/callbacks.jl")
 include("engine/infusion.jl")
+include("engine/dose_modifiers.jl")  # ALAG and bioavailability support
 include("engine/residual_error.jl")
 include("engine/solve.jl")
 

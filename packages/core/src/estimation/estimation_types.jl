@@ -67,6 +67,9 @@ Fields:
 - adaptation_interval: How often to adapt proposal (default: 50 iterations)
 - track_diagnostics: Whether to compute convergence diagnostics (default: true)
 - use_all_chains: Whether to use all chains or just first chain (default: true)
+- parallel_chains: Run MCMC chains in parallel using threads (default: true)
+  This provides ~Nx speedup where N = min(n_chains, n_threads).
+  Set to false for debugging or when running subjects in parallel already.
 """
 struct SAEMMethod <: EstimationMethod
     n_burn::Int
@@ -79,6 +82,7 @@ struct SAEMMethod <: EstimationMethod
     adaptation_interval::Int
     track_diagnostics::Bool
     use_all_chains::Bool
+    parallel_chains::Bool
 
     function SAEMMethod(;
         n_burn::Int=300,
@@ -90,7 +94,8 @@ struct SAEMMethod <: EstimationMethod
         target_acceptance::Float64=0.234,
         adaptation_interval::Int=50,
         track_diagnostics::Bool=true,
-        use_all_chains::Bool=true
+        use_all_chains::Bool=true,
+        parallel_chains::Bool=true
     )
         @assert step_size_schedule in (:harmonic, :constant) "Invalid step size schedule"
         @assert n_mcmc_steps >= 10 "n_mcmc_steps must be at least 10"
@@ -98,7 +103,7 @@ struct SAEMMethod <: EstimationMethod
         @assert adaptation_interval >= 1 "adaptation_interval must be positive"
         new(n_burn, n_iter, n_chains, n_mcmc_steps, step_size_schedule,
             adapt_proposal, target_acceptance, adaptation_interval,
-            track_diagnostics, use_all_chains)
+            track_diagnostics, use_all_chains, parallel_chains)
     end
 end
 

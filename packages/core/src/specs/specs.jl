@@ -22,8 +22,9 @@ export TwoCompIVBolus, TwoCompIVBolusParams, TwoCompOral, TwoCompOralParams
 export ThreeCompIVBolus, ThreeCompIVBolusParams
 export TransitAbsorption, TransitAbsorptionParams
 export MichaelisMentenElimination, MichaelisMentenEliminationParams
-export DoseEvent, ModelSpec
+export DoseEvent, ModelSpec, ModelSpecWithModifiers
 export SolverSpec, SimGrid, SimResult
+export AbsorptionModifiers, validate_absorption_modifiers
 
 abstract type ModelKind end
 
@@ -286,6 +287,214 @@ struct ModelSpec{K<:ModelKind,P}
     params::P
     doses::Vector{DoseEvent}
 end
+
+# -------------------------
+# Absorption Modifiers (ALAG and F)
+# -------------------------
+
+"""
+    AbsorptionModifiers
+
+Industry-standard absorption modifiers following NONMEM conventions.
+
+# Fields
+- `alag::Float64`: Absorption lag time (ALAG) - delays dose onset (time units, >= 0)
+- `bioavailability::Float64`: Bioavailability fraction (F) - fraction reaching systemic circulation
+
+# NONMEM Equivalence
+In NONMEM \$PK block:
+```
+ALAG1 = THETA(5)
+F1 = THETA(6)
+```
+
+In OpenPKPD:
+```julia
+AbsorptionModifiers(alag=THETA5, bioavailability=THETA6)
+```
+
+# Clinical Applications
+
+## ALAG (Absorption Lag Time)
+- Gastric emptying delay for oral drugs
+- Delayed-release formulations
+- Enteric-coated tablets
+- Typical range: 0.1 - 2.0 hours for oral drugs
+
+## Bioavailability (F)
+- Incomplete absorption (F < 1)
+- First-pass metabolism (F < 1)
+- Enhanced absorption with food (F may vary)
+- Typical range: 0.1 - 1.0 for most oral drugs
+
+# Example
+```julia
+# Oral drug with 30 min lag and 70% bioavailability
+modifiers = AbsorptionModifiers(alag=0.5, bioavailability=0.7)
+
+# Modified release formulation
+modifiers = AbsorptionModifiers(alag=2.0, bioavailability=0.85)
+
+# IV administration (default - no modifications)
+modifiers = AbsorptionModifiers()
+```
+"""
+struct AbsorptionModifiers
+    alag::Float64           # Absorption lag time (hours or time units)
+    bioavailability::Float64  # Bioavailability fraction (0-1 typical, can exceed 1)
+
+    function AbsorptionModifiers(; alag::Float64=0.0, bioavailability::Float64=1.0)
+        new(alag, bioavailability)
+    end
+end
+
+# Convenience constructor with positional arguments
+AbsorptionModifiers(alag::Float64, bioavailability::Float64) = AbsorptionModifiers(alag=alag, bioavailability=bioavailability)
+
+# Default modifiers (no lag, 100% bioavailability)
+const DEFAULT_ABSORPTION_MODIFIERS = AbsorptionModifiers()
+
+"""
+    validate_absorption_modifiers(modifiers::AbsorptionModifiers)
+
+Validate absorption modifiers for physiological plausibility.
+
+# Validation Rules
+- ALAG must be non-negative (cannot have negative delay)
+- Bioavailability must be positive
+- Warning issued if F > 1.0 (unusual but valid for supersaturation/nonlinear absorption)
+- Warning issued if ALAG > 24 hours (unusually long for most drugs)
+"""
+function validate_absorption_modifiers(modifiers::AbsorptionModifiers)
+    if modifiers.alag < 0.0
+        error("ALAG (absorption lag time) must be non-negative, got $(modifiers.alag)")
+    end
+
+    if modifiers.bioavailability <= 0.0
+        error("Bioavailability (F) must be positive, got $(modifiers.bioavailability)")
+    end
+
+    # Warnings for unusual values
+    if modifiers.bioavailability > 1.0
+        @warn "Bioavailability (F) = $(modifiers.bioavailability) exceeds 100%. " *
+              "This is unusual - verify this is intended (e.g., supersaturation, reference formulation)."
+    end
+
+    if modifiers.alag > 24.0
+        @warn "ALAG = $(modifiers.alag) hours is unusually long. " *
+              "Verify time units are correct."
+    end
+
+    return nothing
+end
+
+"""
+    ModelSpecWithModifiers{K<:ModelKind,P}
+
+Extended model specification that includes absorption modifiers (ALAG and F).
+
+This is the recommended way to specify models with oral absorption
+or any route requiring lag time or incomplete bioavailability.
+
+# Fields
+- `kind::K`: Model type (e.g., OneCompOralFirstOrder)
+- `name::String`: Model name for identification
+- `params::P`: Model parameters struct
+- `doses::Vector{DoseEvent}`: Dosing schedule
+- `absorption_modifiers::AbsorptionModifiers`: ALAG and F values
+
+# Example
+```julia
+# One-compartment oral model with lag and bioavailability
+spec = ModelSpecWithModifiers(
+    OneCompOralFirstOrder(),
+    "Theophylline PK",
+    OneCompOralFirstOrderParams(Ka=1.5, CL=2.0, V=30.0),
+    [DoseEvent(0.0, 300.0)],
+    AbsorptionModifiers(alag=0.5, bioavailability=0.8)
+)
+```
+
+# IIV on ALAG and F
+For population simulation with IIV on absorption modifiers, use PopulationSpec
+with the extended IIV specification that includes :ALAG and :F parameters.
+
+# Notes
+- ModelSpec (without modifiers) can still be used and is equivalent to
+  ModelSpecWithModifiers with default modifiers (ALAG=0, F=1)
+- The simulation engine automatically handles both spec types
+"""
+struct ModelSpecWithModifiers{K<:ModelKind,P}
+    kind::K
+    name::String
+    params::P
+    doses::Vector{DoseEvent}
+    absorption_modifiers::AbsorptionModifiers
+
+    function ModelSpecWithModifiers(
+        kind::K,
+        name::String,
+        params::P,
+        doses::Vector{DoseEvent},
+        absorption_modifiers::AbsorptionModifiers
+    ) where {K<:ModelKind,P}
+        validate_absorption_modifiers(absorption_modifiers)
+        new{K,P}(kind, name, params, doses, absorption_modifiers)
+    end
+end
+
+# Convenience constructor with default modifiers
+function ModelSpecWithModifiers(
+    kind::K,
+    name::String,
+    params::P,
+    doses::Vector{DoseEvent}
+) where {K<:ModelKind,P}
+    return ModelSpecWithModifiers(kind, name, params, doses, DEFAULT_ABSORPTION_MODIFIERS)
+end
+
+"""
+Convert ModelSpec to ModelSpecWithModifiers with default absorption modifiers.
+"""
+function with_modifiers(spec::ModelSpec{K,P}) where {K,P}
+    return ModelSpecWithModifiers(
+        spec.kind,
+        spec.name,
+        spec.params,
+        spec.doses,
+        DEFAULT_ABSORPTION_MODIFIERS
+    )
+end
+
+"""
+Convert ModelSpec to ModelSpecWithModifiers with specified absorption modifiers.
+"""
+function with_modifiers(spec::ModelSpec{K,P}, modifiers::AbsorptionModifiers) where {K,P}
+    return ModelSpecWithModifiers(
+        spec.kind,
+        spec.name,
+        spec.params,
+        spec.doses,
+        modifiers
+    )
+end
+
+export with_modifiers, DEFAULT_ABSORPTION_MODIFIERS
+
+"""
+Check if a model spec has non-default absorption modifiers.
+"""
+has_absorption_modifiers(spec::ModelSpec) = false
+has_absorption_modifiers(spec::ModelSpecWithModifiers) =
+    spec.absorption_modifiers.alag != 0.0 || spec.absorption_modifiers.bioavailability != 1.0
+
+"""
+Get absorption modifiers from a spec (returns defaults for ModelSpec).
+"""
+get_absorption_modifiers(spec::ModelSpec) = DEFAULT_ABSORPTION_MODIFIERS
+get_absorption_modifiers(spec::ModelSpecWithModifiers) = spec.absorption_modifiers
+
+export has_absorption_modifiers, get_absorption_modifiers
 
 struct SolverSpec
     alg::Symbol

@@ -146,6 +146,7 @@ function saem_estimate(
     adaptation_interval = config.method.adaptation_interval
     track_diagnostics = config.method.track_diagnostics
     use_all_chains = config.method.use_all_chains
+    parallel_chains = config.method.parallel_chains
 
     n_total_iter = n_burn + n_iter
 
@@ -186,6 +187,7 @@ function saem_estimate(
     if config.verbose
         println("SAEM: Starting $n_burn burn-in + $n_iter main iterations")
         println("  MCMC: $n_mcmc_steps steps per iteration, $n_chains chains per subject")
+        println("  Parallel chains: $(parallel_chains ? "enabled ($(nthreads()) threads)" : "disabled")")
         println("  Adaptation: $(adapt_proposal ? "enabled" : "disabled")")
     end
 
@@ -252,10 +254,14 @@ function saem_estimate(
                 sampled_etas[i] = eta_sample
             end
         else
-            # Serial execution (original code path)
+            # Serial subject execution (process subjects one by one)
+            # Chains within each subject can still run in parallel
             for (i, (subj_id, times, obs, doses)) in enumerate(subjects)
+                # Choose MCMC sampler based on parallel_chains setting
+                mcmc_fn = parallel_chains ? mcmc_sample_eta_parallel_chains : mcmc_sample_eta_adaptive
+
                 # Run MCMC sampling with BLQ support
-                new_chains, accepts, n_props = mcmc_sample_eta_adaptive(
+                new_chains, accepts, n_props = mcmc_fn(
                     theta_current, omega_inv, omega_chol, sigma_current,
                     times, obs, doses, model_spec, grid, solver,
                     eta_chains[i], proposal_sds[i], n_mcmc_steps, subject_rngs[i];
@@ -362,9 +368,12 @@ function saem_estimate(
         Diagonal(sqrt.(abs.(diag(omega_current))))
     end
 
+    # Choose MCMC function for final EBEs
+    final_mcmc_fn = parallel_chains ? mcmc_sample_eta_parallel_chains : mcmc_sample_eta_adaptive
+
     for (i, (subj_id, times, obs, doses)) in enumerate(subjects)
         # Run extra MCMC for final EBEs with BLQ support
-        final_chains, _, _ = mcmc_sample_eta_adaptive(
+        final_chains, _, _ = final_mcmc_fn(
             theta_current, omega_inv, omega_chol, sigma_current,
             times, obs, doses, model_spec, grid, solver,
             eta_chains[i], proposal_sds[i], n_mcmc_steps * 2, subject_rngs[i];
@@ -615,6 +624,199 @@ function mcmc_sample_eta_adaptive(
         end
 
         new_chains[c] = eta_current
+    end
+
+    return new_chains, accepts, n_proposals
+end
+
+# ============================================================================
+# Parallel MCMC Chain Sampling (Performance Critical)
+# ============================================================================
+
+"""
+    create_chain_rngs(base_rng, n_chains::Int) -> Vector{StableRNG}
+
+Create independent RNG streams for each MCMC chain from a base RNG.
+Uses deterministic seeding for reproducibility even in parallel execution.
+"""
+function create_chain_rngs(base_rng, n_chains::Int)::Vector{StableRNG}
+    # Generate a base seed from the subject RNG for reproducibility
+    base_seed = UInt64(abs(rand(base_rng, Int64)))
+
+    # Create independent streams for each chain using hash combination
+    chain_rngs = Vector{StableRNG}(undef, n_chains)
+    for c in 1:n_chains
+        # Combine base seed with chain index for independence
+        chain_seed = base_seed ⊻ hash(c) ⊻ UInt64(0x9e3779b97f4a7c15)  # Golden ratio constant
+        chain_rngs[c] = StableRNG(chain_seed)
+    end
+
+    return chain_rngs
+end
+
+"""
+    mcmc_run_single_chain(
+        chain_idx, eta_init, log_posterior, proposal_sd, n_steps, chain_rng
+    ) -> (eta_final, n_accepts)
+
+Run MCMC for a single chain. Thread-safe and deterministic with provided RNG.
+This is the inner kernel called by parallel chain sampling.
+"""
+function mcmc_run_single_chain(
+    chain_idx::Int,
+    eta_init::Vector{Float64},
+    log_posterior::Function,
+    proposal_sd::Vector{Float64},
+    n_steps::Int,
+    chain_rng::StableRNG
+)::Tuple{Vector{Float64}, Int}
+    n_eta = length(eta_init)
+    eta_current = copy(eta_init)
+    log_p_current = log_posterior(eta_current)
+
+    # Handle invalid initial state
+    if !isfinite(log_p_current)
+        log_p_current = -1e10
+    end
+
+    n_accepts = 0
+
+    for step in 1:n_steps
+        # Random walk proposal using chain-specific RNG
+        eta_proposed = eta_current .+ randn(chain_rng, n_eta) .* proposal_sd
+        log_p_proposed = log_posterior(eta_proposed)
+
+        # Metropolis accept/reject
+        if isfinite(log_p_proposed)
+            log_alpha = log_p_proposed - log_p_current
+            if log(rand(chain_rng)) < log_alpha
+                eta_current = eta_proposed
+                log_p_current = log_p_proposed
+                n_accepts += 1
+            end
+        end
+    end
+
+    return eta_current, n_accepts
+end
+
+"""
+    mcmc_sample_eta_parallel_chains(
+        theta, omega_inv, omega_chol, sigma,
+        times, obs, doses, model_spec, grid, solver,
+        current_chains, proposal_sd, n_steps, rng;
+        blq_config=nothing, blq_flags=Bool[], lloq=0.0
+    ) -> (new_chains, accepts, n_proposals)
+
+MCMC sampling with PARALLEL chain execution using Julia threads.
+
+This is a performance-critical function that runs multiple MCMC chains
+in parallel within a single subject. Each chain gets its own deterministic
+RNG stream derived from the subject RNG, ensuring reproducibility.
+
+Performance benefit:
+- With 4 chains and 4 threads: ~4x speedup per subject
+- Critical for SAEM where each E-step runs 100+ MCMC steps per subject
+
+Thread safety:
+- Each chain has independent RNG (no shared state)
+- Log posterior computation is thread-safe (read-only on model)
+- Results are written to pre-allocated arrays by chain index
+"""
+function mcmc_sample_eta_parallel_chains(
+    theta::Vector{Float64},
+    omega_inv::Matrix{Float64},
+    omega_chol::Union{LowerTriangular{Float64}, Diagonal{Float64}},
+    sigma::ResidualErrorSpec,
+    times::Vector{Float64},
+    obs::Vector{Float64},
+    doses::Vector{DoseEvent},
+    model_spec::ModelSpec,
+    grid::SimGrid,
+    solver::SolverSpec,
+    current_chains::Vector{Vector{Float64}},
+    proposal_sd::Vector{Float64},
+    n_steps::Int,
+    rng;
+    blq_config::Union{Nothing,BLQConfig}=nothing,
+    blq_flags::Vector{Bool}=Bool[],
+    lloq::Float64=0.0
+)::Tuple{Vector{Vector{Float64}}, Vector{Int}, Vector{Int}}
+    n_chains = length(current_chains)
+    n_eta = length(current_chains[1])
+
+    # Create independent RNG for each chain (deterministic from subject RNG)
+    chain_rngs = create_chain_rngs(rng, n_chains)
+
+    # Build log posterior function (shared across chains, read-only)
+    has_blq = blq_config !== nothing && !isempty(blq_flags)
+
+    function log_posterior(eta)
+        # Prior: N(0, omega)
+        log_prior = -0.5 * dot(eta, omega_inv * eta)
+
+        # Likelihood
+        ipred = compute_individual_predictions(
+            theta, eta, times, doses, model_spec, grid, solver
+        )
+
+        log_lik = 0.0
+        for (i, (y, f)) in enumerate(zip(obs, ipred))
+            if !isfinite(f) || f <= 0
+                return -Inf
+            end
+
+            # BLQ handling
+            is_blq = has_blq && i <= length(blq_flags) && blq_flags[i]
+
+            if is_blq
+                if blq_config.method == BLQ_M1_DISCARD
+                    continue
+                elseif blq_config.method == BLQ_M2_IMPUTE_HALF
+                    y = lloq / 2.0
+                elseif blq_config.method == BLQ_M2_IMPUTE_ZERO
+                    y = 0.0
+                elseif blq_config.method == BLQ_M3_LIKELIHOOD
+                    var_res = residual_variance(f, sigma)
+                    if var_res <= 0 || !isfinite(var_res)
+                        return -Inf
+                    end
+                    sigma_res = sqrt(var_res)
+                    z = (lloq - f) / sigma_res
+                    log_phi = log_phi_stable(Float64(z))
+                    log_lik += log_phi
+                    continue
+                end
+            end
+
+            var_res = residual_variance(f, sigma)
+            if var_res > 0
+                log_lik += -0.5 * (log(2π) + log(var_res) + (y - f)^2 / var_res)
+            else
+                return -Inf
+            end
+        end
+
+        return log_prior + log_lik
+    end
+
+    # Pre-allocate result arrays
+    new_chains = Vector{Vector{Float64}}(undef, n_chains)
+    accepts = zeros(Int, n_chains)
+    n_proposals = fill(n_steps, n_chains)
+
+    # Run chains in parallel using @threads
+    @threads for c in 1:n_chains
+        eta_final, n_accepts = mcmc_run_single_chain(
+            c,
+            current_chains[c],
+            log_posterior,
+            proposal_sd,
+            n_steps,
+            chain_rngs[c]
+        )
+        new_chains[c] = eta_final
+        accepts[c] = n_accepts
     end
 
     return new_chains, accepts, n_proposals

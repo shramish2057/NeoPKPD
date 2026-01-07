@@ -136,6 +136,11 @@ include("test_helpers.jl")
         include("test_estimation.jl")
     end
 
+    # Parallel MCMC Chains for SAEM
+    @testset "Parallel MCMC" begin
+        include("test_parallel_mcmc.jl")
+    end
+
     # Dose Escalation Simulation
     @testset "Dose Escalation" begin
         include("test_escalation.jl")

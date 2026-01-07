@@ -33,6 +33,7 @@ using StableRNGs
             @test method.adaptation_interval == 50
             @test method.track_diagnostics == true
             @test method.use_all_chains == true
+            @test method.parallel_chains == true  # Default to parallel chains
 
             # Test custom values
             method2 = SAEMMethod(
@@ -44,7 +45,8 @@ using StableRNGs
                 target_acceptance=0.3,
                 adaptation_interval=25,
                 track_diagnostics=false,
-                use_all_chains=false
+                use_all_chains=false,
+                parallel_chains=false
             )
             @test method2.n_burn == 100
             @test method2.n_mcmc_steps == 200
@@ -54,6 +56,7 @@ using StableRNGs
             @test method2.adaptation_interval == 25
             @test method2.track_diagnostics == false
             @test method2.use_all_chains == false
+            @test method2.parallel_chains == false
 
             # Test assertions
             @test_throws AssertionError SAEMMethod(step_size_schedule=:invalid)

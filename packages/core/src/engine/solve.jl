@@ -672,3 +672,704 @@ function simulate(
 
     return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
 end
+
+# ============================================================================
+# ModelSpecWithModifiers Support (ALAG and Bioavailability)
+# ============================================================================
+
+"""
+Apply absorption modifiers (ALAG and F) to doses for simulation.
+
+Returns:
+- initial_amount: Amount for initial condition (doses at or before effective t0)
+- dose_times: Times of callback doses (after ALAG applied)
+- dose_amounts: Amounts of callback doses (after F applied)
+"""
+function _normalize_doses_with_absorption_modifiers(
+    doses::Vector{DoseEvent},
+    modifiers::AbsorptionModifiers,
+    t0::Float64,
+    t1::Float64
+)
+    initial_amount = 0.0
+    dose_times_dict = Dict{Float64, Float64}()
+
+    alag = modifiers.alag
+    F = modifiers.bioavailability
+
+    for dose in doses
+        # Apply modifiers
+        effective_time = dose.time + alag
+        effective_amount = dose.amount * F
+
+        if is_bolus(dose)
+            if effective_time < t0
+                # Dose completed before t0, add to initial
+                initial_amount += effective_amount
+            elseif effective_time == t0
+                # Dose at exactly t0
+                initial_amount += effective_amount
+            elseif effective_time <= t1
+                # Dose within (t0, t1]
+                dose_times_dict[effective_time] = get(dose_times_dict, effective_time, 0.0) + effective_amount
+            end
+        else
+            # Infusion handling with ALAG/F
+            effective_end = effective_time + dose.duration
+
+            if effective_end <= t0
+                # Infusion completed before t0
+                initial_amount += effective_amount
+            elseif effective_time >= t1
+                # Infusion starts after simulation ends - ignore
+            else
+                # Infusion overlaps with simulation
+                dose_times_dict[effective_time] = get(dose_times_dict, effective_time, 0.0) + effective_amount
+            end
+        end
+    end
+
+    dose_times = sort(collect(keys(dose_times_dict)))
+    dose_amounts = [dose_times_dict[t] for t in dose_times]
+
+    return initial_amount, dose_times, dose_amounts
+end
+
+# -------------------------
+# OneCompOralFirstOrder with Modifiers
+# -------------------------
+
+function simulate(
+    spec::ModelSpecWithModifiers{OneCompOralFirstOrder,OneCompOralFirstOrderParams},
+    grid::SimGrid,
+    solver::SolverSpec,
+)
+    # Validate inputs
+    validate(spec.params)
+    validate(grid)
+    validate(solver)
+
+    Ka = spec.params.Ka
+    CL = spec.params.CL
+    V = spec.params.V
+    modifiers = spec.absorption_modifiers
+
+    # Apply ALAG and bioavailability to doses
+    a0_add, dose_times, dose_amounts = _normalize_doses_with_absorption_modifiers(
+        spec.doses, modifiers, grid.t0, grid.t1
+    )
+
+    p = (Ka=Ka, CL=CL, V=V)
+    u0 = [a0_add, 0.0]  # [A_gut, A_central]
+    tspan = (grid.t0, grid.t1)
+
+    prob = ODEProblem(_ode_onecomp_oral_first_order!, u0, tspan, p)
+
+    # Build callback for ALAG-shifted doses
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]  # Add to gut
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    # Include ALAG-shifted times in tstops for accuracy
+    tstops = filter(t -> t > grid.t0 && t < grid.t1, dose_times)
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+        tstops=tstops,
+    )
+
+    Agut = [u[1] for u in sol.u]
+    Acent = [u[2] for u in sol.u]
+    C = [a / V for a in Acent]
+
+    states = Dict(:A_gut => Agut, :A_central => Acent)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "OneCompOralFirstOrder",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
+        "absorption_modifiers" => Dict(
+            "ALAG" => modifiers.alag,
+            "F" => modifiers.bioavailability
+        ),
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+# Validate method for params (reuse existing)
+function validate(params::OneCompOralFirstOrderParams)
+    _require_positive("Ka", params.Ka)
+    _require_positive("CL", params.CL)
+    _require_positive("V", params.V)
+    return nothing
+end
+
+# -------------------------
+# TwoCompOral with Modifiers
+# -------------------------
+
+function simulate(
+    spec::ModelSpecWithModifiers{TwoCompOral,TwoCompOralParams},
+    grid::SimGrid,
+    solver::SolverSpec
+)
+    validate(spec.params)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+    modifiers = spec.absorption_modifiers
+
+    # Apply ALAG and bioavailability to doses
+    a0_add, dose_times, dose_amounts = _normalize_doses_with_absorption_modifiers(
+        spec.doses, modifiers, grid.t0, grid.t1
+    )
+
+    u0 = [a0_add, 0.0, 0.0]  # [A_gut, A_central, A_peripheral]
+    tspan = (grid.t0, grid.t1)
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, TwoCompOral())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]  # Add to gut
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    tstops = filter(t -> t > grid.t0 && t < grid.t1, dose_times)
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+        tstops=tstops,
+    )
+
+    A_gut = [u[1] for u in sol.u]
+    A_central = [u[2] for u in sol.u]
+    A_peripheral = [u[3] for u in sol.u]
+    C = [a / p.V1 for a in A_central]
+
+    states = Dict(:A_gut => A_gut, :A_central => A_central, :A_peripheral => A_peripheral)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "TwoCompOral",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
+        "absorption_modifiers" => Dict(
+            "ALAG" => modifiers.alag,
+            "F" => modifiers.bioavailability
+        ),
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+function validate(params::TwoCompOralParams)
+    _require_positive("Ka", params.Ka)
+    _require_positive("CL", params.CL)
+    _require_positive("V1", params.V1)
+    _require_positive("Q", params.Q)
+    _require_positive("V2", params.V2)
+    return nothing
+end
+
+# pk_param_tuple for ModelSpecWithModifiers
+function pk_param_tuple(spec::ModelSpecWithModifiers{TwoCompOral,TwoCompOralParams})
+    return (Ka=spec.params.Ka, CL=spec.params.CL, V1=spec.params.V1, Q=spec.params.Q, V2=spec.params.V2)
+end
+
+# -------------------------
+# TransitAbsorption with Modifiers
+# -------------------------
+
+function simulate(
+    spec::ModelSpecWithModifiers{TransitAbsorption,TransitAbsorptionParams},
+    grid::SimGrid,
+    solver::SolverSpec
+)
+    validate(spec.params)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+    N = spec.params.N
+    modifiers = spec.absorption_modifiers
+
+    # Apply ALAG and bioavailability to doses
+    a0_add, dose_times, dose_amounts = _normalize_doses_with_absorption_modifiers(
+        spec.doses, modifiers, grid.t0, grid.t1
+    )
+
+    # N transit compartments + 1 central compartment
+    u0 = zeros(N + 1)
+    u0[1] = a0_add  # Initial dose goes to first transit compartment
+
+    tspan = (grid.t0, grid.t1)
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, TransitAbsorption())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]  # Dose goes to first transit
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    tstops = filter(t -> t > grid.t0 && t < grid.t1, dose_times)
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+        tstops=tstops,
+    )
+
+    # Extract all transit compartments and central
+    transit_states = Dict{Symbol,Vector{Float64}}()
+    for i in 1:N
+        transit_states[Symbol("Transit_$i")] = [u[i] for u in sol.u]
+    end
+
+    A_central = [u[N+1] for u in sol.u]
+    C = [a / p.V for a in A_central]
+
+    states = merge(transit_states, Dict(:A_central => A_central))
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "TransitAbsorption",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount) for d in spec.doses],
+        "absorption_modifiers" => Dict(
+            "ALAG" => modifiers.alag,
+            "F" => modifiers.bioavailability
+        ),
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+        "N_transit" => N,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+function validate(params::TransitAbsorptionParams)
+    if params.N < 1
+        error("N (number of transit compartments) must be >= 1, got $(params.N)")
+    end
+    _require_positive("Ktr", params.Ktr)
+    _require_positive("Ka", params.Ka)
+    _require_positive("CL", params.CL)
+    _require_positive("V", params.V)
+    return nothing
+end
+
+function pk_param_tuple(spec::ModelSpecWithModifiers{TransitAbsorption,TransitAbsorptionParams})
+    return (N=spec.params.N, Ktr=spec.params.Ktr, Ka=spec.params.Ka, CL=spec.params.CL, V=spec.params.V)
+end
+
+# -------------------------
+# IV Models with Modifiers (ALAG only, F=1 typical)
+# For completeness, allow modifiers on IV models too
+# -------------------------
+
+function simulate(
+    spec::ModelSpecWithModifiers{OneCompIVBolus,OneCompIVBolusParams},
+    grid::SimGrid,
+    solver::SolverSpec
+)
+    validate(spec.params)
+    validate(grid)
+    validate(solver)
+
+    CL = spec.params.CL
+    V = spec.params.V
+    p = (CL=CL, V=V)
+    modifiers = spec.absorption_modifiers
+
+    # Apply modifiers to doses
+    a0_add, dose_times, dose_amounts = _normalize_doses_with_absorption_modifiers(
+        spec.doses, modifiers, grid.t0, grid.t1
+    )
+
+    tspan = (grid.t0, grid.t1)
+    u0 = [a0_add]
+
+    prob = ODEProblem(_ode_onecomp_ivbolus!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    tstops = filter(t -> t > grid.t0 && t < grid.t1, dose_times)
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+        tstops=tstops,
+    )
+
+    A = [u[1] for u in sol.u]
+    C = [a / V for a in A]
+
+    states = Dict(:A_central => A)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "OneCompIVBolus",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount, d.duration) for d in spec.doses],
+        "absorption_modifiers" => Dict(
+            "ALAG" => modifiers.alag,
+            "F" => modifiers.bioavailability
+        ),
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+function validate(params::OneCompIVBolusParams)
+    _require_positive("CL", params.CL)
+    _require_positive("V", params.V)
+    return nothing
+end
+
+function simulate(
+    spec::ModelSpecWithModifiers{TwoCompIVBolus,TwoCompIVBolusParams},
+    grid::SimGrid,
+    solver::SolverSpec
+)
+    validate(spec.params)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+    modifiers = spec.absorption_modifiers
+
+    a0_add, dose_times, dose_amounts = _normalize_doses_with_absorption_modifiers(
+        spec.doses, modifiers, grid.t0, grid.t1
+    )
+
+    tspan = (grid.t0, grid.t1)
+    u0 = [a0_add, 0.0]
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, TwoCompIVBolus())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    tstops = filter(t -> t > grid.t0 && t < grid.t1, dose_times)
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+        tstops=tstops,
+    )
+
+    A_central = [u[1] for u in sol.u]
+    A_peripheral = [u[2] for u in sol.u]
+    C = [a / p.V1 for a in A_central]
+
+    states = Dict(:A_central => A_central, :A_peripheral => A_peripheral)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "TwoCompIVBolus",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount, d.duration) for d in spec.doses],
+        "absorption_modifiers" => Dict(
+            "ALAG" => modifiers.alag,
+            "F" => modifiers.bioavailability
+        ),
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+function validate(params::TwoCompIVBolusParams)
+    _require_positive("CL", params.CL)
+    _require_positive("V1", params.V1)
+    _require_positive("Q", params.Q)
+    _require_positive("V2", params.V2)
+    return nothing
+end
+
+function pk_param_tuple(spec::ModelSpecWithModifiers{TwoCompIVBolus,TwoCompIVBolusParams})
+    return (CL=spec.params.CL, V1=spec.params.V1, Q=spec.params.Q, V2=spec.params.V2)
+end
+
+function simulate(
+    spec::ModelSpecWithModifiers{ThreeCompIVBolus,ThreeCompIVBolusParams},
+    grid::SimGrid,
+    solver::SolverSpec
+)
+    validate(spec.params)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+    modifiers = spec.absorption_modifiers
+
+    a0_add, dose_times, dose_amounts = _normalize_doses_with_absorption_modifiers(
+        spec.doses, modifiers, grid.t0, grid.t1
+    )
+
+    tspan = (grid.t0, grid.t1)
+    u0 = [a0_add, 0.0, 0.0]
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, ThreeCompIVBolus())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    tstops = filter(t -> t > grid.t0 && t < grid.t1, dose_times)
+
+    sol = solve(
+        prob,
+        _solver_alg(solver.alg);
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+        tstops=tstops,
+    )
+
+    A_central = [u[1] for u in sol.u]
+    A_periph1 = [u[2] for u in sol.u]
+    A_periph2 = [u[3] for u in sol.u]
+    C = [a / p.V1 for a in A_central]
+
+    states = Dict(:A_central => A_central, :A_periph1 => A_periph1, :A_periph2 => A_periph2)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "ThreeCompIVBolus",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount, d.duration) for d in spec.doses],
+        "absorption_modifiers" => Dict(
+            "ALAG" => modifiers.alag,
+            "F" => modifiers.bioavailability
+        ),
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+function validate(params::ThreeCompIVBolusParams)
+    _require_positive("CL", params.CL)
+    _require_positive("V1", params.V1)
+    _require_positive("Q2", params.Q2)
+    _require_positive("V2", params.V2)
+    _require_positive("Q3", params.Q3)
+    _require_positive("V3", params.V3)
+    return nothing
+end
+
+function pk_param_tuple(spec::ModelSpecWithModifiers{ThreeCompIVBolus,ThreeCompIVBolusParams})
+    return (CL=spec.params.CL, V1=spec.params.V1, Q2=spec.params.Q2, V2=spec.params.V2, Q3=spec.params.Q3, V3=spec.params.V3)
+end
+
+function simulate(
+    spec::ModelSpecWithModifiers{MichaelisMentenElimination,MichaelisMentenEliminationParams},
+    grid::SimGrid,
+    solver::SolverSpec
+)
+    validate(spec.params)
+    validate(grid)
+    validate(solver)
+
+    p = pk_param_tuple(spec)
+    modifiers = spec.absorption_modifiers
+
+    a0_add, dose_times, dose_amounts = _normalize_doses_with_absorption_modifiers(
+        spec.doses, modifiers, grid.t0, grid.t1
+    )
+
+    tspan = (grid.t0, grid.t1)
+    u0 = [a0_add]
+
+    # Use Rosenbrock23 for stiff nonlinear elimination by default
+    alg = solver.alg == :Tsit5 ? Rosenbrock23() : _solver_alg(solver.alg)
+
+    function ode!(du, u, params, t)
+        pk_ode!(du, u, params, t, MichaelisMentenElimination())
+    end
+
+    prob = ODEProblem(ode!, u0, tspan, p)
+
+    cb = nothing
+    if !isempty(dose_times)
+        function affect!(integrator)
+            idx = findfirst(==(integrator.t), dose_times)
+            if idx !== nothing
+                integrator.u[1] += dose_amounts[idx]
+            end
+        end
+        cb = PresetTimeCallback(dose_times, affect!)
+    end
+
+    tstops = filter(t -> t > grid.t0 && t < grid.t1, dose_times)
+
+    sol = solve(
+        prob,
+        alg;
+        reltol=solver.reltol,
+        abstol=solver.abstol,
+        maxiters=solver.maxiters,
+        saveat=grid.saveat,
+        callback=cb,
+        tstops=tstops,
+    )
+
+    A = [u[1] for u in sol.u]
+    C = [a / p.V for a in A]
+
+    states = Dict(:A_central => A)
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "MichaelisMentenElimination",
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount, d.duration) for d in spec.doses],
+        "absorption_modifiers" => Dict(
+            "ALAG" => modifiers.alag,
+            "F" => modifiers.bioavailability
+        ),
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end
+
+function validate(params::MichaelisMentenEliminationParams)
+    _require_positive("Vmax", params.Vmax)
+    _require_positive("Km", params.Km)
+    _require_positive("V", params.V)
+    return nothing
+end
+
+function pk_param_tuple(spec::ModelSpecWithModifiers{MichaelisMentenElimination,MichaelisMentenEliminationParams})
+    return (Vmax=spec.params.Vmax, Km=spec.params.Km, V=spec.params.V)
+end
