@@ -43,12 +43,67 @@ function _compare_dict_of_series(expected::Dict{String, Any}, actual::Dict{Symbo
     end
 end
 
+function validate_tmdd(path::String, artifact::Dict)
+    # Check semantics fingerprint if present
+    if haskey(artifact, "semantics_fingerprint")
+        current = semantics_fingerprint()
+        stored = Dict{String, Any}(artifact["semantics_fingerprint"])
+
+        for (k, v) in current
+            if !haskey(stored, k)
+                error("Stored semantics fingerprint missing key $(k) in $(path)")
+            end
+            if String(stored[k]) != String(v)
+                error(
+                    "Semantics version mismatch for $(k) in $(path). " *
+                    "Stored=$(stored[k]), Current=$(v). " *
+                    "Golden update requires intentional semantics bump."
+                )
+            end
+        end
+    end
+
+    # Check schema version
+    schema = String(artifact["artifact_schema_version"])
+    if schema != ARTIFACT_SCHEMA_VERSION
+        error("Artifact schema version mismatch in $(path). Expected $(ARTIFACT_SCHEMA_VERSION), got $(schema)")
+    end
+
+    # Replay TMDD simulation
+    replay = replay_tmdd_execution(artifact)
+
+    # Get stored result
+    stored = Dict{String, Any}(artifact["result"])
+    stored_t = [Float64(x) for x in stored["t"]]
+    stored_states = Dict{String, Any}(stored["states"])
+    stored_obs = Dict{String, Any}(stored["observations"])
+
+    # Compare time grid
+    if replay.t != stored_t
+        error("Time grid mismatch in $(path). Stored t does not match replay t")
+    end
+
+    # Compare states
+    _compare_dict_of_series(stored_states, replay.states, "tmdd.states")
+
+    # Compare observations
+    _compare_dict_of_series(stored_obs, replay.observations, "tmdd.observations")
+
+    return true
+end
+
 function validate_one(path::String)
     artifact = _load_json(path)
 
     atype = "single"
     if haskey(artifact, "artifact_type")
         atype = String(artifact["artifact_type"])
+    end
+
+    # Check execution_mode for TMDD
+    exec_mode = get(artifact, "execution_mode", "pk")
+    if exec_mode == "tmdd"
+        return validate_tmdd(path, artifact)
     end
 
     if atype == "population"

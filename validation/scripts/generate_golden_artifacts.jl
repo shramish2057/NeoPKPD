@@ -434,6 +434,235 @@ function gen_transit_with_turnover()
     return serialize_execution(model_spec=pk, grid=grid, solver=solver, result=res, pd_spec=pd)
 end
 
+# =====================================================
+# TMDD (Target-Mediated Drug Disposition) Models
+# Industry-standard models for monoclonal antibodies
+# =====================================================
+
+function gen_tmdd_qss_iv()
+    # Quasi-Steady-State 2-compartment TMDD - industry standard for mAbs
+    # Parameters typical for IgG monoclonal antibody
+    spec = TMDDSpec(
+        TwoCptTMDD(QSS, IVBolus),
+        "golden_tmdd_qss_iv",
+        TwoCptTMDDParams(
+            0.2,     # CL = 0.2 L/day (typical for IgG)
+            3.0,     # V1 = 3 L (plasma volume)
+            2.5,     # V2 = 2.5 L (peripheral)
+            0.5,     # Q = 0.5 L/day
+            1.0,     # KSS = 1.0 nM
+            0.1,     # kint = 0.1 1/day
+            0.1,     # ksyn = 0.1 nM/day
+            0.1,     # kdeg = 0.1 1/day
+            1.0,     # R0 = 1.0 nM
+        ),
+        [DoseEvent(0.0, 200.0)],  # 200 mg IV bolus
+    )
+
+    grid = SimGrid(0.0, 28.0, collect(0.0:0.5:28.0))  # 28 days
+    solver = SolverSpec(:Rodas5, 1e-10, 1e-12, 10^7)
+
+    res = solve_tmdd(spec, grid, solver)
+
+    return serialize_tmdd_execution(tmdd_spec=spec, grid=grid, solver=solver, result=res)
+end
+
+function gen_tmdd_full_iv()
+    # Full mechanistic TMDD (Mager-Jusko model)
+    spec = TMDDSpec(
+        TwoCptTMDD(FullTMDD, IVBolus),
+        "golden_tmdd_full_iv",
+        TwoCptTMDDParams(
+            0.25,    # CL = 0.25 L/day
+            3.5,     # V1 = 3.5 L
+            3.0,     # V2 = 3.0 L
+            0.6,     # Q = 0.6 L/day
+            0.5,     # KSS = 0.5 nM
+            0.15,    # kint = 0.15 1/day
+            0.15,    # ksyn = 0.15 nM/day
+            0.15,    # kdeg = 0.15 1/day
+            1.0,     # R0 = 1.0 nM
+        ),
+        [DoseEvent(0.0, 150.0)],  # 150 mg IV bolus
+    )
+
+    grid = SimGrid(0.0, 21.0, collect(0.0:0.5:21.0))  # 21 days
+    solver = SolverSpec(:Rodas5, 1e-10, 1e-12, 10^7)
+
+    res = solve_tmdd(spec, grid, solver)
+
+    return serialize_tmdd_execution(tmdd_spec=spec, grid=grid, solver=solver, result=res)
+end
+
+function gen_tmdd_qss_sc()
+    # QSS TMDD with subcutaneous administration
+    spec = TMDDSpec(
+        TwoCptTMDD(QSS, Subcutaneous),
+        "golden_tmdd_qss_sc",
+        TwoCptTMDDParams(
+            0.2,     # CL
+            3.0,     # V1
+            2.5,     # V2
+            0.5,     # Q
+            1.0,     # KSS
+            0.1,     # kint
+            0.1,     # ksyn
+            0.1,     # kdeg
+            1.0,     # R0
+            0.3,     # ka = 0.3 1/day (SC absorption)
+            0.7,     # F = 0.7 (70% bioavailability)
+            0.5,     # Tlag = 0.5 days
+        ),
+        [DoseEvent(0.0, 300.0)],  # 300 mg SC
+    )
+
+    grid = SimGrid(0.0, 28.0, collect(0.0:0.5:28.0))
+    solver = SolverSpec(:Rodas5, 1e-10, 1e-12, 10^7)
+
+    res = solve_tmdd(spec, grid, solver)
+
+    return serialize_tmdd_execution(tmdd_spec=spec, grid=grid, solver=solver, result=res)
+end
+
+function gen_tmdd_rapid_binding()
+    # Rapid binding (Wagner) approximation
+    spec = TMDDSpec(
+        TwoCptTMDD(RapidBinding, IVBolus),
+        "golden_tmdd_rapid_binding",
+        TwoCptTMDDParams(
+            0.3,     # CL
+            4.0,     # V1
+            3.0,     # V2
+            0.8,     # Q
+            2.0,     # KSS
+            0.2,     # kint
+            0.2,     # ksyn
+            0.2,     # kdeg
+            1.0,     # R0
+        ),
+        [DoseEvent(0.0, 100.0)],
+    )
+
+    grid = SimGrid(0.0, 14.0, collect(0.0:0.25:14.0))  # 14 days
+    solver = SolverSpec(:Rodas5, 1e-10, 1e-12, 10^7)
+
+    res = solve_tmdd(spec, grid, solver)
+
+    return serialize_tmdd_execution(tmdd_spec=spec, grid=grid, solver=solver, result=res)
+end
+
+function gen_tmdd_fcrn()
+    # FcRn recycling model for IgG half-life
+    spec = TMDDSpec(
+        TwoCptTMDDFcRn(QSS, IVBolus),
+        "golden_tmdd_fcrn",
+        TwoCptTMDDFcRnParams(
+            3.0,     # V1
+            2.5,     # V2
+            0.5,     # Q
+            0.3,     # CLup (pinocytic uptake)
+            0.9,     # FR (90% FcRn recycling)
+            1.0,     # KSS
+            0.1,     # kint
+            0.1,     # ksyn
+            0.1,     # kdeg
+            1.0,     # R0
+        ),
+        [DoseEvent(0.0, 200.0)],
+    )
+
+    grid = SimGrid(0.0, 42.0, collect(0.0:1.0:42.0))  # 42 days (6 weeks)
+    solver = SolverSpec(:Rodas5, 1e-10, 1e-12, 10^7)
+
+    res = solve_tmdd(spec, grid, solver)
+
+    return serialize_tmdd_execution(tmdd_spec=spec, grid=grid, solver=solver, result=res)
+end
+
+function gen_tmdd_multiple_dose()
+    # Multiple dose TMDD - Q3W dosing typical for mAbs
+    spec = TMDDSpec(
+        TwoCptTMDD(QSS, IVBolus),
+        "golden_tmdd_multiple_dose",
+        TwoCptTMDDParams(
+            0.2,     # CL
+            3.0,     # V1
+            2.5,     # V2
+            0.5,     # Q
+            1.0,     # KSS
+            0.1,     # kint
+            0.1,     # ksyn
+            0.1,     # kdeg
+            1.0,     # R0
+        ),
+        [
+            DoseEvent(0.0, 200.0),    # Dose 1: Day 0
+            DoseEvent(21.0, 200.0),   # Dose 2: Day 21 (Q3W)
+            DoseEvent(42.0, 200.0),   # Dose 3: Day 42
+            DoseEvent(63.0, 200.0),   # Dose 4: Day 63
+        ],
+    )
+
+    grid = SimGrid(0.0, 84.0, collect(0.0:1.0:84.0))  # 12 weeks
+    solver = SolverSpec(:Rodas5, 1e-10, 1e-12, 10^7)
+
+    res = solve_tmdd(spec, grid, solver)
+
+    return serialize_tmdd_execution(tmdd_spec=spec, grid=grid, solver=solver, result=res)
+end
+
+function gen_tmdd_onecomp_qss()
+    # One-compartment QSS TMDD for simpler biologics
+    spec = TMDDSpec(
+        OneCptTMDD(QSS, IVBolus),
+        "golden_tmdd_onecomp_qss",
+        OneCptTMDDParams(
+            0.3,     # CL = 0.3 L/day
+            5.0,     # V = 5 L
+            0.5,     # KSS = 0.5 nM
+            0.2,     # kint = 0.2 1/day
+            0.2,     # ksyn = 0.2 nM/day
+            0.2,     # kdeg = 0.2 1/day
+            1.0,     # R0 = 1.0 nM
+        ),
+        [DoseEvent(0.0, 100.0)],
+    )
+
+    grid = SimGrid(0.0, 14.0, collect(0.0:0.25:14.0))
+    solver = SolverSpec(:Rodas5, 1e-10, 1e-12, 10^7)
+
+    res = solve_tmdd(spec, grid, solver)
+
+    return serialize_tmdd_execution(tmdd_spec=spec, grid=grid, solver=solver, result=res)
+end
+
+function gen_tmdd_high_target()
+    # TMDD with high baseline target (saturable kinetics more prominent)
+    spec = TMDDSpec(
+        TwoCptTMDD(QSS, IVBolus),
+        "golden_tmdd_high_target",
+        TwoCptTMDDParams(
+            0.15,    # CL (lower linear clearance)
+            3.0,     # V1
+            2.5,     # V2
+            0.4,     # Q
+            0.1,     # KSS = 0.1 nM (high affinity)
+            0.3,     # kint (faster internalization)
+            1.0,     # ksyn = 1.0 nM/day (high synthesis)
+            0.1,     # kdeg = 0.1 1/day
+            10.0,    # R0 = 10.0 nM (high baseline target)
+        ),
+        [DoseEvent(0.0, 50.0)],  # Lower dose to show nonlinear kinetics
+    )
+
+    grid = SimGrid(0.0, 21.0, collect(0.0:0.5:21.0))
+    solver = SolverSpec(:Rodas5, 1e-10, 1e-12, 10^7)
+
+    res = solve_tmdd(spec, grid, solver)
+
+    return serialize_tmdd_execution(tmdd_spec=spec, grid=grid, solver=solver, result=res)
+end
+
 function main()
     mkpath("validation/golden")
 
@@ -464,6 +693,16 @@ function main()
         # Integration goldens
         "pkpd_twocomp_sigmoid_emax.json" => gen_twocomp_with_sigmoid_emax(),
         "pkpd_transit_turnover.json" => gen_transit_with_turnover(),
+
+        # TMDD (Target-Mediated Drug Disposition) goldens
+        "tmdd_qss_iv.json" => gen_tmdd_qss_iv(),
+        "tmdd_full_iv.json" => gen_tmdd_full_iv(),
+        "tmdd_qss_sc.json" => gen_tmdd_qss_sc(),
+        "tmdd_rapid_binding.json" => gen_tmdd_rapid_binding(),
+        "tmdd_fcrn.json" => gen_tmdd_fcrn(),
+        "tmdd_multiple_dose.json" => gen_tmdd_multiple_dose(),
+        "tmdd_onecomp_qss.json" => gen_tmdd_onecomp_qss(),
+        "tmdd_high_target.json" => gen_tmdd_high_target(),
     )
 
     for (fname, art) in artifacts

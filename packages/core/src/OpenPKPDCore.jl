@@ -111,6 +111,8 @@ include("serialization/serialize_sensitivity.jl")
 include("serialization/deserialize_sensitivity.jl")
 include("serialization/serialize_error.jl")
 include("serialization/deserialize_error.jl")
+include("serialization/serialize_tmdd.jl")
+include("serialization/deserialize_tmdd.jl")
 
 include("analysis/exposure.jl")
 include("analysis/response_metrics.jl")
