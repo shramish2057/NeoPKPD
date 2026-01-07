@@ -436,4 +436,10 @@ using StableRNGs
     # Include SE Benchmark tests
     include("estimation/test_se_benchmark.jl")
 
+    # Include Optimizer Fallback tests
+    include("estimation/test_optimizer_fallback.jl")
+
+    # Include Mixture Models tests
+    include("estimation/test_mixture_models.jl")
+
 end

@@ -41,3 +41,6 @@ include("bootstrap.jl")
 
 # Model Averaging (AIC/BIC)
 include("model_averaging.jl")
+
+# Mixture Models for Subpopulation Analysis
+include("mixture_models.jl")
