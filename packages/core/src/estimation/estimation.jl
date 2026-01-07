@@ -44,3 +44,6 @@ include("model_averaging.jl")
 
 # Mixture Models for Subpopulation Analysis
 include("mixture_models.jl")
+
+# Time-Varying Covariates in Estimation
+include("time_varying_covariates.jl")

@@ -442,4 +442,7 @@ using StableRNGs
     # Include Mixture Models tests
     include("estimation/test_mixture_models.jl")
 
+    # Include Time-Varying Covariates tests
+    include("estimation/test_time_varying_covariates.jl")
+
 end
