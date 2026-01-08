@@ -20,6 +20,30 @@ using LinearAlgebra
 using Distributions
 using Base.Threads: @threads, nthreads
 
+# Helper to safely convert values that may be Py-wrapped (from Python callables)
+# These handle both pure Julia and Python-via-PythonCall cases
+_to_float_vector(x::Vector{Float64}) = x
+_to_float_vector(x::AbstractVector) = Vector{Float64}(x)
+function _to_float_vector(x)
+    # Handle Py-wrapped objects from PythonCall
+    if isdefined(Main, :PythonCall)
+        return Main.PythonCall.pyconvert(Vector{Float64}, x)
+    else
+        return Vector{Float64}(x)
+    end
+end
+
+_to_float_matrix(x::Matrix{Float64}) = x
+_to_float_matrix(x::AbstractMatrix) = Matrix{Float64}(x)
+function _to_float_matrix(x)
+    # Handle Py-wrapped objects from PythonCall
+    if isdefined(Main, :PythonCall)
+        return Main.PythonCall.pyconvert(Matrix{Float64}, x)
+    else
+        return Matrix{Float64}(x)
+    end
+end
+
 export BootstrapSpec, BootstrapResult, BootstrapDiagnostics
 export OmegaBootstrapSummary, SigmaBootstrapSummary
 export run_bootstrap, run_bootstrap_parallel_impl, stratified_resample, compute_bootstrap_ci
@@ -499,7 +523,7 @@ result = run_bootstrap(estimate_fn, data, BootstrapSpec(parallel=config))
 ```
 """
 function run_bootstrap(
-    estimation_fn::Function,
+    estimation_fn,  # Any callable (Julia Function or Python callable via PythonCall)
     observed_data,  # ObservedData type
     spec::BootstrapSpec;
     strata::Union{Nothing, Vector}=nothing,
@@ -535,7 +559,7 @@ end
 Internal sequential implementation of bootstrap analysis.
 """
 function run_bootstrap_sequential(
-    estimation_fn::Function,
+    estimation_fn,  # Any callable
     observed_data,
     spec::BootstrapSpec;
     strata::Union{Nothing, Vector}=nothing,
@@ -551,7 +575,8 @@ function run_bootstrap_sequential(
         println("Running original estimation...")
     end
     original_result = estimation_fn(observed_data)
-    original_theta = original_result.theta
+    # Handle case where estimation_fn is Python callable returning Py-wrapped result
+    original_theta = _to_float_vector(original_result.theta)
     n_params = length(original_theta)
 
     # Storage for bootstrap estimates
@@ -582,11 +607,11 @@ function run_bootstrap_sequential(
             # Run estimation on resampled data
             boot_result = estimation_fn(resampled_data)
 
-            # Store estimates
-            theta_estimates[b, :] = boot_result.theta
+            # Store estimates (convert in case of Py-wrapped result)
+            theta_estimates[b, :] = _to_float_vector(boot_result.theta)
 
             if boot_result.omega !== nothing
-                push!(omega_estimates, boot_result.omega)
+                push!(omega_estimates, _to_float_matrix(boot_result.omega))
             end
             if boot_result.sigma !== nothing
                 push!(sigma_estimates, boot_result.sigma.params.sigma)
@@ -629,7 +654,7 @@ Internal parallel implementation of bootstrap analysis.
 Uses thread-safe RNG for reproducibility across parallel replicates.
 """
 function run_bootstrap_parallel_impl(
-    estimation_fn::Function,
+    estimation_fn,  # Any callable
     observed_data,
     spec::BootstrapSpec,
     parallel_config::ParallelConfig;
@@ -647,7 +672,8 @@ function run_bootstrap_parallel_impl(
     end
 
     original_result = estimation_fn(observed_data)
-    original_theta = original_result.theta
+    # Handle case where estimation_fn is Python callable returning Py-wrapped result
+    original_theta = _to_float_vector(original_result.theta)
     n_params = length(original_theta)
 
     # Create independent RNGs for each bootstrap replicate (for reproducibility)
@@ -680,11 +706,11 @@ function run_bootstrap_parallel_impl(
                 end
             end
 
-            # Return successful result
+            # Return successful result (convert in case of Py-wrapped result)
             return (
                 success=true,
-                theta=copy(boot_result.theta),
-                omega=boot_result.omega !== nothing ? copy(boot_result.omega) : nothing,
+                theta=_to_float_vector(boot_result.theta),
+                omega=boot_result.omega !== nothing ? _to_float_matrix(boot_result.omega) : nothing,
                 sigma=sigma_val,
                 n_iter=hasproperty(boot_result, :n_iterations) ? boot_result.n_iterations : 0,
                 error=nothing

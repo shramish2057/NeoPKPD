@@ -2,34 +2,83 @@
 Tests for OpenPKPD NCA (Non-Compartmental Analysis) module.
 
 These tests verify the Python bindings to the Julia NCA implementation.
+Comprehensive coverage of:
+- Primary exposure metrics
+- AUC calculations
+- Lambda-z estimation
+- PK parameters
+- Multiple dose metrics
+- Bioequivalence analysis
+- Reference-scaled BE (RSABE/ABEL)
 """
 
+import math
 import pytest
 import openpkpd
 from openpkpd.nca import (
+    # Full workflow
     run_nca,
     NCAConfig,
     NCAResult,
+    # Primary metrics
     nca_cmax,
     nca_tmax,
     nca_cmin,
     nca_clast,
     nca_tlast,
+    nca_cavg,
+    # Additional exposure
+    nca_ctrough,
+    nca_c_at_time,
+    time_above_concentration,
+    # AUC
     auc_0_t,
+    auc_0_inf,
+    auc_0_tau,
+    auc_partial,
+    aumc_0_t,
+    aumc_0_inf,
+    # Lambda-z
     estimate_lambda_z,
     nca_half_life,
+    # PK parameters
     nca_mrt,
     nca_cl_f,
     nca_vz_f,
+    nca_vss,
+    nca_cl,
+    nca_vz,
+    nca_mrt_iv,
+    nca_cl_ss,
+    nca_vss_from_aumc,
+    nca_vc,
+    nca_mean_absorption_time,
+    nca_c0_from_regression,
+    nca_bioavailability,
+    # Multiple dose
     nca_accumulation_index,
     nca_ptf,
     nca_swing,
+    nca_linearity_index,
+    nca_time_to_steady_state,
+    nca_accumulation_predicted,
+    nca_accumulation_cmax,
+    nca_accumulation_cmin,
+    nca_dose_normalized_auc,
+    nca_dose_normalized_cmax,
+    nca_time_to_steady_state_doses,
+    # Bioequivalence
     bioequivalence_90ci,
     tost_analysis,
     be_conclusion,
     geometric_mean_ratio,
     geometric_mean,
     within_subject_cv,
+    # Study designs
+    BEStudyDesign,
+    ReplicateDesign,
+    RegulatoryGuidance,
+    RSABEConfig,
 )
 
 
@@ -370,6 +419,235 @@ class TestEdgeCases:
 
         result = run_nca(t, c, 100.0)
         assert result.cmax == 1.0
+
+
+# ============================================================================
+# Additional PK Parameters Tests
+# ============================================================================
+
+class TestAdditionalPKParameters:
+    """Tests for additional PK parameters."""
+
+    def test_nca_vss(self, init):
+        """Test Vss calculation."""
+        vss = nca_vss(5.0, 10.0)  # CL=5, MRT=10
+        assert vss == 50.0
+
+    def test_nca_cl(self, init):
+        """Test CL (IV) calculation."""
+        cl = nca_cl(100.0, 20.0)
+        assert cl == 5.0
+
+    def test_nca_vz(self, init):
+        """Test Vz (IV) calculation."""
+        vz = nca_vz(100.0, 0.1, 20.0)
+        assert vz == 50.0
+
+    def test_nca_mrt_iv(self, init):
+        """Test MRT_iv from extravascular MRT."""
+        mrt_iv = nca_mrt_iv(10.0, 2.0)
+        assert mrt_iv == 8.0
+
+    def test_nca_cl_ss(self, init):
+        """Test steady-state clearance."""
+        cl_ss = nca_cl_ss(100.0, 25.0)
+        assert cl_ss == 4.0
+
+    def test_nca_vss_from_aumc(self, init):
+        """Test Vss from moment curves."""
+        vss = nca_vss_from_aumc(100.0, 20.0, 200.0)
+        expected = 100.0 * 200.0 / (20.0 ** 2)
+        assert abs(vss - expected) < 0.001
+
+    def test_nca_vc(self, init):
+        """Test central volume."""
+        vc = nca_vc(100.0, 10.0)
+        assert vc == 10.0
+
+    def test_nca_mean_absorption_time(self, init):
+        """Test MAT calculation."""
+        mat = nca_mean_absorption_time(10.0, 6.0)
+        assert mat == 4.0
+
+    def test_nca_bioavailability(self, init):
+        """Test bioavailability."""
+        f = nca_bioavailability(18.0, 100.0, 20.0, 100.0)
+        assert abs(f - 0.9) < 0.001
+
+    def test_nca_c0_from_regression(self, init):
+        """Test C0 from regression intercept."""
+        c0 = nca_c0_from_regression(math.log(10.0))
+        assert abs(c0 - 10.0) < 0.001
+
+
+# ============================================================================
+# Additional Multiple Dose Tests
+# ============================================================================
+
+class TestAdditionalMultipleDoseMetrics:
+    """Tests for additional multiple dose metrics."""
+
+    def test_nca_accumulation_predicted(self, init):
+        """Test predicted accumulation."""
+        rac = nca_accumulation_predicted(0.1, 12.0)
+        expected = 1.0 / (1.0 - math.exp(-0.1 * 12.0))
+        assert abs(rac - expected) < 0.001
+
+    def test_nca_accumulation_cmax(self, init):
+        """Test Cmax accumulation ratio."""
+        rac = nca_accumulation_cmax(3.0, 2.5)
+        assert rac == 1.2
+
+    def test_nca_accumulation_cmin(self, init):
+        """Test Cmin accumulation ratio."""
+        rac = nca_accumulation_cmin(0.5, 0.4)
+        assert rac == 1.25
+
+    def test_nca_dose_normalized_auc(self, init):
+        """Test dose-normalized AUC."""
+        auc_dn = nca_dose_normalized_auc(20.0, 100.0)
+        assert auc_dn == 0.2
+
+    def test_nca_dose_normalized_cmax(self, init):
+        """Test dose-normalized Cmax."""
+        cmax_dn = nca_dose_normalized_cmax(2.5, 100.0)
+        assert cmax_dn == 0.025
+
+    def test_nca_time_to_steady_state(self, init):
+        """Test time to steady state."""
+        t_ss = nca_time_to_steady_state(0.1, fraction=0.90)
+        expected = -math.log(0.10) / 0.1
+        assert abs(t_ss - expected) < 0.001
+
+    def test_nca_time_to_steady_state_doses(self, init):
+        """Test number of doses to steady state."""
+        n_doses = nca_time_to_steady_state_doses(0.1, 8.0, fraction=0.90)
+        assert isinstance(n_doses, int)
+        assert n_doses > 0
+
+    def test_nca_linearity_index(self, init):
+        """Test dose linearity assessment."""
+        doses = [50.0, 100.0, 200.0]
+        aucs = [10.0, 20.0, 40.0]
+        result = nca_linearity_index(doses, aucs)
+
+        assert "beta" in result
+        assert "r_squared" in result
+        assert "is_linear" in result
+        assert abs(result["beta"] - 1.0) < 0.1
+
+
+# ============================================================================
+# Additional AUC Tests
+# ============================================================================
+
+class TestAdditionalAUC:
+    """Tests for additional AUC functions."""
+
+    def test_auc_0_inf(self, init):
+        """Test AUC0-inf calculation."""
+        lz = estimate_lambda_z(TEST_TIMES, TEST_CONC)
+        if lz["lambda_z"] is not None:
+            auc_inf, pct = auc_0_inf(TEST_TIMES, TEST_CONC, lz["lambda_z"], 0.08)
+            assert auc_inf > auc_0_t(TEST_TIMES, TEST_CONC)
+            assert 0 <= pct <= 100
+
+    def test_auc_0_tau(self, init):
+        """Test AUC over dosing interval."""
+        auc = auc_0_tau(SS_TIMES, SS_CONC, SS_TAU)
+        assert auc > 0
+
+    def test_auc_partial(self, init):
+        """Test partial AUC."""
+        auc = auc_partial(TEST_TIMES, TEST_CONC, 2.0, 8.0)
+        assert auc > 0
+
+    def test_aumc_0_t(self, init):
+        """Test AUMC0-t."""
+        aumc = aumc_0_t(TEST_TIMES, TEST_CONC)
+        assert aumc > 0
+
+    def test_aumc_0_inf(self, init):
+        """Test AUMC0-inf."""
+        lz = estimate_lambda_z(TEST_TIMES, TEST_CONC)
+        if lz["lambda_z"] is not None:
+            aumc_inf = aumc_0_inf(TEST_TIMES, TEST_CONC, lz["lambda_z"], 0.08, 24.0)
+            assert aumc_inf > aumc_0_t(TEST_TIMES, TEST_CONC)
+
+
+# ============================================================================
+# Study Design and RSABE Tests
+# ============================================================================
+
+class TestStudyDesignsAndRSABE:
+    """Tests for study design enums and RSABE configuration."""
+
+    def test_be_study_design_enum(self, init):
+        """Test BE study design enum values."""
+        assert BEStudyDesign.CROSSOVER_2X2 == "crossover_2x2"
+        assert BEStudyDesign.CROSSOVER_2X4 == "crossover_2x4"
+        assert BEStudyDesign.PARALLEL_GROUP == "parallel_group"
+
+    def test_replicate_design_enum(self, init):
+        """Test replicate design enum values."""
+        assert ReplicateDesign.PARTIAL_REPLICATE_3X3 == "partial_replicate_3x3"
+        assert ReplicateDesign.FULL_REPLICATE_2X4 == "full_replicate_2x4"
+        assert ReplicateDesign.FULL_REPLICATE_2X3 == "full_replicate_2x3"
+
+    def test_regulatory_guidance_enum(self, init):
+        """Test regulatory guidance enum values."""
+        assert RegulatoryGuidance.FDA == "fda"
+        assert RegulatoryGuidance.EMA == "ema"
+        assert RegulatoryGuidance.HEALTH_CANADA == "health_canada"
+
+    def test_rsabe_config(self, init):
+        """Test RSABE configuration dataclass."""
+        config = RSABEConfig(
+            guidance=RegulatoryGuidance.FDA,
+            design=ReplicateDesign.FULL_REPLICATE_2X4,
+            parameter="cmax",
+            alpha=0.05
+        )
+        assert config.guidance == RegulatoryGuidance.FDA
+        assert config.design == ReplicateDesign.FULL_REPLICATE_2X4
+        assert config.parameter == "cmax"
+        assert config.alpha == 0.05
+
+
+# ============================================================================
+# Import Tests
+# ============================================================================
+
+class TestImports:
+    """Test that all NCA functions are properly importable."""
+
+    def test_import_from_main_package(self):
+        """Test imports from main openpkpd package."""
+        from openpkpd import (
+            run_nca, NCAConfig, NCAResult,
+            nca_cmax, nca_tmax, nca_cmin,
+            auc_0_t, auc_0_inf, auc_0_tau,
+            estimate_lambda_z, nca_half_life,
+            nca_mrt, nca_cl_f, nca_vz_f, nca_vss,
+            nca_accumulation_index, nca_ptf, nca_swing,
+            bioequivalence_90ci, tost_analysis, be_conclusion,
+            BEStudyDesign, ReplicateDesign, RegulatoryGuidance,
+        )
+        assert callable(run_nca)
+        assert callable(nca_cmax)
+
+    def test_import_from_nca_module(self):
+        """Test imports from openpkpd.nca module."""
+        from openpkpd.nca import (
+            nca_ctrough, nca_c_at_time, time_above_concentration,
+            nca_cl, nca_vz, nca_mrt_iv, nca_cl_ss,
+            nca_vss_from_aumc, nca_vc, nca_mean_absorption_time,
+            nca_accumulation_predicted, nca_accumulation_cmax,
+            nca_dose_normalized_auc, nca_dose_normalized_cmax,
+            RSABEConfig, RSABEResult, ABELResult,
+        )
+        assert callable(nca_ctrough)
+        assert callable(nca_c_at_time)
 
 
 if __name__ == "__main__":

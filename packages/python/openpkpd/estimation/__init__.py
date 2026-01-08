@@ -3,14 +3,186 @@ OpenPKPD Parameter Estimation Module
 
 This module provides Python bindings for NLME (Nonlinear Mixed Effects)
 parameter estimation methods including FOCE-I, SAEM, and Laplacian.
+
+Features:
+- Multiple estimation methods: FOCE-I, SAEM, Laplacian
+- BLQ (Below Limit of Quantification) handling: M1, M2, M3
+- Inter-Occasion Variability (IOV) support
+- Covariate effects on IIV
+- Bootstrap confidence intervals
+- Diagnostics: CWRES, IWRES, shrinkage
+- Model comparison: LRT, AIC, BIC
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
-from pathlib import Path
+from enum import Enum
+import numpy as np
 
 from .._core import _require_julia
 
+
+# ============================================================================
+# Enumerations
+# ============================================================================
+
+class BLQMethod(Enum):
+    """Method for handling Below Limit of Quantification observations."""
+    M1_DISCARD = "m1_discard"      # Discard all BLQ observations
+    M2_IMPUTE_HALF = "m2_half"     # Replace BLQ with LLOQ/2
+    M2_IMPUTE_ZERO = "m2_zero"     # Replace BLQ with 0
+    M3_LIKELIHOOD = "m3_likelihood"  # Censored likelihood (gold standard)
+
+
+class OmegaStructure(Enum):
+    """Structure of omega (IIV variance) matrix."""
+    DIAGONAL = "diagonal"  # No correlations between random effects
+    BLOCK = "block"        # Block diagonal (correlations within blocks)
+    FULL = "full"          # Full matrix (all correlations)
+
+
+class BootstrapCIMethod(Enum):
+    """Method for computing bootstrap confidence intervals."""
+    PERCENTILE = "percentile"  # Standard percentile method
+    BCA = "bca"                # Bias-corrected and accelerated
+    BASIC = "basic"            # Basic (pivotal) method
+
+
+# ============================================================================
+# Configuration Types
+# ============================================================================
+
+@dataclass
+class BLQConfig:
+    """Configuration for BLQ/censoring handling in estimation.
+
+    Attributes:
+        method: BLQ handling method (M1, M2, or M3)
+        lloq: Lower limit of quantification
+        max_consecutive_blq: Maximum consecutive BLQ before warning
+    """
+    method: BLQMethod = BLQMethod.M3_LIKELIHOOD
+    lloq: float = 0.0
+    max_consecutive_blq: int = 5
+
+
+@dataclass
+class IOVSpec:
+    """Specification for inter-occasion variability.
+
+    Attributes:
+        eta_name: Name of the random effect with IOV
+        occasion_names: Names/labels for each occasion
+        omega_iov: Variance of IOV (separate from IIV variance)
+    """
+    eta_name: str
+    occasion_names: List[str]
+    omega_iov: float = 0.04  # Default 20% CV
+
+
+@dataclass
+class CovariateOnIIV:
+    """Specification for covariate effects on inter-individual variability.
+
+    Allows variance parameters to depend on covariates:
+        Var(η_i) = ω² * exp(θ_cov * (COV_i - COV_ref))
+
+    Attributes:
+        eta_name: Name of the random effect (e.g., "CL", "V")
+        covariate_name: Name of the covariate (e.g., "WT", "CRCL")
+        reference_value: Reference/centering value for the covariate
+        effect_type: "exponential" or "linear"
+    """
+    eta_name: str
+    covariate_name: str
+    reference_value: float = 0.0
+    effect_type: str = "exponential"
+
+
+@dataclass
+class EstimationConfig:
+    """Configuration for parameter estimation.
+
+    Attributes:
+        method: Estimation method ("foce", "saem", or "laplacian")
+        theta_init: Initial values for fixed effects
+        theta_lower: Lower bounds for theta
+        theta_upper: Upper bounds for theta
+        theta_names: Names of theta parameters
+        omega_init: Initial omega matrix (variance of random effects)
+        omega_names: Names of eta parameters
+        omega_structure: Structure of omega matrix
+        sigma_type: Residual error type
+        sigma_init: Initial sigma value
+        max_iter: Maximum iterations
+        tol: Convergence tolerance
+        compute_se: Compute standard errors
+        compute_ci: Compute confidence intervals
+        ci_level: Confidence level
+        verbose: Print progress
+        seed: Random seed
+        blq_config: BLQ handling configuration
+        iov_specs: Inter-occasion variability specifications
+        covariate_on_iiv: Covariate effects on IIV
+    """
+    method: str = "foce"
+    theta_init: Optional[List[float]] = None
+    theta_lower: Optional[List[float]] = None
+    theta_upper: Optional[List[float]] = None
+    theta_names: Optional[List[str]] = None
+    omega_init: Optional[List[List[float]]] = None
+    omega_names: Optional[List[str]] = None
+    omega_structure: OmegaStructure = OmegaStructure.DIAGONAL
+    sigma_type: str = "proportional"
+    sigma_init: float = 0.1
+    max_iter: int = 500
+    tol: float = 1e-6
+    compute_se: bool = True
+    compute_ci: bool = True
+    ci_level: float = 0.95
+    verbose: bool = False
+    seed: int = 12345
+    # Advanced options
+    blq_config: Optional[BLQConfig] = None
+    iov_specs: Optional[List[IOVSpec]] = None
+    covariate_on_iiv: Optional[List[CovariateOnIIV]] = None
+    # FOCE-specific options
+    foce_max_inner_iter: int = 50
+    foce_inner_tol: float = 1e-6
+    foce_centered: bool = False
+    foce_compute_robust_se: bool = True
+    # SAEM-specific options
+    saem_n_burn: int = 300
+    saem_n_iter: int = 200
+    saem_n_chains: int = 3
+    saem_n_mcmc_steps: int = 100
+
+
+@dataclass
+class BootstrapConfig:
+    """Configuration for bootstrap analysis.
+
+    Attributes:
+        n_bootstrap: Number of bootstrap replicates (FDA recommends ≥500)
+        stratify_by: Variables to stratify by (e.g., ["study", "dose"])
+        ci_level: Confidence interval level
+        ci_method: Method for computing CIs
+        parallel: Run in parallel
+        seed: Random seed
+        min_success_rate: Minimum required success rate
+    """
+    n_bootstrap: int = 1000
+    stratify_by: Optional[List[str]] = None
+    ci_level: float = 0.95
+    ci_method: BootstrapCIMethod = BootstrapCIMethod.PERCENTILE
+    parallel: bool = False
+    seed: int = 12345
+    min_success_rate: float = 0.8
+
+
+# ============================================================================
+# Result Types
+# ============================================================================
 
 @dataclass
 class IndividualEstimate:
@@ -27,54 +199,116 @@ class IndividualEstimate:
 
 
 @dataclass
+class BLQSummary:
+    """Summary of BLQ observations."""
+    total_observations: int
+    blq_observations: int
+    blq_percentage: float
+    blq_by_subject: Dict[str, int]
+    method_used: str
+
+
+@dataclass
+class DiagnosticsSummary:
+    """Summary of estimation diagnostics."""
+    cwres_mean: float
+    cwres_std: float
+    iwres_mean: float
+    iwres_std: float
+    eta_shrinkage: List[float]
+    epsilon_shrinkage: float
+    condition_number: float
+    eigenvalue_ratio: float
+
+
+@dataclass
 class EstimationResult:
     """Result from NLME parameter estimation."""
     method: str
+    # Fixed effects
     theta: List[float]
     theta_se: Optional[List[float]]
+    theta_se_robust: Optional[List[float]]
     theta_rse: Optional[List[float]]
     theta_ci_lower: Optional[List[float]]
     theta_ci_upper: Optional[List[float]]
+    # Random effects
     omega: List[List[float]]
     omega_se: Optional[List[List[float]]]
     omega_corr: List[List[float]]
+    # Residual error
     sigma: Dict[str, Any]
     sigma_se: Optional[Dict[str, Any]]
+    # Fit statistics
     ofv: float
     aic: float
     bic: float
+    # Convergence info
     convergence: bool
     n_iterations: int
     gradient_norm: float
     condition_number: float
     eigenvalue_ratio: float
     covariance_successful: bool
+    # Individual results
     individuals: List[IndividualEstimate]
+    # Diagnostics
+    diagnostics: Optional[DiagnosticsSummary]
+    blq_summary: Optional[BLQSummary]
+    # Runtime
     runtime_seconds: float
     warnings: List[str]
 
 
 @dataclass
-class EstimationConfig:
-    """Configuration for parameter estimation."""
-    method: str = "foce"  # foce, saem, or laplacian
-    theta_init: Optional[List[float]] = None
-    theta_lower: Optional[List[float]] = None
-    theta_upper: Optional[List[float]] = None
-    theta_names: Optional[List[str]] = None
-    omega_init: Optional[List[List[float]]] = None
-    omega_names: Optional[List[str]] = None
-    omega_structure: str = "diagonal"  # diagonal or block
-    sigma_type: str = "proportional"  # additive, proportional, combined
-    sigma_init: float = 0.1
-    max_iter: int = 500
-    tol: float = 1e-6
-    compute_se: bool = True
-    compute_ci: bool = True
-    ci_level: float = 0.95
-    verbose: bool = False
-    seed: int = 12345
+class BootstrapResult:
+    """Result from bootstrap analysis."""
+    # Theta estimates
+    theta_estimates: np.ndarray  # n_bootstrap x n_params
+    theta_mean: List[float]
+    theta_se: List[float]
+    theta_rse: List[float]
+    theta_ci_lower: List[float]
+    theta_ci_upper: List[float]
+    # Original estimate and bias
+    original_estimate: List[float]
+    bias: List[float]
+    bias_corrected: List[float]
+    # Omega and sigma summaries
+    omega_mean: Optional[List[List[float]]]
+    omega_se: Optional[List[List[float]]]
+    omega_ci_lower: Optional[List[List[float]]]
+    omega_ci_upper: Optional[List[List[float]]]
+    sigma_mean: Optional[float]
+    sigma_se: Optional[float]
+    sigma_ci_lower: Optional[float]
+    sigma_ci_upper: Optional[float]
+    # Diagnostics
+    n_successful: int
+    n_failed: int
+    convergence_rate: float
+    ci_level: float
+    ci_method: str
 
+
+@dataclass
+class ModelComparisonResult:
+    """Result from model comparison."""
+    model_names: List[str]
+    ofv_values: List[float]
+    aic_values: List[float]
+    bic_values: List[float]
+    n_params: List[int]
+    best_model_aic: str
+    best_model_bic: str
+    lrt_statistic: Optional[float]
+    lrt_pvalue: Optional[float]
+    lrt_df: Optional[int]
+
+
+# ============================================================================
+# Main Estimation Function
+# ============================================================================
 
 def estimate(
     observed_data: Dict[str, Any],
@@ -122,26 +356,52 @@ def estimate(
     ObservedData = jl.OpenPKPDCore.ObservedData
     DoseEvent = jl.OpenPKPDCore.DoseEvent
 
-    subjects = []
+    # Create Julia vector to hold subjects
+    subjects_vec = jl.seval("SubjectData[]")
     for subj in observed_data["subjects"]:
-        doses = [DoseEvent(float(d["time"]), float(d["amount"])) for d in subj.get("doses", [])]
-        subjects.append(SubjectData(
-            subj["subject_id"],
-            [float(t) for t in subj["times"]],
-            [float(o) for o in subj["observations"]],
-            doses
-        ))
+        # Create dose vector
+        doses_vec = jl.seval("DoseEvent[]")
+        for d in subj.get("doses", []):
+            dose = DoseEvent(float(d["time"]), float(d["amount"]))
+            jl.seval("push!")(doses_vec, dose)
 
-    obs = ObservedData(subjects)
+        # Convert times and observations to Julia Vector{Float64}
+        times_vec = jl.seval("Float64[]")
+        for t in subj["times"]:
+            jl.seval("push!")(times_vec, float(t))
+
+        obs_vec = jl.seval("Float64[]")
+        for o in subj["observations"]:
+            jl.seval("push!")(obs_vec, float(o))
+
+        subj_data = SubjectData(
+            subj["subject_id"],
+            times_vec,
+            obs_vec,
+            doses_vec
+        )
+        jl.seval("push!")(subjects_vec, subj_data)
+
+    obs = ObservedData(subjects_vec)
 
     # Build model spec (just for type inference - estimation creates individual specs)
     model_spec = _build_base_model_spec(jl, model_kind, config.theta_init)
 
     # Build estimation method
     if config.method == "foce":
-        method = jl.OpenPKPDCore.FOCEIMethod()
+        method = jl.OpenPKPDCore.FOCEIMethod(
+            max_inner_iter=config.foce_max_inner_iter,
+            inner_tol=config.foce_inner_tol,
+            centered=config.foce_centered,
+            compute_robust_se=config.foce_compute_robust_se
+        )
     elif config.method == "saem":
-        method = jl.OpenPKPDCore.SAEMMethod(n_burn=100, n_iter=200)
+        method = jl.OpenPKPDCore.SAEMMethod(
+            n_burn=config.saem_n_burn,
+            n_iter=config.saem_n_iter,
+            n_chains=config.saem_n_chains,
+            n_mcmc_steps=config.saem_n_mcmc_steps
+        )
     elif config.method == "laplacian":
         method = jl.OpenPKPDCore.LaplacianMethod()
     else:
@@ -151,7 +411,6 @@ def estimate(
     sigma_spec = _build_sigma_spec(jl, config.sigma_type, config.sigma_init)
 
     # Build omega matrix
-    import numpy as np
     omega_init = np.array(config.omega_init) if config.omega_init else np.eye(len(config.theta_init)) * 0.09
 
     # Build theta bounds
@@ -160,17 +419,44 @@ def estimate(
     theta_upper = config.theta_upper if config.theta_upper else [1e6] * n_theta
 
     # Build omega structure
-    omega_structure = jl.OpenPKPDCore.DiagonalOmega() if config.omega_structure == "diagonal" else jl.OpenPKPDCore.BlockOmega()
+    if config.omega_structure == OmegaStructure.DIAGONAL:
+        omega_structure = jl.OpenPKPDCore.DiagonalOmega()
+    elif config.omega_structure == OmegaStructure.FULL:
+        omega_structure = jl.OpenPKPDCore.FullOmega()
+    else:
+        omega_structure = jl.OpenPKPDCore.DiagonalOmega()
 
-    # Build estimation config
-    est_config = jl.OpenPKPDCore.EstimationConfig(
-        method,
-        theta_init=[float(x) for x in config.theta_init],
-        theta_lower=[float(x) for x in theta_lower],
-        theta_upper=[float(x) for x in theta_upper],
-        theta_names=[jl.Symbol(n) for n in (config.theta_names or [f"theta_{i}" for i in range(n_theta)])],
-        omega_init=omega_init.tolist(),
-        omega_names=[jl.Symbol(n) for n in (config.omega_names or [f"eta_{i}" for i in range(omega_init.shape[0])])],
+    # Build BLQ config if provided
+    blq_config_jl = None
+    if config.blq_config is not None:
+        blq_method_map = {
+            BLQMethod.M1_DISCARD: jl.OpenPKPDCore.BLQ_M1_DISCARD,
+            BLQMethod.M2_IMPUTE_HALF: jl.OpenPKPDCore.BLQ_M2_IMPUTE_HALF,
+            BLQMethod.M2_IMPUTE_ZERO: jl.OpenPKPDCore.BLQ_M2_IMPUTE_ZERO,
+            BLQMethod.M3_LIKELIHOOD: jl.OpenPKPDCore.BLQ_M3_LIKELIHOOD,
+        }
+        blq_config_jl = jl.OpenPKPDCore.BLQConfig(
+            blq_method_map[config.blq_config.method],
+            float(config.blq_config.lloq),
+            max_consecutive_blq=config.blq_config.max_consecutive_blq
+        )
+
+    # Build estimation config - convert all Python lists to Julia vectors
+    theta_init_jl = _to_julia_float_vec(jl, config.theta_init)
+    theta_lower_jl = _to_julia_float_vec(jl, theta_lower)
+    theta_upper_jl = _to_julia_float_vec(jl, theta_upper)
+    theta_names_jl = _to_julia_symbol_vec(jl, config.theta_names or [f"theta_{i}" for i in range(n_theta)])
+    omega_init_jl = _to_julia_matrix(jl, omega_init.tolist())
+    omega_names_jl = _to_julia_symbol_vec(jl, config.omega_names or [f"eta_{i}" for i in range(omega_init.shape[0])])
+
+    # Build kwargs dict for EstimationConfig - only include non-default seed if needed
+    est_kwargs = dict(
+        theta_init=theta_init_jl,
+        theta_lower=theta_lower_jl,
+        theta_upper=theta_upper_jl,
+        theta_names=theta_names_jl,
+        omega_init=omega_init_jl,
+        omega_names=omega_names_jl,
         omega_structure=omega_structure,
         sigma_init=sigma_spec,
         max_iter=config.max_iter,
@@ -179,14 +465,18 @@ def estimate(
         compute_ci=config.compute_ci,
         ci_level=config.ci_level,
         verbose=config.verbose,
-        seed=jl.UInt64(config.seed),
     )
+    if blq_config_jl is not None:
+        est_kwargs["blq_config"] = blq_config_jl
+
+    est_config = jl.OpenPKPDCore.EstimationConfig(method, **est_kwargs)
 
     # Build grid
+    saveat_jl = _to_julia_float_vec(jl, [float(x) for x in grid["saveat"]])
     grid_jl = jl.OpenPKPDCore.SimGrid(
         float(grid["t0"]),
         float(grid["t1"]),
-        [float(x) for x in grid["saveat"]],
+        saveat_jl,
     )
 
     # Build solver
@@ -207,12 +497,382 @@ def estimate(
     return _convert_estimation_result(result, config.method)
 
 
+# ============================================================================
+# Bootstrap Function
+# ============================================================================
+
+def run_bootstrap(
+    observed_data: Dict[str, Any],
+    model_kind: str,
+    estimation_config: EstimationConfig,
+    bootstrap_config: BootstrapConfig,
+    grid: Dict[str, Any],
+    solver: Optional[Dict[str, Any]] = None,
+) -> BootstrapResult:
+    """
+    Run bootstrap analysis for parameter uncertainty estimation.
+
+    Implements FDA/EMA-recommended non-parametric case bootstrap.
+
+    Args:
+        observed_data: Observed data dictionary
+        model_kind: PK model type
+        estimation_config: Configuration for each estimation run
+        bootstrap_config: Bootstrap analysis configuration
+        grid: Simulation time grid
+        solver: Optional solver settings
+
+    Returns:
+        BootstrapResult with bootstrap estimates and confidence intervals
+
+    Example:
+        >>> boot_config = BootstrapConfig(n_bootstrap=500, ci_level=0.95)
+        >>> result = run_bootstrap(data, "OneCompIVBolus", est_config, boot_config, grid)
+        >>> print(f"CL 95% CI: [{result.theta_ci_lower[0]}, {result.theta_ci_upper[0]}]")
+    """
+    jl = _require_julia()
+
+    # Build observed data
+    SubjectData = jl.OpenPKPDCore.SubjectData
+    ObservedData = jl.OpenPKPDCore.ObservedData
+    DoseEvent = jl.OpenPKPDCore.DoseEvent
+
+    # Create Julia vector to hold subjects
+    subjects_vec = jl.seval("SubjectData[]")
+    for subj in observed_data["subjects"]:
+        # Create dose vector
+        doses_vec = jl.seval("DoseEvent[]")
+        for d in subj.get("doses", []):
+            dose = DoseEvent(float(d["time"]), float(d["amount"]))
+            jl.seval("push!")(doses_vec, dose)
+
+        # Convert times and observations to Julia Vector{Float64}
+        times_vec = jl.seval("Float64[]")
+        for t in subj["times"]:
+            jl.seval("push!")(times_vec, float(t))
+
+        obs_vec = jl.seval("Float64[]")
+        for o in subj["observations"]:
+            jl.seval("push!")(obs_vec, float(o))
+
+        subj_data = SubjectData(
+            subj["subject_id"],
+            times_vec,
+            obs_vec,
+            doses_vec
+        )
+        jl.seval("push!")(subjects_vec, subj_data)
+
+    obs = ObservedData(subjects_vec)
+
+    # Build estimation config (reuse from main estimation)
+    model_spec = _build_base_model_spec(jl, model_kind, estimation_config.theta_init)
+
+    # Build estimation method
+    if estimation_config.method == "foce":
+        method = jl.OpenPKPDCore.FOCEIMethod()
+    elif estimation_config.method == "saem":
+        method = jl.OpenPKPDCore.SAEMMethod(n_burn=100, n_iter=100)  # Reduced for bootstrap
+    else:
+        method = jl.OpenPKPDCore.LaplacianMethod()
+
+    sigma_spec = _build_sigma_spec(jl, estimation_config.sigma_type, estimation_config.sigma_init)
+    omega_init = np.array(estimation_config.omega_init) if estimation_config.omega_init else np.eye(len(estimation_config.theta_init)) * 0.09
+    n_theta = len(estimation_config.theta_init)
+
+    # Convert to Julia types using helper functions
+    theta_init_jl = _to_julia_float_vec(jl, [float(x) for x in estimation_config.theta_init])
+    theta_lower_jl = _to_julia_float_vec(jl, [float(x) for x in (estimation_config.theta_lower or [1e-6] * n_theta)])
+    theta_upper_jl = _to_julia_float_vec(jl, [float(x) for x in (estimation_config.theta_upper or [1e6] * n_theta)])
+    theta_names_jl = _to_julia_symbol_vec(jl, estimation_config.theta_names or [f"theta_{i}" for i in range(n_theta)])
+    omega_init_jl = _to_julia_matrix(jl, omega_init.tolist())
+    omega_names_jl = _to_julia_symbol_vec(jl, estimation_config.omega_names or [f"eta_{i}" for i in range(omega_init.shape[0])])
+
+    est_config = jl.OpenPKPDCore.EstimationConfig(
+        method,
+        theta_init=theta_init_jl,
+        theta_lower=theta_lower_jl,
+        theta_upper=theta_upper_jl,
+        theta_names=theta_names_jl,
+        omega_init=omega_init_jl,
+        omega_names=omega_names_jl,
+        omega_structure=jl.OpenPKPDCore.DiagonalOmega(),
+        sigma_init=sigma_spec,
+        max_iter=200,  # Reduced for bootstrap
+        tol=1e-4,
+        compute_se=False,  # Skip SE computation for speed
+        compute_ci=False,
+        ci_level=0.95,
+        verbose=False,
+        # Note: seed is not passed here - Julia uses default; bootstrap seeds are in BootstrapSpec
+    )
+
+    # Build grid and solver
+    saveat_jl = _to_julia_float_vec(jl, [float(x) for x in grid["saveat"]])
+    grid_jl = jl.OpenPKPDCore.SimGrid(
+        float(grid["t0"]),
+        float(grid["t1"]),
+        saveat_jl,
+    )
+
+    if solver is None:
+        solver_jl = jl.OpenPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
+    else:
+        solver_jl = jl.OpenPKPDCore.SolverSpec(
+            jl.Symbol(solver.get("alg", "Tsit5")),
+            float(solver.get("reltol", 1e-8)),
+            float(solver.get("abstol", 1e-10)),
+            int(solver.get("maxiters", 10**6)),
+        )
+
+    # Build bootstrap spec
+    ci_method_map = {
+        BootstrapCIMethod.PERCENTILE: jl.OpenPKPDCore.PercentileCI(),
+        BootstrapCIMethod.BCA: jl.OpenPKPDCore.BCCI(),
+        BootstrapCIMethod.BASIC: jl.OpenPKPDCore.BasicCI(),
+    }
+
+    boot_spec = jl.OpenPKPDCore.BootstrapSpec(
+        n_bootstrap=bootstrap_config.n_bootstrap,
+        # Note: seed not passed - Julia uses default UInt64(12345) to avoid Python->Julia Int64/UInt64 issues
+        parallel=bootstrap_config.parallel,
+        ci_level=bootstrap_config.ci_level,
+        ci_method=ci_method_map[bootstrap_config.ci_method],
+        min_success_rate=bootstrap_config.min_success_rate,
+    )
+
+    # Create estimation function closure
+    def estimation_fn(data):
+        return jl.OpenPKPDCore.estimate(data, model_spec, est_config, grid=grid_jl, solver=solver_jl)
+
+    # Run bootstrap
+    result = jl.OpenPKPDCore.run_bootstrap(estimation_fn, obs, boot_spec, verbose=False)
+
+    return _convert_bootstrap_result(result)
+
+
+# ============================================================================
+# Model Comparison Functions
+# ============================================================================
+
+def compare_models(
+    results: List[EstimationResult],
+    model_names: List[str],
+    n_obs: int,
+) -> ModelComparisonResult:
+    """
+    Compare multiple estimation results using AIC, BIC, and LRT.
+
+    Args:
+        results: List of EstimationResult objects
+        model_names: Names for each model
+        n_obs: Total number of observations
+
+    Returns:
+        ModelComparisonResult with comparison metrics
+
+    Example:
+        >>> comparison = compare_models([result1, result2], ["Full", "Reduced"], n_obs=100)
+        >>> print(f"Best model (AIC): {comparison.best_model_aic}")
+    """
+    ofv_values = [r.ofv for r in results]
+    aic_values = [r.aic for r in results]
+    bic_values = [r.bic for r in results]
+    n_params = [len(r.theta) + _count_omega_params(r.omega) + 1 for r in results]
+
+    best_aic_idx = np.argmin(aic_values)
+    best_bic_idx = np.argmin(bic_values)
+
+    # Compute LRT if exactly 2 models (assumes first is full, second is reduced)
+    lrt_statistic = None
+    lrt_pvalue = None
+    lrt_df = None
+    if len(results) == 2:
+        lrt_df = abs(n_params[0] - n_params[1])
+        if lrt_df > 0:
+            lrt_statistic = abs(ofv_values[1] - ofv_values[0])
+            from scipy.stats import chi2
+            lrt_pvalue = 1 - chi2.cdf(lrt_statistic, lrt_df)
+
+    return ModelComparisonResult(
+        model_names=model_names,
+        ofv_values=ofv_values,
+        aic_values=aic_values,
+        bic_values=bic_values,
+        n_params=n_params,
+        best_model_aic=model_names[best_aic_idx],
+        best_model_bic=model_names[best_bic_idx],
+        lrt_statistic=lrt_statistic,
+        lrt_pvalue=lrt_pvalue,
+        lrt_df=lrt_df,
+    )
+
+
+def likelihood_ratio_test(
+    ofv_full: float,
+    ofv_reduced: float,
+    df: int,
+) -> Dict[str, float]:
+    """
+    Perform likelihood ratio test between nested models.
+
+    Args:
+        ofv_full: OFV of full (more complex) model
+        ofv_reduced: OFV of reduced (simpler) model
+        df: Degrees of freedom (difference in parameters)
+
+    Returns:
+        Dict with chi_sq statistic and p_value
+
+    Example:
+        >>> result = likelihood_ratio_test(450.0, 460.0, df=2)
+        >>> if result["p_value"] < 0.05:
+        ...     print("Full model significantly better")
+    """
+    chi_sq = max(0.0, ofv_reduced - ofv_full)
+    from scipy.stats import chi2
+    p_value = 1 - chi2.cdf(chi_sq, df)
+    return {"chi_sq": chi_sq, "p_value": p_value, "df": df}
+
+
+# ============================================================================
+# Diagnostic Functions
+# ============================================================================
+
+def compute_diagnostics(result: EstimationResult) -> DiagnosticsSummary:
+    """
+    Compute diagnostic summary from estimation result.
+
+    Args:
+        result: EstimationResult from estimate()
+
+    Returns:
+        DiagnosticsSummary with residual and shrinkage metrics
+
+    Example:
+        >>> diag = compute_diagnostics(result)
+        >>> print(f"CWRES mean: {diag.cwres_mean:.3f} (should be ~0)")
+        >>> print(f"Eta shrinkage: {[f'{s:.1f}%' for s in diag.eta_shrinkage]}")
+    """
+    # Collect residuals from all individuals
+    all_cwres = []
+    all_iwres = []
+    all_etas = []
+
+    for ind in result.individuals:
+        all_cwres.extend(ind.cwres)
+        all_iwres.extend(ind.iwres)
+        all_etas.append(ind.eta)
+
+    cwres_arr = np.array(all_cwres)
+    iwres_arr = np.array(all_iwres)
+    etas_arr = np.array(all_etas)
+
+    # CWRES and IWRES statistics
+    cwres_mean = float(np.nanmean(cwres_arr))
+    cwres_std = float(np.nanstd(cwres_arr))
+    iwres_mean = float(np.nanmean(iwres_arr))
+    iwres_std = float(np.nanstd(iwres_arr))
+
+    # Eta shrinkage: 1 - SD(eta) / sqrt(omega)
+    n_eta = len(result.omega)
+    eta_shrinkage = []
+    for j in range(n_eta):
+        eta_j = etas_arr[:, j]
+        sd_empirical = float(np.nanstd(eta_j))
+        sd_theoretical = np.sqrt(result.omega[j][j])
+        if sd_theoretical > 0:
+            shrinkage = (1.0 - sd_empirical / sd_theoretical) * 100
+        else:
+            shrinkage = float('nan')
+        eta_shrinkage.append(shrinkage)
+
+    # Epsilon shrinkage: 1 - SD(IWRES)
+    epsilon_shrinkage = (1.0 - iwres_std) * 100
+
+    return DiagnosticsSummary(
+        cwres_mean=cwres_mean,
+        cwres_std=cwres_std,
+        iwres_mean=iwres_mean,
+        iwres_std=iwres_std,
+        eta_shrinkage=eta_shrinkage,
+        epsilon_shrinkage=epsilon_shrinkage,
+        condition_number=result.condition_number,
+        eigenvalue_ratio=result.eigenvalue_ratio,
+    )
+
+
+def get_individual_predictions(result: EstimationResult) -> Dict[str, Dict[str, List[float]]]:
+    """
+    Extract individual predictions from estimation result.
+
+    Args:
+        result: EstimationResult from estimate()
+
+    Returns:
+        Dict mapping subject_id to dict with ipred, pred, cwres, iwres
+
+    Example:
+        >>> preds = get_individual_predictions(result)
+        >>> for subj_id, data in preds.items():
+        ...     print(f"Subject {subj_id}: IPRED = {data['ipred'][:3]}...")
+    """
+    predictions = {}
+    for ind in result.individuals:
+        predictions[ind.subject_id] = {
+            "ipred": ind.ipred,
+            "pred": ind.pred,
+            "cwres": ind.cwres,
+            "iwres": ind.iwres,
+            "wres": ind.wres,
+            "eta": ind.eta,
+            "ofv_contribution": ind.ofv_contribution,
+        }
+    return predictions
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def _to_julia_float_vec(jl, py_list: List[float]):
+    """Convert Python list to Julia Vector{Float64}."""
+    vec = jl.seval("Float64[]")
+    for x in py_list:
+        jl.seval("push!")(vec, float(x))
+    return vec
+
+
+def _to_julia_symbol_vec(jl, py_list: List[str]):
+    """Convert Python list of strings to Julia Vector{Symbol}."""
+    vec = jl.seval("Symbol[]")
+    for s in py_list:
+        jl.seval("push!")(vec, jl.Symbol(s))
+    return vec
+
+
+def _to_julia_matrix(jl, py_matrix: List[List[float]]):
+    """Convert Python 2D list to Julia Matrix{Float64}."""
+    n_rows = len(py_matrix)
+    n_cols = len(py_matrix[0]) if n_rows > 0 else 0
+
+    # Create Julia matrix
+    mat = jl.seval(f"zeros({n_rows}, {n_cols})")
+    for i, row in enumerate(py_matrix):
+        for j, val in enumerate(row):
+            jl.seval("setindex!")(mat, float(val), i + 1, j + 1)  # Julia is 1-indexed
+    return mat
+
+
 def _build_base_model_spec(jl, model_kind: str, theta_init: List[float]):
     """Build a model spec for the specified model kind."""
     ModelSpec = jl.OpenPKPDCore.ModelSpec
     DoseEvent = jl.OpenPKPDCore.DoseEvent
 
-    doses = [DoseEvent(0.0, 100.0)]  # Placeholder
+    # Create Julia dose vector
+    doses = jl.seval("DoseEvent[]")
+    dose = DoseEvent(0.0, 100.0)  # Placeholder
+    jl.seval("push!")(doses, dose)
 
     if model_kind == "OneCompIVBolus":
         Kind = jl.OpenPKPDCore.OneCompIVBolus
@@ -284,17 +944,35 @@ def _convert_estimation_result(result, method: str) -> EstimationResult:
         omega_se = [[float(result.omega_se[i, j]) for j in range(result.omega_se.shape[1])]
                     for i in range(result.omega_se.shape[0])]
 
+    # Get robust SE if available
+    theta_se_robust = None
+    if hasattr(result, 'theta_se_robust') and result.theta_se_robust is not None:
+        theta_se_robust = list(result.theta_se_robust)
+
+    # Get BLQ summary if available
+    blq_summary = None
+    if hasattr(result, 'blq_summary') and result.blq_summary is not None:
+        blq = result.blq_summary
+        blq_summary = BLQSummary(
+            total_observations=int(blq.total_observations),
+            blq_observations=int(blq.blq_observations),
+            blq_percentage=float(blq.blq_percentage),
+            blq_by_subject={str(k): int(v) for k, v in blq.blq_by_subject.items()},
+            method_used=str(blq.method_used),
+        )
+
     return EstimationResult(
         method=method,
         theta=list(result.theta),
         theta_se=list(result.theta_se) if result.theta_se is not None else None,
+        theta_se_robust=theta_se_robust,
         theta_rse=list(result.theta_rse) if result.theta_rse is not None else None,
         theta_ci_lower=list(result.theta_ci_lower) if result.theta_ci_lower is not None else None,
         theta_ci_upper=list(result.theta_ci_upper) if result.theta_ci_upper is not None else None,
         omega=omega,
         omega_se=omega_se,
         omega_corr=omega_corr,
-        sigma={"type": "estimated"},  # Simplified
+        sigma={"type": "estimated"},
         sigma_se=None,
         ofv=float(result.ofv),
         aic=float(result.aic),
@@ -304,16 +982,102 @@ def _convert_estimation_result(result, method: str) -> EstimationResult:
         gradient_norm=float(result.gradient_norm),
         condition_number=float(result.condition_number) if hasattr(result, 'condition_number') else float('nan'),
         eigenvalue_ratio=float(result.eigenvalue_ratio) if hasattr(result, 'eigenvalue_ratio') else float('nan'),
-        covariance_successful=bool(result.covariance_successful),
+        covariance_successful=bool(result.covariance_step_successful) if hasattr(result, 'covariance_step_successful') else bool(result.covariance_successful),
         individuals=individuals,
+        diagnostics=None,  # Computed separately
+        blq_summary=blq_summary,
         runtime_seconds=float(result.runtime_seconds),
-        warnings=list(result.warnings) if hasattr(result, 'warnings') else [],
+        warnings=list(result.messages) if hasattr(result, 'messages') else [],
     )
 
 
+def _convert_bootstrap_result(result) -> BootstrapResult:
+    """Convert Julia BootstrapResult to Python dataclass."""
+    # Convert theta estimates matrix
+    theta_estimates = np.array(result.theta_estimates)
+
+    # Omega summary
+    omega_mean = None
+    omega_se = None
+    omega_ci_lower = None
+    omega_ci_upper = None
+    if result.omega_summary is not None:
+        os = result.omega_summary
+        omega_mean = [[float(os.mean[i, j]) for j in range(os.mean.shape[1])]
+                      for i in range(os.mean.shape[0])]
+        omega_se = [[float(os.se[i, j]) for j in range(os.se.shape[1])]
+                    for i in range(os.se.shape[0])]
+        omega_ci_lower = [[float(os.ci_lower[i, j]) for j in range(os.ci_lower.shape[1])]
+                          for i in range(os.ci_lower.shape[0])]
+        omega_ci_upper = [[float(os.ci_upper[i, j]) for j in range(os.ci_upper.shape[1])]
+                          for i in range(os.ci_upper.shape[0])]
+
+    # Sigma summary
+    sigma_mean = None
+    sigma_se = None
+    sigma_ci_lower = None
+    sigma_ci_upper = None
+    if result.sigma_summary is not None:
+        ss = result.sigma_summary
+        sigma_mean = float(ss.mean)
+        sigma_se = float(ss.se)
+        sigma_ci_lower = float(ss.ci_lower)
+        sigma_ci_upper = float(ss.ci_upper)
+
+    return BootstrapResult(
+        theta_estimates=theta_estimates,
+        theta_mean=list(result.theta_mean),
+        theta_se=list(result.theta_se),
+        theta_rse=list(result.theta_rse),
+        theta_ci_lower=list(result.theta_ci_lower),
+        theta_ci_upper=list(result.theta_ci_upper),
+        original_estimate=list(result.original_estimate),
+        bias=list(result.bias),
+        bias_corrected=list(result.bias_corrected),
+        omega_mean=omega_mean,
+        omega_se=omega_se,
+        omega_ci_lower=omega_ci_lower,
+        omega_ci_upper=omega_ci_upper,
+        sigma_mean=sigma_mean,
+        sigma_se=sigma_se,
+        sigma_ci_lower=sigma_ci_lower,
+        sigma_ci_upper=sigma_ci_upper,
+        n_successful=int(result.diagnostics.n_successful),
+        n_failed=int(result.diagnostics.n_failed),
+        convergence_rate=float(result.diagnostics.convergence_rate),
+        ci_level=float(result.ci_level),
+        ci_method=str(result.ci_method),
+    )
+
+
+def _count_omega_params(omega: List[List[float]]) -> int:
+    """Count number of parameters in omega matrix (diagonal only)."""
+    return len(omega)
+
+
 __all__ = [
+    # Main functions
     "estimate",
+    "run_bootstrap",
+    "compare_models",
+    "likelihood_ratio_test",
+    "compute_diagnostics",
+    "get_individual_predictions",
+    # Configuration types
     "EstimationConfig",
+    "BootstrapConfig",
+    "BLQConfig",
+    "IOVSpec",
+    "CovariateOnIIV",
+    # Result types
     "EstimationResult",
+    "BootstrapResult",
     "IndividualEstimate",
+    "DiagnosticsSummary",
+    "BLQSummary",
+    "ModelComparisonResult",
+    # Enums
+    "BLQMethod",
+    "OmegaStructure",
+    "BootstrapCIMethod",
 ]

@@ -6,9 +6,9 @@ This module provides simulation functions for advanced PK models:
 - Michaelis-Menten elimination (MichaelisMentenElimination)
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Union
 
-from .._core import _require_julia, _simresult_to_py, _to_julia_vector
+from .._core import _require_julia, _simresult_to_py, _create_dose_events
 
 
 def simulate_pk_transit_absorption(
@@ -17,7 +17,7 @@ def simulate_pk_transit_absorption(
     ka: float,
     cl: float,
     v: float,
-    doses: List[Dict[str, float]],
+    doses: List[Dict[str, Union[float, int]]],
     t0: float,
     t1: float,
     saveat: List[float],
@@ -25,6 +25,8 @@ def simulate_pk_transit_absorption(
     reltol: float = 1e-10,
     abstol: float = 1e-12,
     maxiters: int = 10**7,
+    alag: Optional[float] = None,
+    bioavailability: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Run a transit compartment absorption PK simulation.
@@ -45,7 +47,10 @@ def simulate_pk_transit_absorption(
         ka: Absorption rate constant from last transit to central (1/time)
         cl: Clearance from central compartment (volume/time)
         v: Volume of central compartment
-        doses: List of dose events
+        doses: List of dose events, each a dict with:
+            - 'time': Dose administration time
+            - 'amount': Total drug amount
+            - 'duration' (optional): For extended-release formulations
         t0: Simulation start time
         t1: Simulation end time
         saveat: List of time points for output
@@ -53,6 +58,8 @@ def simulate_pk_transit_absorption(
         reltol: Relative tolerance (default: 1e-10)
         abstol: Absolute tolerance (default: 1e-12)
         maxiters: Maximum solver iterations (default: 10^7)
+        alag: Absorption lag time - delays dose by this amount (default: None)
+        bioavailability: Fraction of dose absorbed (0-1, default: None = 1.0)
 
     Returns:
         Dict with keys:
@@ -71,15 +78,14 @@ def simulate_pk_transit_absorption(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.OpenPKPDCore.DoseEvent
     ModelSpec = jl.OpenPKPDCore.ModelSpec
     TransitAbsorption = jl.OpenPKPDCore.TransitAbsorption
     TransitAbsorptionParams = jl.OpenPKPDCore.TransitAbsorptionParams
     SimGrid = jl.OpenPKPDCore.SimGrid
     SolverSpec = jl.OpenPKPDCore.SolverSpec
 
-    dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
-    doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
+    # Create dose events with optional duration support
+    doses_vec = _create_dose_events(jl, doses)
 
     spec = ModelSpec(
         TransitAbsorption(), "py_transit",
@@ -89,7 +95,23 @@ def simulate_pk_transit_absorption(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.OpenPKPDCore.simulate(spec, grid, solver)
+    # Apply dose modifiers if specified
+    if alag is not None or bioavailability is not None:
+        AbsorptionModifiers = jl.OpenPKPDCore.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.OpenPKPDCore.ModelSpecWithModifiers
+        modifiers = AbsorptionModifiers(
+            alag=float(alag) if alag is not None else 0.0,
+            bioavailability=float(bioavailability) if bioavailability is not None else 1.0
+        )
+        spec_with_mod = ModelSpecWithModifiers(
+            TransitAbsorption(), "py_transit",
+            TransitAbsorptionParams(int(n), float(ktr), float(ka), float(cl), float(v)),
+            doses_vec, modifiers
+        )
+        res = jl.OpenPKPDCore.simulate(spec_with_mod, grid, solver)
+    else:
+        res = jl.OpenPKPDCore.simulate(spec, grid, solver)
+
     return _simresult_to_py(res)
 
 
@@ -97,7 +119,7 @@ def simulate_pk_michaelis_menten(
     vmax: float,
     km: float,
     v: float,
-    doses: List[Dict[str, float]],
+    doses: List[Dict[str, Union[float, int]]],
     t0: float,
     t1: float,
     saveat: List[float],
@@ -105,6 +127,8 @@ def simulate_pk_michaelis_menten(
     reltol: float = 1e-10,
     abstol: float = 1e-12,
     maxiters: int = 10**7,
+    alag: Optional[float] = None,
+    bioavailability: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Run a one-compartment PK simulation with Michaelis-Menten (saturable) elimination.
@@ -126,7 +150,10 @@ def simulate_pk_michaelis_menten(
         vmax: Maximum elimination rate (amount/time)
         km: Michaelis constant (concentration at half-Vmax)
         v: Volume of distribution
-        doses: List of dose events
+        doses: List of dose events, each a dict with:
+            - 'time': Dose administration time
+            - 'amount': Total drug amount
+            - 'duration' (optional): Infusion duration (0 = bolus, default)
         t0: Simulation start time
         t1: Simulation end time
         saveat: List of time points for output
@@ -134,6 +161,8 @@ def simulate_pk_michaelis_menten(
         reltol: Relative tolerance (default: 1e-10)
         abstol: Absolute tolerance (default: 1e-12)
         maxiters: Maximum solver iterations (default: 10^7)
+        alag: Absorption lag time - delays dose by this amount (default: None)
+        bioavailability: Fraction of dose absorbed (0-1, default: None = 1.0)
 
     Returns:
         Dict with keys:
@@ -153,15 +182,14 @@ def simulate_pk_michaelis_menten(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.OpenPKPDCore.DoseEvent
     ModelSpec = jl.OpenPKPDCore.ModelSpec
     MichaelisMentenElimination = jl.OpenPKPDCore.MichaelisMentenElimination
     MichaelisMentenEliminationParams = jl.OpenPKPDCore.MichaelisMentenEliminationParams
     SimGrid = jl.OpenPKPDCore.SimGrid
     SolverSpec = jl.OpenPKPDCore.SolverSpec
 
-    dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
-    doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
+    # Create dose events with optional duration support
+    doses_vec = _create_dose_events(jl, doses)
 
     spec = ModelSpec(
         MichaelisMentenElimination(), "py_mm",
@@ -171,5 +199,21 @@ def simulate_pk_michaelis_menten(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.OpenPKPDCore.simulate(spec, grid, solver)
+    # Apply dose modifiers if specified
+    if alag is not None or bioavailability is not None:
+        AbsorptionModifiers = jl.OpenPKPDCore.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.OpenPKPDCore.ModelSpecWithModifiers
+        modifiers = AbsorptionModifiers(
+            alag=float(alag) if alag is not None else 0.0,
+            bioavailability=float(bioavailability) if bioavailability is not None else 1.0
+        )
+        spec_with_mod = ModelSpecWithModifiers(
+            MichaelisMentenElimination(), "py_mm",
+            MichaelisMentenEliminationParams(float(vmax), float(km), float(v)),
+            doses_vec, modifiers
+        )
+        res = jl.OpenPKPDCore.simulate(spec_with_mod, grid, solver)
+    else:
+        res = jl.OpenPKPDCore.simulate(spec, grid, solver)
+
     return _simresult_to_py(res)

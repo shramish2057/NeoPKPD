@@ -12,6 +12,7 @@
     "doses": [
       {
         "amount": 100.0,
+        "duration": 0.0,
         "time": 0.0
       }
     ],
@@ -84,7 +85,8 @@
       "dose_schedule": [
         [
           0.0,
-          100.0
+          100.0,
+          0.0
         ]
       ],
       "deterministic_output_grid": true,

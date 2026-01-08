@@ -108,12 +108,31 @@ from .simulations.pk_advanced import (
     simulate_pk_michaelis_menten,
 )
 
+# Simulations - Custom PK models
+from .simulations.pk_custom import (
+    simulate_pk_tmdd_custom,
+    simulate_pk_parallel_absorption,
+    simulate_pk_enterohepatic_recirculation,
+    simulate_pk_autoinduction,
+)
+
 # Simulations - Coupled PKPD
 from .simulations.pkpd import (
+    # Basic effect models
     simulate_pkpd_direct_emax,
-    simulate_pkpd_indirect_response,
     simulate_pkpd_sigmoid_emax,
     simulate_pkpd_biophase_equilibration,
+    # Indirect response models (IRM)
+    simulate_pkpd_indirect_response,  # IRM-III (inhibition of Kout)
+    simulate_pkpd_irm1,               # IRM-I (inhibition of Kin)
+    simulate_pkpd_irm2,               # IRM-II (stimulation of Kin)
+    simulate_pkpd_irm4,               # IRM-IV (stimulation of Kout)
+    # Advanced PD models
+    simulate_pkpd_transit_compartment,
+    simulate_pkpd_disease_progression,
+    # Tolerance models
+    simulate_pkpd_tolerance_counter_regulation,
+    simulate_pkpd_receptor_regulation,
 )
 
 # Simulations - Population
@@ -129,39 +148,111 @@ from .simulations.sensitivity import (
 
 # NCA - Non-Compartmental Analysis
 from .nca import (
+    # Full workflow
     run_nca,
     run_population_nca,
     summarize_population_nca,
     NCAConfig,
     NCAResult,
+    # Primary metrics
     nca_cmax,
     nca_tmax,
+    nca_cmin,
+    nca_clast,
+    nca_tlast,
+    nca_cavg,
+    # AUC calculations
     auc_0_t,
     auc_0_inf,
+    auc_0_tau,
+    auc_partial,
+    aumc_0_t,
+    aumc_0_inf,
+    # Lambda-z and half-life
     estimate_lambda_z,
     nca_half_life,
+    # PK parameters
+    nca_mrt,
+    nca_cl_f,
+    nca_vz_f,
+    nca_vss,
+    nca_cl,
+    nca_vz,
+    # Multiple dose metrics
+    nca_accumulation_index,
+    nca_ptf,
+    nca_swing,
+    nca_linearity_index,
+    nca_time_to_steady_state,
+    # Bioequivalence
     bioequivalence_90ci,
     tost_analysis,
     be_conclusion,
     geometric_mean_ratio,
+    geometric_mean,
+    within_subject_cv,
+    # Study designs and RSABE
+    BEStudyDesign,
+    ReplicateDesign,
+    RegulatoryGuidance,
+    RSABEConfig,
 )
 
 # Parameter Estimation (NLME)
 from .estimation import (
     estimate,
+    run_bootstrap,
+    compare_models,
+    likelihood_ratio_test,
+    compute_diagnostics,
+    get_individual_predictions,
     EstimationConfig,
+    BootstrapConfig,
+    BLQConfig,
+    IOVSpec,
+    CovariateOnIIV,
     EstimationResult,
+    BootstrapResult,
     IndividualEstimate,
+    DiagnosticsSummary,
+    BLQSummary,
+    ModelComparisonResult,
+    BLQMethod,
+    OmegaStructure,
+    BootstrapCIMethod,
 )
 
 # Visual Predictive Check
 from .vpc import (
+    # VPC computation
     compute_vpc,
     compute_pcvpc,
+    compute_vpc_python,
+    compute_stratified_vpc,
+    compute_vpc_with_blq,
+    # Configuration and types
     VPCConfig,
     VPCResult,
     VPCBin,
-    VPCPercentile,
+    VPCPercentileData,
+    StratifiedVPCResult,
+    BLQBinStats,
+    # Binning strategies
+    BinningStrategy,
+    BinDefinition,
+    QuantileBinning,
+    EqualWidthBinning,
+    KMeansBinning,
+    # BLQ handling
+    BLQMethod as VPCBLQMethod,
+    handle_blq,
+    # Result extraction helpers
+    get_bin_midpoints,
+    get_observed_percentile,
+    get_simulated_median,
+    get_simulated_ci,
+    get_blq_observed,
+    get_blq_simulated,
 )
 
 # CDISC Data Import
@@ -242,36 +333,106 @@ __all__ = [
     "tmax",
     "half_life",
 
-    # NCA
+    # NCA - Full workflow
     "run_nca",
     "run_population_nca",
     "summarize_population_nca",
     "NCAConfig",
     "NCAResult",
+    # NCA - Primary metrics
     "nca_cmax",
     "nca_tmax",
+    "nca_cmin",
+    "nca_clast",
+    "nca_tlast",
+    "nca_cavg",
+    # NCA - AUC
     "auc_0_t",
     "auc_0_inf",
+    "auc_0_tau",
+    "auc_partial",
+    "aumc_0_t",
+    "aumc_0_inf",
+    # NCA - Lambda-z
     "estimate_lambda_z",
     "nca_half_life",
+    # NCA - PK parameters
+    "nca_mrt",
+    "nca_cl_f",
+    "nca_vz_f",
+    "nca_vss",
+    "nca_cl",
+    "nca_vz",
+    # NCA - Multiple dose
+    "nca_accumulation_index",
+    "nca_ptf",
+    "nca_swing",
+    "nca_linearity_index",
+    "nca_time_to_steady_state",
+    # NCA - Bioequivalence
     "bioequivalence_90ci",
     "tost_analysis",
     "be_conclusion",
     "geometric_mean_ratio",
+    "geometric_mean",
+    "within_subject_cv",
+    # NCA - Study designs and RSABE
+    "BEStudyDesign",
+    "ReplicateDesign",
+    "RegulatoryGuidance",
+    "RSABEConfig",
 
     # Estimation (NLME)
     "estimate",
+    "run_bootstrap",
+    "compare_models",
+    "likelihood_ratio_test",
+    "compute_diagnostics",
+    "get_individual_predictions",
     "EstimationConfig",
+    "BootstrapConfig",
+    "BLQConfig",
+    "IOVSpec",
+    "CovariateOnIIV",
     "EstimationResult",
+    "BootstrapResult",
     "IndividualEstimate",
+    "DiagnosticsSummary",
+    "BLQSummary",
+    "ModelComparisonResult",
+    "BLQMethod",
+    "OmegaStructure",
+    "BootstrapCIMethod",
 
-    # VPC
+    # VPC - Computation
     "compute_vpc",
     "compute_pcvpc",
+    "compute_vpc_python",
+    "compute_stratified_vpc",
+    "compute_vpc_with_blq",
+    # VPC - Types
     "VPCConfig",
     "VPCResult",
     "VPCBin",
-    "VPCPercentile",
+    "VPCPercentileData",
+    "StratifiedVPCResult",
+    "BLQBinStats",
+    # VPC - Binning
+    "BinningStrategy",
+    "BinDefinition",
+    "QuantileBinning",
+    "EqualWidthBinning",
+    "KMeansBinning",
+    # VPC - BLQ
+    "VPCBLQMethod",
+    "handle_blq",
+    # VPC - Result extraction
+    "get_bin_midpoints",
+    "get_observed_percentile",
+    "get_simulated_median",
+    "get_simulated_ci",
+    "get_blq_observed",
+    "get_blq_simulated",
 
     # CDISC Data
     "read_cdisc_pc",

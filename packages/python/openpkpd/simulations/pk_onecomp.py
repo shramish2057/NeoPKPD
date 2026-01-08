@@ -7,9 +7,9 @@ This module provides simulation functions for one-compartment PK models:
 - Oral first-order absorption (OneCompOralFirstOrder)
 """
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
-from .._core import _require_julia, _simresult_to_py, _to_julia_vector, _create_dose_events
+from .._core import _require_julia, _simresult_to_py, _create_dose_events
 
 
 def simulate_pk_iv_bolus(
@@ -23,6 +23,8 @@ def simulate_pk_iv_bolus(
     reltol: float = 1e-10,
     abstol: float = 1e-12,
     maxiters: int = 10**7,
+    alag: Optional[float] = None,
+    bioavailability: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Run a one-compartment IV bolus or infusion PK simulation.
@@ -50,6 +52,8 @@ def simulate_pk_iv_bolus(
         reltol: Relative tolerance (default: 1e-10)
         abstol: Absolute tolerance (default: 1e-12)
         maxiters: Maximum solver iterations (default: 10^7)
+        alag: Absorption lag time - delays dose by this amount (default: None)
+        bioavailability: Fraction of dose absorbed (0-1, default: None = 1.0)
 
     Returns:
         Dict with keys:
@@ -90,7 +94,23 @@ def simulate_pk_iv_bolus(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.OpenPKPDCore.simulate(spec, grid, solver)
+    # Apply dose modifiers if specified
+    if alag is not None or bioavailability is not None:
+        AbsorptionModifiers = jl.OpenPKPDCore.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.OpenPKPDCore.ModelSpecWithModifiers
+        modifiers = AbsorptionModifiers(
+            alag=float(alag) if alag is not None else 0.0,
+            bioavailability=float(bioavailability) if bioavailability is not None else 1.0
+        )
+        spec_with_mod = ModelSpecWithModifiers(
+            OneCompIVBolus(), "py_iv_bolus",
+            OneCompIVBolusParams(float(cl), float(v)),
+            doses_vec, modifiers
+        )
+        res = jl.OpenPKPDCore.simulate(spec_with_mod, grid, solver)
+    else:
+        res = jl.OpenPKPDCore.simulate(spec, grid, solver)
+
     return _simresult_to_py(res)
 
 
@@ -98,7 +118,7 @@ def simulate_pk_oral_first_order(
     ka: float,
     cl: float,
     v: float,
-    doses: List[Dict[str, float]],
+    doses: List[Dict[str, Union[float, int]]],
     t0: float,
     t1: float,
     saveat: List[float],
@@ -106,6 +126,8 @@ def simulate_pk_oral_first_order(
     reltol: float = 1e-10,
     abstol: float = 1e-12,
     maxiters: int = 10**7,
+    alag: Optional[float] = None,
+    bioavailability: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Run a one-compartment oral first-order absorption PK simulation.
@@ -120,7 +142,10 @@ def simulate_pk_oral_first_order(
         ka: Absorption rate constant (1/time)
         cl: Clearance (volume/time)
         v: Volume of distribution
-        doses: List of dose events, each a dict with 'time' and 'amount'
+        doses: List of dose events, each a dict with:
+            - 'time': Dose administration time
+            - 'amount': Total drug amount
+            - 'duration' (optional): For extended-release formulations
         t0: Simulation start time
         t1: Simulation end time
         saveat: List of time points for output
@@ -128,6 +153,8 @@ def simulate_pk_oral_first_order(
         reltol: Relative tolerance (default: 1e-10)
         abstol: Absolute tolerance (default: 1e-12)
         maxiters: Maximum solver iterations (default: 10^7)
+        alag: Absorption lag time - delays dose by this amount (default: None)
+        bioavailability: Fraction of dose absorbed (0-1, default: None = 1.0)
 
     Returns:
         Dict with keys:
@@ -143,18 +170,26 @@ def simulate_pk_oral_first_order(
         ...     t0=0.0, t1=24.0,
         ...     saveat=[0.0, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
         ... )
+        >>>
+        >>> # With absorption lag time (30 min) and 70% bioavailability
+        >>> result = openpkpd.simulate_pk_oral_first_order(
+        ...     ka=0.5, cl=1.0, v=10.0,
+        ...     doses=[{"time": 0.0, "amount": 100.0}],
+        ...     t0=0.0, t1=24.0,
+        ...     saveat=[0.0, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0],
+        ...     alag=0.5, bioavailability=0.7
+        ... )
     """
     jl = _require_julia()
 
-    DoseEvent = jl.OpenPKPDCore.DoseEvent
     ModelSpec = jl.OpenPKPDCore.ModelSpec
     OneCompOralFirstOrder = jl.OpenPKPDCore.OneCompOralFirstOrder
     OneCompOralFirstOrderParams = jl.OpenPKPDCore.OneCompOralFirstOrderParams
     SimGrid = jl.OpenPKPDCore.SimGrid
     SolverSpec = jl.OpenPKPDCore.SolverSpec
 
-    dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
-    doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
+    # Create dose events with optional duration support
+    doses_vec = _create_dose_events(jl, doses)
 
     spec = ModelSpec(
         OneCompOralFirstOrder(),
@@ -165,5 +200,21 @@ def simulate_pk_oral_first_order(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.OpenPKPDCore.simulate(spec, grid, solver)
+    # Apply dose modifiers if specified
+    if alag is not None or bioavailability is not None:
+        AbsorptionModifiers = jl.OpenPKPDCore.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.OpenPKPDCore.ModelSpecWithModifiers
+        modifiers = AbsorptionModifiers(
+            alag=float(alag) if alag is not None else 0.0,
+            bioavailability=float(bioavailability) if bioavailability is not None else 1.0
+        )
+        spec_with_mod = ModelSpecWithModifiers(
+            OneCompOralFirstOrder(), "py_oral_first_order",
+            OneCompOralFirstOrderParams(float(ka), float(cl), float(v)),
+            doses_vec, modifiers
+        )
+        res = jl.OpenPKPDCore.simulate(spec_with_mod, grid, solver)
+    else:
+        res = jl.OpenPKPDCore.simulate(spec, grid, solver)
+
     return _simresult_to_py(res)

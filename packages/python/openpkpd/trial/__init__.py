@@ -97,6 +97,35 @@ from .analysis import (
     ResponderResult,
 )
 
+from .core_integration import (
+    # Subject exposure simulation
+    simulate_subject_exposure,
+    SubjectExposure,
+    # Dose escalation
+    simulate_dose_escalation_3plus3,
+    simulate_dose_escalation_mtpi,
+    simulate_dose_escalation_crm,
+    CohortResult,
+    EscalationResult,
+    # Model-connected trial simulation
+    simulate_trial_with_model,
+    ModelTrialSubjectResult,
+    ModelTrialArmResult,
+    ModelTrialResult,
+    # Crossover analysis
+    analyze_crossover,
+    test_period_effect,
+    test_sequence_effect,
+    compute_within_subject_cv,
+    CrossoverAnalysis,
+    # Adaptive trials
+    simulate_adaptive_trial,
+    InterimResult,
+    AdaptiveTrialResult,
+    # PK metrics
+    calculate_pk_metrics,
+)
+
 
 __all__ = [
     # Designs
@@ -161,4 +190,30 @@ __all__ = [
     "SampleSizeResult",
     "ComparisonResult",
     "ResponderResult",
+    # Core Integration - Subject Exposure
+    "simulate_subject_exposure",
+    "SubjectExposure",
+    # Core Integration - Dose Escalation
+    "simulate_dose_escalation_3plus3",
+    "simulate_dose_escalation_mtpi",
+    "simulate_dose_escalation_crm",
+    "CohortResult",
+    "EscalationResult",
+    # Core Integration - Model-Connected Trial
+    "simulate_trial_with_model",
+    "ModelTrialSubjectResult",
+    "ModelTrialArmResult",
+    "ModelTrialResult",
+    # Core Integration - Crossover Analysis
+    "analyze_crossover",
+    "test_period_effect",
+    "test_sequence_effect",
+    "compute_within_subject_cv",
+    "CrossoverAnalysis",
+    # Core Integration - Adaptive Trials
+    "simulate_adaptive_trial",
+    "InterimResult",
+    "AdaptiveTrialResult",
+    # Core Integration - PK Metrics
+    "calculate_pk_metrics",
 ]

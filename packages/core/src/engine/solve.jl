@@ -1373,3 +1373,125 @@ end
 function pk_param_tuple(spec::ModelSpecWithModifiers{MichaelisMentenElimination,MichaelisMentenEliminationParams})
     return (Vmax=spec.params.Vmax, Km=spec.params.Km, V=spec.params.V)
 end
+
+# ============================================================================
+# CustomODE Simulation
+# ============================================================================
+
+"""
+    simulate(spec::ModelSpec{<:CustomODE, CustomODEParams}, grid::SimGrid, solver::SolverSpec)
+
+Simulate a custom ODE model.
+
+This is a generic simulation method that uses the CustomODE interface functions:
+- pk_param_tuple: Get parameters as NamedTuple
+- pk_u0: Get initial conditions
+- pk_ode!: ODE function
+- pk_conc: Compute concentration from state
+- pk_dose_target_index: Which state receives doses
+
+Supports both bolus and infusion dosing.
+"""
+function simulate(
+    spec::ModelSpec{<:CustomODE, CustomODEParams},
+    grid::SimGrid,
+    solver::SolverSpec
+)
+    validate(spec)
+    validate(grid)
+    validate(solver)
+
+    kind = spec.kind
+    p = pk_param_tuple(spec)
+    tspan = (grid.t0, grid.t1)
+    dose_target_idx = pk_dose_target_index(kind)
+
+    # Check for infusion doses
+    if _has_any_infusion(spec.doses)
+        # Use infusion-aware simulation
+        schedule = build_infusion_schedule(spec.doses, grid.t0, grid.t1)
+        u0 = pk_u0(spec, grid)
+        u0[dose_target_idx] += schedule.initial_amount
+
+        rate_fn = make_infusion_rate_function(schedule)
+        function ode_with_infusion!(du, u, params, t)
+            pk_ode_with_infusion!(du, u, params, t, kind, rate_fn(t))
+        end
+
+        prob = ODEProblem(ode_with_infusion!, u0, tspan, p)
+        tstops = schedule.rate_change_times
+
+        sol = solve(
+            prob,
+            Rosenbrock23();
+            reltol=solver.reltol,
+            abstol=solver.abstol,
+            maxiters=solver.maxiters,
+            saveat=grid.saveat,
+            tstops=tstops,
+        )
+    else
+        # Standard bolus simulation
+        _, dose_times, dose_amounts = normalize_doses_for_sim(spec.doses, grid.t0, grid.t1)
+        u0 = pk_u0(spec, grid)
+
+        function ode!(du, u, params, t)
+            pk_ode!(du, u, params, t, kind)
+        end
+
+        prob = ODEProblem(ode!, u0, tspan, p)
+
+        cb = nothing
+        if !isempty(dose_times)
+            function affect!(integrator)
+                idx = findfirst(==(integrator.t), dose_times)
+                if idx !== nothing
+                    integrator.u[dose_target_idx] += dose_amounts[idx]
+                end
+            end
+            cb = PresetTimeCallback(dose_times, affect!)
+        end
+
+        tstops = filter(t -> t > grid.t0 && t < grid.t1, dose_times)
+
+        sol = solve(
+            prob,
+            Rosenbrock23();
+            reltol=solver.reltol,
+            abstol=solver.abstol,
+            maxiters=solver.maxiters,
+            saveat=grid.saveat,
+            callback=cb,
+            tstops=tstops,
+        )
+    end
+
+    # Build state dictionary using state names from CustomODE
+    state_names = pk_state_symbols(kind)
+    states = Dict{Symbol, Vector{Float64}}()
+    for (i, name) in enumerate(state_names)
+        states[name] = [u[i] for u in sol.u]
+    end
+
+    # Compute concentration using output function
+    C = [pk_conc(u, p, kind) for u in sol.u]
+    observations = Dict(:conc => C)
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "model" => "CustomODE",
+        "model_description" => kind.description,
+        "n_states" => kind.n_states,
+        "param_names" => [String(s) for s in kind.param_names],
+        "state_names" => [String(s) for s in state_names],
+        "solver_alg" => String(solver.alg),
+        "reltol" => solver.reltol,
+        "abstol" => solver.abstol,
+        "dose_schedule" => [(d.time, d.amount, d.duration) for d in spec.doses],
+        "deterministic_output_grid" => true,
+        "event_semantics_version" => EVENT_SEMANTICS_VERSION,
+        "solver_semantics_version" => SOLVER_SEMANTICS_VERSION,
+    )
+
+    return SimResult(Vector{Float64}(sol.t), states, observations, metadata)
+end

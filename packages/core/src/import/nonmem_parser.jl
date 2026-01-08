@@ -638,9 +638,11 @@ end
 Check if a \$PK line contains unsupported constructs.
 """
 function _is_unsupported_pk_line(line::AbstractString)::Bool
-    # IF statements (conditional logic)
+    # IF statements (but allow safe patterns)
     if occursin(r"\bIF\s*\("i, line)
-        return true
+        if !_is_safe_if_pattern(line)
+            return true
+        end
     end
 
     # ALAG (absorption lag time)
@@ -750,12 +752,49 @@ function parse_error_block(lines::Vector{String})::ErrorBlock
 end
 
 """
+Check if an IF statement is a safe/common pattern that can be ignored.
+
+Safe patterns include:
+- IF(W.EQ.0) W = 1 (prevent division by zero)
+- IF(W.LE.0) W = 1
+- IF(F.EQ.0) F = 1
+- IF(IPRED.EQ.0) ... (protect IPRED)
+"""
+function _is_safe_if_pattern(line::AbstractString)::Bool
+    line_upper = uppercase(strip(line))
+
+    # Pattern: IF(X.EQ.0) X = 1 or IF(X.LE.0) X = 1 (division by zero protection)
+    if occursin(r"IF\s*\(\s*\w+\s*\.(EQ|LE|LT)\s*\.?\s*0\s*\)\s*\w+\s*=\s*\d"i, line_upper)
+        return true
+    end
+
+    # Pattern: IF(W.EQ.0) W = 1 specifically
+    if occursin(r"IF\s*\(\s*W\s*\.(EQ|LE)\s*\.?\s*0\s*\)"i, line_upper)
+        return true
+    end
+
+    # Pattern: IF(F.EQ.0) F = ... (bioavailability protection)
+    if occursin(r"IF\s*\(\s*F\s*\.(EQ|LE)\s*\.?\s*0\s*\)"i, line_upper)
+        return true
+    end
+
+    # Pattern: IF(IPRED.EQ.0) or IF(IPRED.LE.0) (prediction protection)
+    if occursin(r"IF\s*\(\s*IPRED\s*\.(EQ|LE)\s*\.?\s*0\s*\)"i, line_upper)
+        return true
+    end
+
+    return false
+end
+
+"""
 Check if a \$ERROR line contains unsupported constructs.
 """
 function _is_unsupported_error_line(line::AbstractString)::Bool
-    # IF statements
+    # IF statements (but allow safe patterns)
     if occursin(r"\bIF\s*\("i, line)
-        return true
+        if !_is_safe_if_pattern(line)
+            return true
+        end
     end
 
     # CALL statements
@@ -795,7 +834,8 @@ function check_unsupported_constructs(ctl::NONMEMControlFile)::Vector{Unsupporte
     for line in ctl.pk_code
         line_upper = uppercase(strip(line))
 
-        if occursin(r"\bIF\s*\("i, line_upper)
+        # IF statements (but allow safe patterns)
+        if occursin(r"\bIF\s*\("i, line_upper) && !_is_safe_if_pattern(line)
             push!(unsupported, UnsupportedConstruct("IF statement", "\$PK", line))
         end
 
@@ -824,7 +864,8 @@ function check_unsupported_constructs(ctl::NONMEMControlFile)::Vector{Unsupporte
     for line in ctl.error_code
         line_upper = uppercase(strip(line))
 
-        if occursin(r"\bIF\s*\("i, line_upper)
+        # IF statements (but allow safe patterns)
+        if occursin(r"\bIF\s*\("i, line_upper) && !_is_safe_if_pattern(line)
             push!(unsupported, UnsupportedConstruct("IF statement", "\$ERROR", line))
         end
 

@@ -505,6 +505,244 @@ def nca_bioavailability(
 
 
 # ============================================================================
+# Additional Exposure Metrics
+# ============================================================================
+
+def nca_ctrough(
+    times: List[float],
+    concentrations: List[float],
+    tau: float
+) -> float:
+    """
+    Find trough concentration at end of dosing interval.
+
+    Args:
+        times: List of time points
+        concentrations: List of concentration values
+        tau: Dosing interval
+
+    Returns:
+        Trough concentration
+    """
+    jl = _require_julia()
+    t = _to_julia_float_vector(jl, times)
+    c = _to_julia_float_vector(jl, concentrations)
+    return float(jl.OpenPKPDCore.nca_ctrough(t, c, tau))
+
+
+def nca_c_at_time(
+    times: List[float],
+    concentrations: List[float],
+    target_time: float
+) -> float:
+    """
+    Get concentration at a specific time point (with interpolation if needed).
+
+    Args:
+        times: List of time points
+        concentrations: List of concentration values
+        target_time: Target time for concentration
+
+    Returns:
+        Concentration at target time
+    """
+    jl = _require_julia()
+    t = _to_julia_float_vector(jl, times)
+    c = _to_julia_float_vector(jl, concentrations)
+    return float(jl.OpenPKPDCore.nca_c_at_time(t, c, target_time))
+
+
+def time_above_concentration(
+    times: List[float],
+    concentrations: List[float],
+    threshold: float
+) -> float:
+    """
+    Calculate time above a concentration threshold.
+
+    Args:
+        times: List of time points
+        concentrations: List of concentration values
+        threshold: Concentration threshold
+
+    Returns:
+        Total time where concentration > threshold
+    """
+    jl = _require_julia()
+    t = _to_julia_float_vector(jl, times)
+    c = _to_julia_float_vector(jl, concentrations)
+    return float(jl.OpenPKPDCore.time_above_concentration(t, c, threshold))
+
+
+# ============================================================================
+# Additional PK Parameters
+# ============================================================================
+
+def nca_cl(dose: float, auc_0_inf: float) -> float:
+    """
+    Calculate systemic clearance (CL) for IV administration.
+
+    CL = Dose / AUC0-inf
+
+    Args:
+        dose: Administered dose
+        auc_0_inf: AUC extrapolated to infinity
+
+    Returns:
+        Systemic clearance
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_cl(dose, auc_0_inf))
+
+
+def nca_vz(dose: float, lambda_z: float, auc_0_inf: float) -> float:
+    """
+    Calculate terminal volume of distribution (Vz) for IV administration.
+
+    Vz = Dose / (lambda_z * AUC0-inf)
+
+    Args:
+        dose: Administered dose
+        lambda_z: Terminal elimination rate constant
+        auc_0_inf: AUC extrapolated to infinity
+
+    Returns:
+        Terminal volume of distribution
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_vz(dose, lambda_z, auc_0_inf))
+
+
+def nca_mrt_iv(mrt_extravascular: float, absorption_time: float) -> float:
+    """
+    Estimate MRT for IV administration from extravascular MRT.
+
+    MRTiv = MRText - MAT
+
+    Args:
+        mrt_extravascular: MRT from extravascular administration
+        absorption_time: Mean absorption time estimate
+
+    Returns:
+        Estimated IV MRT
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_mrt_iv(mrt_extravascular, absorption_time))
+
+
+def nca_cl_ss(dose: float, auc_0_tau: float) -> float:
+    """
+    Calculate clearance at steady state.
+
+    CLss = Dose / AUC0-tau
+
+    Args:
+        dose: Administered dose per interval
+        auc_0_tau: AUC over dosing interval
+
+    Returns:
+        Steady-state clearance
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_cl_ss(dose, auc_0_tau))
+
+
+def nca_vss_from_aumc(dose: float, auc_0_inf: float, aumc_0_inf: float) -> float:
+    """
+    Calculate Vss directly from moment curves.
+
+    Vss = Dose * AUMC0-inf / (AUC0-inf)^2
+
+    Args:
+        dose: Administered dose
+        auc_0_inf: AUC from 0 to infinity
+        aumc_0_inf: AUMC from 0 to infinity
+
+    Returns:
+        Volume at steady state
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_vss_from_aumc(dose, auc_0_inf, aumc_0_inf))
+
+
+def nca_vc(dose: float, c0: float) -> float:
+    """
+    Calculate central volume of distribution from back-extrapolated C0.
+
+    Vc = Dose / C0
+
+    For IV bolus administration.
+
+    Args:
+        dose: Administered dose
+        c0: Back-extrapolated concentration at time 0
+
+    Returns:
+        Central volume of distribution
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_vc(dose, c0))
+
+
+def nca_mean_absorption_time(mrt_po: float, mrt_iv: float) -> float:
+    """
+    Calculate Mean Absorption Time (MAT).
+
+    MAT = MRTpo - MRTiv
+
+    Args:
+        mrt_po: MRT from oral/extravascular administration
+        mrt_iv: MRT from IV administration
+
+    Returns:
+        Mean absorption time
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_mean_absorption_time(mrt_po, mrt_iv))
+
+
+def nca_c0_backextrap(
+    times: List[float],
+    concentrations: List[float],
+    lambda_z: float
+) -> float:
+    """
+    Back-extrapolate C0 for IV bolus administration.
+
+    Uses the lambda_z regression parameters.
+
+    Args:
+        times: Time points (from terminal phase regression)
+        concentrations: Concentration values
+        lambda_z: Terminal elimination rate constant
+
+    Returns:
+        Back-extrapolated C0
+    """
+    jl = _require_julia()
+    t = _to_julia_float_vector(jl, times)
+    c = _to_julia_float_vector(jl, concentrations)
+    return float(jl.OpenPKPDCore.nca_c0_backextrap(t, c, lambda_z))
+
+
+def nca_c0_from_regression(intercept: float) -> float:
+    """
+    Get C0 from lambda_z regression intercept.
+
+    For log-linear regression: ln(C) = intercept - lambda_z * t
+    C0 = exp(intercept)
+
+    Args:
+        intercept: Y-intercept from log-linear regression
+
+    Returns:
+        Back-extrapolated C0
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_c0_from_regression(intercept))
+
+
+# ============================================================================
 # Multiple Dose Metrics
 # ============================================================================
 
@@ -600,6 +838,130 @@ def nca_time_to_steady_state(lambda_z: float, fraction: float = 0.90) -> float:
     """
     jl = _require_julia()
     return float(jl.OpenPKPDCore.nca_time_to_steady_state(lambda_z, fraction=fraction))
+
+
+def nca_accumulation_predicted(lambda_z: float, tau: float) -> float:
+    """
+    Predict accumulation index from lambda_z and dosing interval.
+
+    Rac_pred = 1 / (1 - exp(-lambda_z * tau))
+
+    This is the theoretical accumulation for a one-compartment model.
+
+    Args:
+        lambda_z: Terminal elimination rate constant
+        tau: Dosing interval
+
+    Returns:
+        Predicted accumulation index
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_accumulation_predicted(lambda_z, tau))
+
+
+def nca_accumulation_cmax(cmax_ss: float, cmax_sd: float) -> float:
+    """
+    Calculate Cmax accumulation ratio.
+
+    Rac_Cmax = Cmax_ss / Cmax_sd
+
+    Args:
+        cmax_ss: Cmax at steady state
+        cmax_sd: Cmax from single dose
+
+    Returns:
+        Cmax accumulation ratio
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_accumulation_cmax(cmax_ss, cmax_sd))
+
+
+def nca_accumulation_cmin(cmin_ss: float, c_at_tau_sd: float) -> float:
+    """
+    Calculate Cmin accumulation ratio.
+
+    Rac_Cmin = Cmin_ss / C(tau)_sd
+
+    Args:
+        cmin_ss: Cmin (trough) at steady state
+        c_at_tau_sd: Concentration at time tau after single dose
+
+    Returns:
+        Cmin accumulation ratio
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_accumulation_cmin(cmin_ss, c_at_tau_sd))
+
+
+def nca_dose_normalized_auc(auc: float, dose: float) -> float:
+    """
+    Calculate dose-normalized AUC.
+
+    AUC/D = AUC / Dose
+
+    Args:
+        auc: AUC value
+        dose: Dose administered
+
+    Returns:
+        Dose-normalized AUC
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_dose_normalized_auc(auc, dose))
+
+
+def nca_dose_normalized_cmax(cmax: float, dose: float) -> float:
+    """
+    Calculate dose-normalized Cmax.
+
+    Cmax/D = Cmax / Dose
+
+    Args:
+        cmax: Maximum concentration
+        dose: Dose administered
+
+    Returns:
+        Dose-normalized Cmax
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_dose_normalized_cmax(cmax, dose))
+
+
+def nca_time_to_steady_state_doses(
+    lambda_z: float,
+    tau: float,
+    fraction: float = 0.90
+) -> int:
+    """
+    Estimate number of doses to reach a fraction of steady state.
+
+    n_doses = ceil(t_ss / tau)
+
+    Args:
+        lambda_z: Terminal elimination rate constant
+        tau: Dosing interval
+        fraction: Fraction of steady state (default: 0.90)
+
+    Returns:
+        Number of doses to reach steady state
+    """
+    jl = _require_julia()
+    return int(jl.OpenPKPDCore.nca_time_to_steady_state_doses(lambda_z, tau, fraction=fraction))
+
+
+def nca_effective_half_life(auc_ss: float, auc_inf_sd: float) -> float:
+    """
+    Calculate effective half-life from steady-state data.
+
+    Args:
+        auc_ss: AUC0-tau at steady state
+        auc_inf_sd: AUC0-inf from single dose
+
+    Returns:
+        Effective half-life
+    """
+    jl = _require_julia()
+    return float(jl.OpenPKPDCore.nca_effective_half_life(auc_ss, auc_inf_sd))
 
 
 # ============================================================================

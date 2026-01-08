@@ -230,10 +230,33 @@ function convert_nonmem_to_openpkpd(
         max_used_theta = max(max_used_theta, idx)
     end
 
-    unused_thetas = [i for i in 1:length(ctl.thetas) if !(i in keys(parameter_mapping)) &&
-                     !any(a -> a.tv_theta == i || any(c -> c.theta_index == i for c in a.covariate_effects)
-                          for a in pk_block.assignments) &&
-                     !(i in error_block.theta_indices)]
+    # Detect unused THETAs
+    unused_thetas = Int[]
+    for i in 1:length(ctl.thetas)
+        if i in keys(parameter_mapping) || i in error_block.theta_indices
+            continue
+        end
+        # Check if THETA(i) is used in any assignment
+        used_in_assignment = false
+        for a in pk_block.assignments
+            if a.tv_theta == i
+                used_in_assignment = true
+                break
+            end
+            for c in a.covariate_effects
+                if c.theta_index == i
+                    used_in_assignment = true
+                    break
+                end
+            end
+            if used_in_assignment
+                break
+            end
+        end
+        if !used_in_assignment
+            push!(unused_thetas, i)
+        end
+    end
     if !isempty(unused_thetas)
         push!(warnings, "THETAs not detected in \$PK or \$ERROR: $(join(unused_thetas, ", "))")
     end
@@ -312,7 +335,8 @@ function validate_nonmem_conversion(
     for (tv_name, theta_idx) in pk_block.tv_definitions
         # Extract parameter name from TV name (e.g., TVCL -> CL)
         param_name = Symbol(replace(String(tv_name), r"^TV"i => ""))
-        if !any(a -> a.target == param_name for a in pk_block.assignments)
+        has_assignment = any(a.target == param_name for a in pk_block.assignments)
+        if !has_assignment
             push!(warnings, "TV definition $tv_name (THETA($theta_idx)) found but no corresponding individual parameter assignment (e.g., $param_name = $tv_name * EXP(ETA(n)))")
         end
     end
@@ -321,15 +345,31 @@ function validate_nonmem_conversion(
 end
 
 """
-Get number of compartments for an ADVAN number.
+Get number of NONMEM compartments for an ADVAN number.
+
+NONMEM compartment numbers:
+- ADVAN1: 1 (central only for IV bolus)
+- ADVAN2: 2 (depot + central for oral 1-comp) - S2 scales central
+- ADVAN3: 2 (central + peripheral for IV 2-comp)
+- ADVAN4: 3 (depot + central + peripheral for oral 2-comp) - S2 scales central
+- ADVAN10: 1 (central with MM elimination)
+- ADVAN11: 3 (central + 2 peripherals for IV 3-comp)
 """
 function _get_n_compartments(advan::Int)::Int
-    if advan in [1, 2, 10]
-        return 1
-    elseif advan in [3, 4]
-        return 2
-    elseif advan in [11, 12]
-        return 3
+    if advan == 1
+        return 1  # IV bolus 1-comp: central only
+    elseif advan == 2
+        return 2  # Oral 1-comp: depot + central
+    elseif advan == 3
+        return 2  # IV 2-comp: central + peripheral
+    elseif advan == 4
+        return 3  # Oral 2-comp: depot + central + peripheral
+    elseif advan == 10
+        return 1  # MM elimination: central only
+    elseif advan == 11
+        return 3  # IV 3-comp: central + 2 peripherals
+    elseif advan == 12
+        return 4  # Oral 3-comp: depot + central + 2 peripherals
     else
         return 10  # Default for general ADVANs
     end
