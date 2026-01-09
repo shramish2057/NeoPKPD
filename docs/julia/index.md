@@ -102,14 +102,6 @@ println(result.observations[:conc])
 
     [:octicons-arrow-right-24: Trial Reference](trial/index.md)
 
--   :material-code-tags:{ .lg .middle } **API Reference**
-
-    ---
-
-    Complete function and type reference
-
-    [:octicons-arrow-right-24: API Reference](api-reference.md)
-
 </div>
 
 ---

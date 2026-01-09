@@ -84,7 +84,7 @@ Run NLME parameter estimation (FOCE-I, SAEM, or Laplacian).
 
 **Specification includes**: observed data, model, estimation method, initial values, bounds.
 
-See [Parameter Estimation](estimation.md) for specification format.
+See [Parameter Estimation](julia/estimation/index.md) for specification format.
 
 ---
 
@@ -96,7 +96,7 @@ Run non-compartmental analysis.
 ./packages/cli/bin/openpkpd nca --spec <path> [--out <output_path>]
 ```
 
-See [NCA](nca.md) for specification format.
+See [NCA](julia/nca/index.md) for specification format.
 
 ---
 
@@ -108,7 +108,7 @@ Compute Visual Predictive Check.
 ./packages/cli/bin/openpkpd vpc --spec <path> [--out <output_path>]
 ```
 
-See [VPC](vpc.md) for specification format.
+See [VPC](julia/vpc/index.md) for specification format.
 
 ---
 
@@ -122,7 +122,7 @@ Run clinical trial simulation.
 
 Supports parallel, crossover, dose-escalation, and bioequivalence designs.
 
-See [Trial Simulation](trial.md) for specification format.
+See [Trial Simulation](julia/trial/index.md) for specification format.
 
 ---
 
@@ -152,7 +152,7 @@ Import models from NONMEM or Monolix.
 ./packages/cli/bin/openpkpd import --input project.mlxtran --format monolix --out model.json
 ```
 
-See [Model Import](import.md) for details.
+See [Model Import](julia/import/index.md) for details.
 
 ---
 

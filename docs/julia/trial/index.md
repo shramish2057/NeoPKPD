@@ -53,14 +53,6 @@ graph TB
 
     [:octicons-arrow-right-24: Escalation](dose-escalation.md)
 
--   :material-scale-balance:{ .lg .middle } **Bioequivalence**
-
-    ---
-
-    BE studies with statistical analysis
-
-    [:octicons-arrow-right-24: BE Studies](bioequivalence.md)
-
 -   :material-chart-line:{ .lg .middle } **Power Analysis**
 
     ---

@@ -67,6 +67,5 @@ julia --project=core/OpenPKPDCore docs/examples/use_cases/population_pkpd_analys
 
 ## See Also
 
-- [Population Examples](../../population/README.md)
-- [PKPD Model Examples](../../models/pkpd/README.md)
-- [VPC Examples](../../vpc/README.md)
+- [Population Documentation](../../../python/population/index.md)
+- [VPC Documentation](../../../python/vpc/index.md)

@@ -51,14 +51,6 @@ graph LR
 
     [:octicons-arrow-right-24: Stratified](stratified.md)
 
--   :material-check-all:{ .lg .middle } **VPC Diagnostics**
-
-    ---
-
-    Quantitative VPC metrics
-
-    [:octicons-arrow-right-24: Diagnostics](diagnostics.md)
-
 </div>
 
 ---

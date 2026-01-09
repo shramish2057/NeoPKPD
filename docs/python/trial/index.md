@@ -32,14 +32,6 @@ The `openpkpd.trial` module provides comprehensive clinical trial simulation and
 
     [:octicons-arrow-right-24: Population](population.md)
 
--   :material-play:{ .lg .middle } **Trial Simulation**
-
-    ---
-
-    Execute virtual trials
-
-    [:octicons-arrow-right-24: Simulation](simulation.md)
-
 -   :material-chart-line:{ .lg .middle } **Power Analysis**
 
     ---

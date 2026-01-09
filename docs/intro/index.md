@@ -62,14 +62,6 @@ NCA calculations follow FDA/EMA guidelines. VPC and diagnostic plots meet regula
 
     [:octicons-arrow-right-24: Get Started](getting-started.md)
 
--   :material-book-open-variant:{ .lg .middle } **Examples**
-
-    ---
-
-    Runnable examples for every feature
-
-    [:octicons-arrow-right-24: Examples](../examples/index.md)
-
 </div>
 
 ---

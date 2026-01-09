@@ -53,7 +53,6 @@ julia --project=core/OpenPKPDCore docs/examples/use_cases/real_world_theophyllin
 
 ## See Also
 
-- [NCA Examples](../../nca/README.md)
-- [Estimation Examples](../../estimation/README.md)
-- [VPC Examples](../../vpc/README.md)
-- [Real-World Validation](../../real_world_validation/README.md)
+- [NCA Documentation](../../../julia/nca/index.md)
+- [Estimation Documentation](../../../julia/estimation/index.md)
+- [VPC Documentation](../../../julia/vpc/index.md)

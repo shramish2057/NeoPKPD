@@ -481,4 +481,3 @@ In this tutorial, you learned:
 - [PD Models Reference](models/pd/direct-emax.md) - Pharmacodynamic models
 - [Population Modeling](population/index.md) - Advanced IIV/IOV/covariates
 - [Parameter Estimation](estimation/index.md) - FOCE-I, SAEM, Laplacian
-- [API Reference](api-reference.md) - Complete function reference

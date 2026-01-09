@@ -531,7 +531,6 @@ println("=" ^ 60)
 ## See Also
 
 - [Parallel Design](parallel.md) - Independent group designs
-- [Bioequivalence](bioequivalence.md) - Detailed BE analysis
 - [Power Analysis](power.md) - Sample size for crossover
 - [NCA](../nca/index.md) - Non-compartmental analysis
 

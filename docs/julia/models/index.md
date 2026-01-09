@@ -35,13 +35,11 @@ OpenPKPD provides a comprehensive library of validated pharmacokinetic (PK) and 
 | Model | Page | Parameters | Route | Use Case |
 |-------|------|------------|-------|----------|
 | One-Comp IV Bolus | [→](pk/onecomp-iv-bolus.md) | CL, V | IV | Simple IV kinetics |
-| One-Comp IV Infusion | [→](pk/onecomp-iv-infusion.md) | CL, V | IV | Infusion dosing |
 | One-Comp Oral | [→](pk/onecomp-oral.md) | Ka, CL, V | Oral | Simple oral drugs |
 | Two-Comp IV | [→](pk/twocomp-iv.md) | CL, V1, Q, V2 | IV | Distribution kinetics |
 | Two-Comp Oral | [→](pk/twocomp-oral.md) | Ka, CL, V1, Q, V2 | Oral | Oral with distribution |
 | Three-Comp IV | [→](pk/threecomp-iv.md) | CL, V1, Q2, V2, Q3, V3 | IV | Deep tissue |
 | Transit Absorption | [→](pk/transit-absorption.md) | N, Ktr, Ka, CL, V | Oral | Delayed absorption |
-| Michaelis-Menten | [→](pk/michaelis-menten.md) | Vmax, Km, V | IV | Saturable elimination |
 | TMDD | [→](pk/tmdd.md) | Multiple | IV | Target-mediated disposition |
 
 ### Model Selection Guide
@@ -75,11 +73,6 @@ graph TD
 | Direct Emax | [→](pd/direct-emax.md) | E0, Emax, EC50 | Direct | Hyperbolic response |
 | Sigmoid Emax | [→](pd/sigmoid-emax.md) | E0, Emax, EC50, γ | Direct | Hill equation |
 | Effect Compartment | [→](pd/effect-compartment.md) | ke0, E0, Emax, EC50 | Indirect | Biophase equilibration |
-| Indirect Response I | [→](pd/indirect-response-1.md) | Kin, Kout, Imax, IC50 | Indirect | Inhibition of Kin |
-| Indirect Response II | [→](pd/indirect-response-2.md) | Kin, Kout, Imax, IC50 | Indirect | Inhibition of Kout |
-| Indirect Response III | [→](pd/indirect-response-3.md) | Kin, Kout, Smax, SC50 | Indirect | Stimulation of Kin |
-| Indirect Response IV | [→](pd/indirect-response-4.md) | Kin, Kout, Smax, SC50 | Indirect | Stimulation of Kout |
-| Turnover | [→](pd/turnover.md) | Kin, Kout, R0 | Indirect | Biomarker turnover |
 | Disease Progression | [→](pd/disease-progression.md) | Multiple | Complex | Disease dynamics |
 
 ### PD Model Selection Guide
@@ -177,7 +170,7 @@ end
 
 ### Creating Custom Models
 
-See [API Reference](../api-reference.md) for extending OpenPKPD with custom models.
+See the source code in `core/OpenPKPDCore/src/models/` for examples of extending OpenPKPD with custom models.
 
 ---
 

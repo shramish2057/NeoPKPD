@@ -106,14 +106,6 @@ print("Concentrations:", result["observations"]["conc"])
 
     [:octicons-arrow-right-24: Data Import](data/index.md)
 
--   :material-code-tags:{ .lg .middle } **API Reference**
-
-    ---
-
-    Complete function reference
-
-    [:octicons-arrow-right-24: API Reference](api-reference.md)
-
 </div>
 
 ---

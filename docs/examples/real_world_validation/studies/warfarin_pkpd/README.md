@@ -96,4 +96,3 @@ julia --project=core/OpenPKPDCore \
 
 - [Theophylline SD Study](../theophylline_theo_sd/README.md)
 - [Theophylline MD Study](../theophylline_theo_md/README.md)
-- [PKPD Model Examples](../../models/pkpd/README.md)
