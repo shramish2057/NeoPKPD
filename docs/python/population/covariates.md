@@ -1,6 +1,6 @@
 # Covariates
 
-Comprehensive guide for incorporating patient characteristics into population models in OpenPKPD Python.
+Comprehensive guide for incorporating patient characteristics into population models in NeoPKPD Python.
 
 ---
 
@@ -9,7 +9,7 @@ Comprehensive guide for incorporating patient characteristics into population mo
 Covariate models explain inter-individual variability by relating PK parameters to measurable patient characteristics.
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 
 # Weight effect on CL and V
 covariate_effects = [
@@ -248,7 +248,7 @@ cyp_effect = {"param": "CL", "cov": "CYP2D6", "ref": 1.0, "kind": "PowerCovariat
 ### Complete Example
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 import numpy as np
 
 # 1. Generate population
@@ -435,7 +435,7 @@ plt.show()
 ## Complete Example
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 import numpy as np
 import matplotlib.pyplot as plt
 

@@ -7,7 +7,7 @@ Single-compartment pharmacokinetic model with instantaneous IV bolus or zero-ord
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_iv_bolus(
+neopkpd.simulate_pk_iv_bolus(
     cl: float,
     v: float,
     doses: list[dict],
@@ -90,9 +90,9 @@ where $R_0 = \text{amount} / \text{duration}$
 ### Single IV Bolus
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=10.0,      # 10 L/h clearance
     v=50.0,       # 50 L volume
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -110,7 +110,7 @@ print(f"Half-life = {0.693 * 50 / 10:.1f} h")                # 3.47 h
 
 ```python
 # 500 mg over 2 hours
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=10.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 500.0, "duration": 2.0}],
@@ -136,7 +136,7 @@ print(f"Cmax = {conc[cmax_idx]:.2f} mg/L at t = {t[cmax_idx]} h")
 # 500 mg every 8 hours for 5 doses
 doses = [{"time": i * 8.0, "amount": 500.0} for i in range(5)]
 
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=10.0,
     v=50.0,
     doses=doses,
@@ -164,7 +164,7 @@ print(f"Steady-state Cmin: {cmin:.2f} mg/L")
 
 ```python
 # Continuous infusion: 20 mg/h for 24 hours
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=10.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 480.0, "duration": 24.0}],
@@ -200,7 +200,7 @@ doses = [
     {"time": 0.0, "amount": maint_rate * 24, "duration": 24.0} # 24h infusion
 ]
 
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=cl, v=v,
     doses=doses,
     t0=0.0, t1=24.0,
@@ -218,10 +218,10 @@ print(f"C at 24h: {result['observations']['conc'][-1]:.2f} mg/L")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pk_profile
+import neopkpd
+from neopkpd.viz import plot_pk_profile
 
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,
@@ -247,7 +247,7 @@ fig = plot_pk_profile(
 ```python
 import numpy as np
 
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=48.0,

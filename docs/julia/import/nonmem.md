@@ -1,15 +1,15 @@
 # NONMEM Import
 
-Comprehensive guide for importing NONMEM control stream files (.ctl, .mod) into OpenPKPD.
+Comprehensive guide for importing NONMEM control stream files (.ctl, .mod) into NeoPKPD.
 
 ---
 
 ## Overview
 
-OpenPKPD can parse NONMEM control files and convert them to native OpenPKPD model specifications, enabling seamless migration from NONMEM workflows.
+NeoPKPD can parse NONMEM control files and convert them to native NeoPKPD model specifications, enabling seamless migration from NONMEM workflows.
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 result = import_nonmem("run001.ctl")
 println("Model: $(result.model_type)")
@@ -23,7 +23,7 @@ println("Parameters: $(result.parameters)")
 ### Basic Import
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Import NONMEM control file
 result = import_nonmem("run001.ctl")
@@ -55,7 +55,7 @@ result = import_nonmem("run001.ctl"; doses=doses)
 
 ```julia
 struct ImportResult
-    model_type::Symbol              # OpenPKPD model kind
+    model_type::Symbol              # NeoPKPD model kind
     parameters::Dict{Symbol,Float64} # Parameter values
     spec::ModelSpec                 # Complete model specification
     iiv::Union{Nothing,IIVSpec}     # Inter-individual variability
@@ -106,7 +106,7 @@ end
 $SUBROUTINES ADVAN1 TRANS2
 ```
 
-| TRANS | Parameters | OpenPKPD Model |
+| TRANS | Parameters | NeoPKPD Model |
 |-------|------------|----------------|
 | TRANS1 | K, V | `:OneCompIVBolus` |
 | TRANS2 | CL, V | `:OneCompIVBolus` |
@@ -117,7 +117,7 @@ $SUBROUTINES ADVAN1 TRANS2
 $SUBROUTINES ADVAN2 TRANS2
 ```
 
-| TRANS | Parameters | OpenPKPD Model |
+| TRANS | Parameters | NeoPKPD Model |
 |-------|------------|----------------|
 | TRANS1 | KA, K, V | `:OneCompOralFirstOrder` |
 | TRANS2 | KA, CL, V | `:OneCompOralFirstOrder` |
@@ -128,7 +128,7 @@ $SUBROUTINES ADVAN2 TRANS2
 $SUBROUTINES ADVAN3 TRANS4
 ```
 
-| TRANS | Parameters | OpenPKPD Model |
+| TRANS | Parameters | NeoPKPD Model |
 |-------|------------|----------------|
 | TRANS1 | K, K12, K21, V | `:TwoCompIVBolus` |
 | TRANS3 | CL, V, Q, VSS | `:TwoCompIVBolus` |
@@ -140,7 +140,7 @@ $SUBROUTINES ADVAN3 TRANS4
 $SUBROUTINES ADVAN4 TRANS4
 ```
 
-| TRANS | Parameters | OpenPKPD Model |
+| TRANS | Parameters | NeoPKPD Model |
 |-------|------------|----------------|
 | TRANS1 | KA, K, K23, K32, V | `:TwoCompOral` |
 | TRANS3 | KA, CL, V, Q, VSS | `:TwoCompOral` |
@@ -152,7 +152,7 @@ $SUBROUTINES ADVAN4 TRANS4
 $SUBROUTINES ADVAN10
 ```
 
-| Parameters | OpenPKPD Model |
+| Parameters | NeoPKPD Model |
 |------------|----------------|
 | VM, KM, V | `:MichaelisMentenElimination` |
 
@@ -162,7 +162,7 @@ $SUBROUTINES ADVAN10
 $SUBROUTINES ADVAN11 TRANS4
 ```
 
-| TRANS | Parameters | OpenPKPD Model |
+| TRANS | Parameters | NeoPKPD Model |
 |-------|------------|----------------|
 | TRANS1 | K, K12, K21, K13, K31, V | `:ThreeCompIVBolus` |
 | TRANS4 | CL, V1, Q2, V2, Q3, V3 | `:ThreeCompIVBolus` |
@@ -605,7 +605,7 @@ $COV PRINT=E
 ### Julia Import Code
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Import the control file
 result = import_nonmem("run001.ctl")
@@ -616,7 +616,7 @@ println("NONMEM Import Results")
 println("=" ^ 50)
 
 println("\n--- Model Type ---")
-println("OpenPKPD model: $(result.model_type)")
+println("NeoPKPD model: $(result.model_type)")
 
 println("\n--- Fixed Effects (THETA) ---")
 for (param, value) in result.parameters
@@ -669,7 +669,7 @@ NONMEM Import Results
 ==================================================
 
 --- Model Type ---
-OpenPKPD model: TwoCompOral
+NeoPKPD model: TwoCompOral
 
 --- Fixed Effects (THETA) ---
   CL = 10.0
@@ -709,19 +709,19 @@ Tmax: 1.5
 ### Basic Import
 
 ```bash
-./bin/openpkpd import --input run001.ctl --format nonmem
+./bin/neopkpd import --input run001.ctl --format nonmem
 ```
 
 ### Export to JSON
 
 ```bash
-./bin/openpkpd import --input run001.ctl --format nonmem --out model.json
+./bin/neopkpd import --input run001.ctl --format nonmem --out model.json
 ```
 
 ### Validate Import
 
 ```bash
-./bin/openpkpd import --input run001.ctl --format nonmem --validate
+./bin/neopkpd import --input run001.ctl --format nonmem --validate
 ```
 
 ---
@@ -730,5 +730,5 @@ Tmax: 1.5
 
 - [Monolix Import](monolix.md) - Import Monolix projects
 - [CDISC Import](cdisc.md) - Import CDISC data
-- [Model Specification](../models/index.md) - OpenPKPD model types
+- [Model Specification](../models/index.md) - NeoPKPD model types
 

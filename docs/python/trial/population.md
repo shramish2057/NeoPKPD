@@ -1,6 +1,6 @@
 # Virtual Population
 
-Comprehensive guide for generating realistic virtual patient populations in OpenPKPD Python.
+Comprehensive guide for generating realistic virtual patient populations in NeoPKPD Python.
 
 ---
 
@@ -9,7 +9,7 @@ Comprehensive guide for generating realistic virtual patient populations in Open
 Virtual population generation creates demographically realistic subjects for trial simulation.
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # Generate healthy volunteers
 pop = trial.generate_virtual_population(
@@ -71,7 +71,7 @@ class DemographicSpec:
 ### Creating Custom Specs
 
 ```python
-from openpkpd.trial import DemographicSpec
+from neopkpd.trial import DemographicSpec
 
 # Custom population
 spec = DemographicSpec(
@@ -222,7 +222,7 @@ class VirtualSubject:
 ### Standard Covariates
 
 ```python
-from openpkpd.trial import CovariateSpec
+from neopkpd.trial import CovariateSpec
 
 # Continuous covariate
 creatinine = CovariateSpec(
@@ -506,7 +506,7 @@ print(f"Balance metrics: {balance}")
 ## Complete Example
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # =========================================
 # Phase III Population Generation

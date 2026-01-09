@@ -1,6 +1,6 @@
 # Glossary
 
-Common pharmacometrics and OpenPKPD terminology.
+Common pharmacometrics and NeoPKPD terminology.
 
 ---
 

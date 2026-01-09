@@ -1,5 +1,5 @@
 from pathlib import Path
-from openpkpd import init_julia, replay_artifact, write_single_artifact
+from neopkpd import init_julia, replay_artifact, write_single_artifact
 
 
 def test_python_written_artifact_replays():

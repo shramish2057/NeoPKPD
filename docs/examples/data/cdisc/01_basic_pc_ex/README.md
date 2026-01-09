@@ -30,7 +30,7 @@ Import pharmacokinetic data from standard CDISC PC (concentrations) and EX (expo
 ## Usage
 
 ```python
-from openpkpd.data import load_cdisc
+from neopkpd.data import load_cdisc
 
 data = load_cdisc(pc="pc.csv", ex="ex.csv", dm="dm.csv")
 ```

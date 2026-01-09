@@ -7,7 +7,7 @@ Comprehensive diagnostic tools for assessing model fit and validating assumption
 ## Overview
 
 ```python
-from openpkpd.estimation import compute_diagnostics
+from neopkpd.estimation import compute_diagnostics
 
 result = estimate(data, model, config)
 diagnostics = compute_diagnostics(result)

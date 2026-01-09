@@ -1,10 +1,10 @@
 # CLI Reference
 
-OpenPKPD provides a comprehensive command-line interface for PK/PD simulations, estimation, VPC, NCA, trial simulation, and model import.
+NeoPKPD provides a comprehensive command-line interface for PK/PD simulations, estimation, VPC, NCA, trial simulation, and model import.
 
 ## Installation
 
-The CLI is located in `packages/cli/bin/openpkpd` and requires Julia with the OpenPKPDCore and OpenPKPDCLI packages.
+The CLI is located in `packages/cli/bin/neopkpd` and requires Julia with the NeoPKPDCore and NeoPKPDCLI packages.
 
 ```bash
 # Install dependencies
@@ -12,10 +12,10 @@ julia --project=packages/core -e 'using Pkg; Pkg.instantiate()'
 julia --project=packages/cli -e 'using Pkg; Pkg.instantiate()'
 
 # Make executable
-chmod +x packages/cli/bin/openpkpd
+chmod +x packages/cli/bin/neopkpd
 
 # Run CLI
-./packages/cli/bin/openpkpd <command> [options]
+./packages/cli/bin/neopkpd <command> [options]
 ```
 
 ---
@@ -24,16 +24,16 @@ chmod +x packages/cli/bin/openpkpd
 
 ### version
 
-Display version information for all OpenPKPD components.
+Display version information for all NeoPKPD components.
 
 ```bash
-./packages/cli/bin/openpkpd version
+./packages/cli/bin/neopkpd version
 ```
 
 **Output**:
 
 ```
-OpenPKPD 0.1.0
+NeoPKPD 0.1.0
 Event semantics: 1.0.0
 Solver semantics: 1.0.0
 Artifact schema: 1.0.0
@@ -46,7 +46,7 @@ Artifact schema: 1.0.0
 Run a PK/PD simulation from a JSON specification.
 
 ```bash
-./packages/cli/bin/openpkpd simulate --spec <path> [--out <output_path>]
+./packages/cli/bin/neopkpd simulate --spec <path> [--out <output_path>]
 ```
 
 **Options**:
@@ -59,7 +59,7 @@ Run a PK/PD simulation from a JSON specification.
 **Example**:
 
 ```bash
-./packages/cli/bin/openpkpd simulate --spec simulation.json --out result.json
+./packages/cli/bin/neopkpd simulate --spec simulation.json --out result.json
 ```
 
 ---
@@ -69,7 +69,7 @@ Run a PK/PD simulation from a JSON specification.
 Run a population simulation with IIV/IOV.
 
 ```bash
-./packages/cli/bin/openpkpd population --spec <path> [--out <output_path>]
+./packages/cli/bin/neopkpd population --spec <path> [--out <output_path>]
 ```
 
 ---
@@ -79,7 +79,7 @@ Run a population simulation with IIV/IOV.
 Run NLME parameter estimation (FOCE-I, SAEM, or Laplacian).
 
 ```bash
-./packages/cli/bin/openpkpd estimate --spec <path> [--out <output_path>]
+./packages/cli/bin/neopkpd estimate --spec <path> [--out <output_path>]
 ```
 
 **Specification includes**: observed data, model, estimation method, initial values, bounds.
@@ -93,7 +93,7 @@ See [Parameter Estimation](julia/estimation/index.md) for specification format.
 Run non-compartmental analysis.
 
 ```bash
-./packages/cli/bin/openpkpd nca --spec <path> [--out <output_path>]
+./packages/cli/bin/neopkpd nca --spec <path> [--out <output_path>]
 ```
 
 See [NCA](julia/nca/index.md) for specification format.
@@ -105,7 +105,7 @@ See [NCA](julia/nca/index.md) for specification format.
 Compute Visual Predictive Check.
 
 ```bash
-./packages/cli/bin/openpkpd vpc --spec <path> [--out <output_path>]
+./packages/cli/bin/neopkpd vpc --spec <path> [--out <output_path>]
 ```
 
 See [VPC](julia/vpc/index.md) for specification format.
@@ -117,7 +117,7 @@ See [VPC](julia/vpc/index.md) for specification format.
 Run clinical trial simulation.
 
 ```bash
-./packages/cli/bin/openpkpd trial --spec <path> [--out <output_path>]
+./packages/cli/bin/neopkpd trial --spec <path> [--out <output_path>]
 ```
 
 Supports parallel, crossover, dose-escalation, and bioequivalence designs.
@@ -131,7 +131,7 @@ See [Trial Simulation](julia/trial/index.md) for specification format.
 Import models from NONMEM or Monolix.
 
 ```bash
-./packages/cli/bin/openpkpd import --input <path> --format <format> [--out <output_path>]
+./packages/cli/bin/neopkpd import --input <path> --format <format> [--out <output_path>]
 ```
 
 **Options**:
@@ -146,10 +146,10 @@ Import models from NONMEM or Monolix.
 
 ```bash
 # Import NONMEM control file
-./packages/cli/bin/openpkpd import --input run001.ctl --format nonmem --out model.json
+./packages/cli/bin/neopkpd import --input run001.ctl --format nonmem --out model.json
 
 # Import Monolix project
-./packages/cli/bin/openpkpd import --input project.mlxtran --format monolix --out model.json
+./packages/cli/bin/neopkpd import --input project.mlxtran --format monolix --out model.json
 ```
 
 See [Model Import](julia/import/index.md) for details.
@@ -161,7 +161,7 @@ See [Model Import](julia/import/index.md) for details.
 Run parameter sensitivity analysis.
 
 ```bash
-./packages/cli/bin/openpkpd sensitivity --spec <path> [--out <output_path>]
+./packages/cli/bin/neopkpd sensitivity --spec <path> [--out <output_path>]
 ```
 
 ---
@@ -171,13 +171,13 @@ Run parameter sensitivity analysis.
 Compute PK/PD metrics from simulation results.
 
 ```bash
-./packages/cli/bin/openpkpd metrics --artifact <path> --metrics <list>
+./packages/cli/bin/neopkpd metrics --artifact <path> --metrics <list>
 ```
 
 **Examples**:
 
 ```bash
-./packages/cli/bin/openpkpd metrics --artifact result.json --metrics cmax,tmax,auc
+./packages/cli/bin/neopkpd metrics --artifact result.json --metrics cmax,tmax,auc
 ```
 
 ---
@@ -187,7 +187,7 @@ Compute PK/PD metrics from simulation results.
 Replay an execution artifact to verify reproducibility.
 
 ```bash
-./packages/cli/bin/openpkpd replay --artifact <path> [--out <output_path>]
+./packages/cli/bin/neopkpd replay --artifact <path> [--out <output_path>]
 ```
 
 **Options**:
@@ -209,13 +209,13 @@ Replay an execution artifact to verify reproducibility.
 
 ```bash
 # Replay and verify
-./packages/cli/bin/openpkpd replay --artifact validation/golden/pk_iv_bolus.json
+./packages/cli/bin/neopkpd replay --artifact validation/golden/pk_iv_bolus.json
 
 # Replay and save output
-./packages/cli/bin/openpkpd replay --artifact my_simulation.json --out replayed.json
+./packages/cli/bin/neopkpd replay --artifact my_simulation.json --out replayed.json
 
 # Replay population artifact
-./packages/cli/bin/openpkpd replay --artifact validation/golden/population_iv_bolus.json
+./packages/cli/bin/neopkpd replay --artifact validation/golden/population_iv_bolus.json
 ```
 
 ---
@@ -225,7 +225,7 @@ Replay an execution artifact to verify reproducibility.
 Run the full golden artifact validation suite.
 
 ```bash
-./packages/cli/bin/openpkpd validate-golden
+./packages/cli/bin/neopkpd validate-golden
 ```
 
 **What It Does**:
@@ -262,16 +262,16 @@ All golden artifacts validated successfully.
 Display help for any command.
 
 ```bash
-./packages/cli/bin/openpkpd help
-./packages/cli/bin/openpkpd help simulate
-./packages/cli/bin/openpkpd help estimate
+./packages/cli/bin/neopkpd help
+./packages/cli/bin/neopkpd help simulate
+./packages/cli/bin/neopkpd help estimate
 ```
 
 ---
 
 ## Artifact Format
 
-All OpenPKPD artifacts are JSON files with a consistent structure.
+All NeoPKPD artifacts are JSON files with a consistent structure.
 
 ### Common Fields
 
@@ -368,8 +368,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
-      - run: julia --project=core/OpenPKPDCore -e 'using Pkg; Pkg.instantiate()'
-      - run: ./bin/openpkpd validate-golden
+      - run: julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
+      - run: ./bin/neopkpd validate-golden
 ```
 
 ### Batch Replay
@@ -380,7 +380,7 @@ jobs:
 
 for artifact in artifacts/*.json; do
     echo "Replaying: $artifact"
-    ./bin/openpkpd replay --artifact "$artifact" --out "replayed/$(basename $artifact)"
+    ./bin/neopkpd replay --artifact "$artifact" --out "replayed/$(basename $artifact)"
 done
 ```
 
@@ -388,7 +388,7 @@ done
 
 ```bash
 # Generate new artifact
-julia --project=core/OpenPKPDCore my_simulation.jl
+julia --project=core/NeoPKPDCore my_simulation.jl
 
 # Compare with golden
 diff <(jq -S . validation/golden/pk_iv_bolus.json) <(jq -S . my_artifact.json)
@@ -409,14 +409,14 @@ Error: julia: command not found
 ### Package Not Installed
 
 ```
-Error: ArgumentError: Package OpenPKPDCore not found
+Error: ArgumentError: Package NeoPKPDCore not found
 ```
 
 **Solution**: Install dependencies:
 
 ```bash
-julia --project=core/OpenPKPDCore -e 'using Pkg; Pkg.instantiate()'
-julia --project=cli/OpenPKPDCLI -e 'using Pkg; Pkg.instantiate()'
+julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
+julia --project=cli/NeoPKPDCLI -e 'using Pkg; Pkg.instantiate()'
 ```
 
 ### Artifact Schema Mismatch
@@ -425,9 +425,9 @@ julia --project=cli/OpenPKPDCLI -e 'using Pkg; Pkg.instantiate()'
 Warning: Artifact schema version mismatch
 ```
 
-**Cause**: Artifact was created with a different version of OpenPKPD.
+**Cause**: Artifact was created with a different version of NeoPKPD.
 
-**Solution**: Re-generate the artifact or update your OpenPKPD installation.
+**Solution**: Re-generate the artifact or update your NeoPKPD installation.
 
 ---
 
@@ -436,7 +436,7 @@ Warning: Artifact schema version mismatch
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `JULIA_PROJECT` | Julia project path | Auto-detected |
-| `OPENPKPD_ROOT` | Repository root | Auto-detected |
+| `NEOPKPD_ROOT` | Repository root | Auto-detected |
 
 ---
 

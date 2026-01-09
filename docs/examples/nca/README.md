@@ -25,7 +25,7 @@ Examples demonstrating NCA metrics computation from concentration-time data.
 ## Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Compute NCA metrics
 result = compute_nca(
@@ -41,7 +41,7 @@ println("t_half: $(result.t_half)")
 ```
 
 ```python
-from openpkpd.nca import compute_nca
+from neopkpd.nca import compute_nca
 
 result = compute_nca(
     times=[0, 0.5, 1, 2, 4, 8, 12, 24],

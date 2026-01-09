@@ -1,5 +1,5 @@
 """
-Tests for OpenPKPD Trial Core Integration
+Tests for NeoPKPD Trial Core Integration
 
 Tests the Julia-connected clinical trial functions including:
 - Model-based subject exposure simulation
@@ -19,7 +19,7 @@ class TestSubjectExposure:
     def julia_initialized(self):
         """Initialize Julia."""
         try:
-            from openpkpd._julia_bridge import get_julia
+            from neopkpd._julia_bridge import get_julia
             get_julia()
             return True
         except Exception:
@@ -28,7 +28,7 @@ class TestSubjectExposure:
 
     def test_simulate_exposure_onecomp_iv(self, julia_initialized):
         """Test one-compartment IV bolus exposure simulation."""
-        from openpkpd.trial import simulate_subject_exposure
+        from neopkpd.trial import simulate_subject_exposure
 
         exposure = simulate_subject_exposure(
             model_kind='OneCompIVBolus',
@@ -45,7 +45,7 @@ class TestSubjectExposure:
 
     def test_simulate_exposure_twocomp_oral(self, julia_initialized):
         """Test two-compartment oral exposure simulation."""
-        from openpkpd.trial import simulate_subject_exposure
+        from neopkpd.trial import simulate_subject_exposure
 
         exposure = simulate_subject_exposure(
             model_kind='TwoCompOral',
@@ -62,7 +62,7 @@ class TestSubjectExposure:
 
     def test_exposure_pk_metrics(self, julia_initialized):
         """Test PK metrics calculation from exposure."""
-        from openpkpd.trial import simulate_subject_exposure
+        from neopkpd.trial import simulate_subject_exposure
 
         exposure = simulate_subject_exposure(
             model_kind='OneCompIVBolus',
@@ -87,7 +87,7 @@ class TestDoseEscalation:
     def julia_initialized(self):
         """Initialize Julia."""
         try:
-            from openpkpd._julia_bridge import get_julia
+            from neopkpd._julia_bridge import get_julia
             get_julia()
             return True
         except Exception:
@@ -96,7 +96,7 @@ class TestDoseEscalation:
 
     def test_3plus3_basic(self, julia_initialized):
         """Test basic 3+3 dose escalation."""
-        from openpkpd.trial import simulate_dose_escalation_3plus3
+        from neopkpd.trial import simulate_dose_escalation_3plus3
 
         result = simulate_dose_escalation_3plus3(
             dose_levels=[10, 25, 50, 100, 200],
@@ -114,7 +114,7 @@ class TestDoseEscalation:
 
     def test_3plus3_finds_mtd(self, julia_initialized):
         """Test 3+3 finds MTD at appropriate dose."""
-        from openpkpd.trial import simulate_dose_escalation_3plus3
+        from neopkpd.trial import simulate_dose_escalation_3plus3
 
         # With V=50, Cmax = Dose/V
         # DLT threshold at 3 means MTD should be around dose=150
@@ -132,7 +132,7 @@ class TestDoseEscalation:
     def test_mtpi_basic(self, julia_initialized):
         """Test mTPI dose escalation."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_dose_escalation_mtpi
+        from neopkpd.trial import simulate_dose_escalation_mtpi
 
         result = simulate_dose_escalation_mtpi(
             dose_levels=[10, 25, 50, 100, 200],
@@ -154,7 +154,7 @@ class TestCrossoverAnalysis:
 
     def test_analyze_crossover_basic(self):
         """Test basic crossover analysis."""
-        from openpkpd.trial import analyze_crossover
+        from neopkpd.trial import analyze_crossover
 
         # Simulated 2x2 crossover data
         # AB sequence: Period 1 = Test, Period 2 = Reference
@@ -173,7 +173,7 @@ class TestCrossoverAnalysis:
 
     def test_crossover_bioequivalence(self):
         """Test bioequivalence assessment from crossover."""
-        from openpkpd.trial import analyze_crossover
+        from neopkpd.trial import analyze_crossover
 
         # Very similar values should be bioequivalent
         p1 = [100, 102, 98, 101, 99, 100]
@@ -189,7 +189,7 @@ class TestCrossoverAnalysis:
 
     def test_period_effect(self):
         """Test period effect detection."""
-        from openpkpd.trial import test_period_effect
+        from neopkpd.trial import test_period_effect
 
         # No period effect
         p1 = [100, 102, 98, 101, 99, 100]
@@ -203,7 +203,7 @@ class TestCrossoverAnalysis:
 
     def test_sequence_effect(self):
         """Test sequence effect detection."""
-        from openpkpd.trial import test_sequence_effect
+        from neopkpd.trial import test_sequence_effect
 
         p1 = [100, 102, 98, 101, 99, 100]
         p2 = [99, 101, 97, 100, 100, 99]
@@ -216,7 +216,7 @@ class TestCrossoverAnalysis:
 
     def test_within_subject_cv(self):
         """Test within-subject CV calculation."""
-        from openpkpd.trial import compute_within_subject_cv
+        from neopkpd.trial import compute_within_subject_cv
 
         v1 = [100, 105, 95, 102, 98]
         v2 = [102, 103, 97, 100, 99]
@@ -233,7 +233,7 @@ class TestAdaptiveTrial:
     def test_adaptive_trial_basic(self):
         """Test basic adaptive trial simulation."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_adaptive_trial
+        from neopkpd.trial import simulate_adaptive_trial
 
         result = simulate_adaptive_trial(
             n_per_arm=50,
@@ -252,7 +252,7 @@ class TestAdaptiveTrial:
     def test_adaptive_trial_efficacy_stopping(self):
         """Test that large effect can stop trial early."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_adaptive_trial
+        from neopkpd.trial import simulate_adaptive_trial
 
         # Very large effect should trigger early stopping
         result = simulate_adaptive_trial(
@@ -272,7 +272,7 @@ class TestAdaptiveTrial:
     def test_adaptive_trial_no_effect(self):
         """Test trial with no true effect."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_adaptive_trial
+        from neopkpd.trial import simulate_adaptive_trial
 
         result = simulate_adaptive_trial(
             n_per_arm=50,
@@ -293,7 +293,7 @@ class TestPKMetrics:
 
     def test_calculate_pk_metrics_basic(self):
         """Test basic PK metrics calculation."""
-        from openpkpd.trial import calculate_pk_metrics
+        from neopkpd.trial import calculate_pk_metrics
 
         times = [0, 0.5, 1, 2, 4, 8, 12, 24]
         concs = [0, 1.5, 2.0, 1.8, 1.2, 0.6, 0.3, 0.1]
@@ -310,7 +310,7 @@ class TestPKMetrics:
 
     def test_calculate_pk_metrics_half_life(self):
         """Test half-life calculation."""
-        from openpkpd.trial import calculate_pk_metrics
+        from neopkpd.trial import calculate_pk_metrics
 
         # Exponential decay with known half-life
         times = [0, 1, 2, 4, 8, 12, 24]
@@ -334,7 +334,7 @@ class TestIntegrationWorkflow:
     def julia_initialized(self):
         """Initialize Julia."""
         try:
-            from openpkpd._julia_bridge import get_julia
+            from neopkpd._julia_bridge import get_julia
             get_julia()
             return True
         except Exception:
@@ -343,7 +343,7 @@ class TestIntegrationWorkflow:
 
     def test_phase1_escalation_workflow(self, julia_initialized):
         """Test complete Phase I dose escalation workflow."""
-        from openpkpd.trial import (
+        from neopkpd.trial import (
             simulate_dose_escalation_3plus3,
             calculate_pk_metrics
         )
@@ -369,7 +369,7 @@ class TestIntegrationWorkflow:
 
     def test_be_study_workflow(self, julia_initialized):
         """Test bioequivalence study workflow."""
-        from openpkpd.trial import (
+        from neopkpd.trial import (
             simulate_subject_exposure,
             analyze_crossover,
             crossover_2x2
@@ -428,7 +428,7 @@ class TestCRMDoseEscalation:
     def julia_initialized(self):
         """Initialize Julia."""
         try:
-            from openpkpd._julia_bridge import get_julia
+            from neopkpd._julia_bridge import get_julia
             get_julia()
             return True
         except Exception:
@@ -438,7 +438,7 @@ class TestCRMDoseEscalation:
     def test_crm_basic(self, julia_initialized):
         """Test basic CRM dose escalation."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_dose_escalation_crm
+        from neopkpd.trial import simulate_dose_escalation_crm
 
         result = simulate_dose_escalation_crm(
             dose_levels=[10, 25, 50, 100, 200],
@@ -459,7 +459,7 @@ class TestCRMDoseEscalation:
     def test_crm_with_skeleton(self, julia_initialized):
         """Test CRM with custom prior skeleton."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_dose_escalation_crm
+        from neopkpd.trial import simulate_dose_escalation_crm
 
         skeleton = [0.05, 0.10, 0.20, 0.35, 0.50]
         result = simulate_dose_escalation_crm(
@@ -485,7 +485,7 @@ class TestModelConnectedTrial:
     def julia_initialized(self):
         """Initialize Julia."""
         try:
-            from openpkpd._julia_bridge import get_julia
+            from neopkpd._julia_bridge import get_julia
             get_julia()
             return True
         except Exception:
@@ -495,7 +495,7 @@ class TestModelConnectedTrial:
     def test_trial_with_model_basic(self, julia_initialized):
         """Test basic model-connected trial simulation."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_trial_with_model
+        from neopkpd.trial import simulate_trial_with_model
 
         result = simulate_trial_with_model(
             trial_name="Test PK Trial",
@@ -531,7 +531,7 @@ class TestModelConnectedTrial:
     def test_trial_with_model_iiv(self, julia_initialized):
         """Test model-connected trial with inter-individual variability."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_trial_with_model
+        from neopkpd.trial import simulate_trial_with_model
 
         # 2x2 omega matrix for CL and V
         omega = [[0.09, 0.0], [0.0, 0.04]]  # 30% CV for CL, 20% for V
@@ -559,7 +559,7 @@ class TestModelConnectedTrial:
     def test_trial_with_dropout(self, julia_initialized):
         """Test model-connected trial with dropout."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_trial_with_model
+        from neopkpd.trial import simulate_trial_with_model
 
         result = simulate_trial_with_model(
             trial_name="Dropout Trial",
@@ -584,7 +584,7 @@ class TestModelConnectedTrial:
     def test_trial_comparisons(self, julia_initialized):
         """Test statistical comparisons between arms."""
         pytest.importorskip("scipy")
-        from openpkpd.trial import simulate_trial_with_model
+        from neopkpd.trial import simulate_trial_with_model
 
         result = simulate_trial_with_model(
             trial_name="Comparison Trial",

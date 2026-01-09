@@ -9,8 +9,8 @@ Comprehensive guide to VPC computation and analysis in Python.
 Visual Predictive Checks (VPCs) compare observed data distributions to model simulations, providing a visual diagnostic for population model adequacy.
 
 ```python
-from openpkpd import compute_vpc, compute_pcvpc, compute_stratified_vpc
-from openpkpd.vpc import VPCConfig, QuantileBinning
+from neopkpd import compute_vpc, compute_pcvpc, compute_stratified_vpc
+from neopkpd.vpc import VPCConfig, QuantileBinning
 
 # Basic VPC computation
 vpc_result = compute_vpc(
@@ -68,7 +68,7 @@ vpc_result = compute_vpc(
 Configuration dataclass for VPC computation:
 
 ```python
-from openpkpd.vpc import VPCConfig, QuantileBinning
+from neopkpd.vpc import VPCConfig, QuantileBinning
 
 @dataclass
 class VPCConfig:
@@ -176,10 +176,10 @@ def compute_vpc(
 ### Usage
 
 ```python
-import openpkpd
-from openpkpd.vpc import VPCConfig, QuantileBinning
+import neopkpd
+from neopkpd.vpc import VPCConfig, QuantileBinning
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Observed data structure
 observed_data = {
@@ -210,7 +210,7 @@ config = VPCConfig(
 )
 
 # Compute VPC
-vpc_result = openpkpd.compute_vpc(
+vpc_result = neopkpd.compute_vpc(
     observed_data=observed_data,
     population_spec=population_spec,
     grid=grid,
@@ -232,7 +232,7 @@ error_spec = {
     "sigma_prop": 0.1
 }
 
-vpc_result = openpkpd.compute_vpc(
+vpc_result = neopkpd.compute_vpc(
     observed_data=observed_data,
     population_spec=population_spec,
     grid=grid,
@@ -272,7 +272,7 @@ def compute_pcvpc(
 ### Usage
 
 ```python
-from openpkpd.vpc import VPCConfig
+from neopkpd.vpc import VPCConfig
 
 # pcVPC for variable-dose study
 config = VPCConfig(
@@ -280,7 +280,7 @@ config = VPCConfig(
     n_simulations=500
 )
 
-pcvpc_result = openpkpd.compute_pcvpc(
+pcvpc_result = neopkpd.compute_pcvpc(
     observed_data=observed_data,
     population_spec=population_spec,
     grid=grid,
@@ -334,7 +334,7 @@ def compute_stratified_vpc(
 ### Usage
 
 ```python
-from openpkpd.vpc import VPCConfig
+from neopkpd.vpc import VPCConfig
 
 # Define strata for each subject
 strata_data = {
@@ -355,7 +355,7 @@ config = VPCConfig(
 )
 
 # Compute stratified VPC
-stratified_result = openpkpd.compute_stratified_vpc(
+stratified_result = neopkpd.compute_stratified_vpc(
     observed_data=observed_data,
     population_spec=population_spec,
     grid=grid,
@@ -437,7 +437,7 @@ class StratifiedVPCResult:
 Convenient functions to extract data from VPCResult:
 
 ```python
-from openpkpd.vpc import (
+from neopkpd.vpc import (
     get_bin_midpoints,
     get_observed_percentile,
     get_simulated_median,
@@ -458,7 +458,7 @@ sim_lo, sim_hi = get_simulated_ci(vpc_result, 0.50)  # CI bounds
 For standalone use without Julia:
 
 ```python
-from openpkpd.vpc import compute_vpc_python
+from neopkpd.vpc import compute_vpc_python
 
 # Compute VPC from pre-simulated data
 vpc_result = compute_vpc_python(
@@ -478,9 +478,9 @@ vpc_result = compute_vpc_python(
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
-from openpkpd.vpc import VPCConfig, QuantileBinning
+import neopkpd
+from neopkpd import viz
+from neopkpd.vpc import VPCConfig, QuantileBinning
 import numpy as np
 
 # ================================================
@@ -488,7 +488,7 @@ import numpy as np
 # ================================================
 
 # 1. Initialize
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 print("=== VPC Computation Example ===\n")
 
@@ -554,7 +554,7 @@ config = VPCConfig(
     seed=42
 )
 
-vpc_result = openpkpd.compute_vpc(
+vpc_result = neopkpd.compute_vpc(
     observed_data=observed_data,
     population_spec=population_spec,
     grid=grid,

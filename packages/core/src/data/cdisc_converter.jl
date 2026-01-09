@@ -1,10 +1,10 @@
-# CDISC to OpenPKPD Converter
-# Convert CDISC datasets to OpenPKPD format for simulation and analysis
+# CDISC to NeoPKPD Converter
+# Convert CDISC datasets to NeoPKPD format for simulation and analysis
 
 export cdisc_to_observed, CDISCConversionConfig, CDISCConversionResult
 
 """
-Configuration for CDISC to OpenPKPD conversion.
+Configuration for CDISC to NeoPKPD conversion.
 
 Fields:
 - time_reference: How to calculate time (`:first_dose`, `:reference_time`, `:study_day`)
@@ -42,7 +42,7 @@ struct CDISCConversionConfig
 end
 
 """
-Result of CDISC to OpenPKPD conversion.
+Result of CDISC to NeoPKPD conversion.
 
 Fields:
 - observed_data: The converted ObservedData
@@ -62,7 +62,7 @@ struct CDISCConversionResult
 end
 
 """
-Convert CDISC dataset to OpenPKPD ObservedData format.
+Convert CDISC dataset to NeoPKPD ObservedData format.
 
 Arguments:
 - dataset: CDISCDataset to convert

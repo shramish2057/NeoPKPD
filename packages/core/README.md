@@ -1,8 +1,8 @@
-# OpenPKPDCore
+# NeoPKPDCore
 
 **Julia simulation engine for pharmacokinetics and pharmacodynamics**
 
-OpenPKPDCore is the computational heart of OpenPKPD, providing high-performance ODE-based simulation, population modeling, parameter estimation, and model diagnostics.
+NeoPKPDCore is the computational heart of NeoPKPD, providing high-performance ODE-based simulation, population modeling, parameter estimation, and model diagnostics.
 
 ## Installation
 
@@ -11,7 +11,7 @@ using Pkg
 Pkg.activate("packages/core")
 Pkg.instantiate()
 
-using OpenPKPDCore
+using NeoPKPDCore
 ```
 
 ## Quick Start
@@ -19,7 +19,7 @@ using OpenPKPDCore
 ### Single Subject Simulation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define model specification
 spec = ModelSpec(
@@ -106,7 +106,7 @@ println(pop_result.summaries[:conc].quantiles["0.95"])
 
 ## Parameter Estimation (NLME)
 
-OpenPKPDCore provides three estimation methods:
+NeoPKPDCore provides three estimation methods:
 
 ### FOCE-I (First-Order Conditional Estimation with Interaction)
 
@@ -196,7 +196,7 @@ dataset = read_cdisc_xpt("pc.xpt", "ex.xpt", "dm.xpt")
 # Validate dataset
 warnings = validate_cdisc_dataset(dataset)
 
-# Convert to OpenPKPD format
+# Convert to NeoPKPD format
 pop_spec, observed = cdisc_to_population(dataset, model_spec)
 ```
 
@@ -205,11 +205,11 @@ pop_spec, observed = cdisc_to_population(dataset, model_spec)
 ```julia
 # Parse NONMEM control file
 nmctl = parse_nonmem_control("run001.ctl")
-model_spec, pop_spec, mapping = convert_nonmem_to_openpkpd(nmctl)
+model_spec, pop_spec, mapping = convert_nonmem_to_neopkpd(nmctl)
 
 # Parse Monolix project
 mlx = parse_monolix_project("project.mlxtran")
-model_spec, pop_spec, mapping = convert_monolix_to_openpkpd(mlx)
+model_spec, pop_spec, mapping = convert_monolix_to_neopkpd(mlx)
 ```
 
 ## Covariate Models
@@ -287,7 +287,7 @@ pop_artifact = serialize_population_artifact(pop_spec, grid, solver, pop_result)
 ## Module Structure
 
 ```
-OpenPKPDCore/
+NeoPKPDCore/
 ├── src/
 │   ├── models/           # PK/PD model implementations
 │   ├── engine/           # solve.jl, population.jl, infusion.jl

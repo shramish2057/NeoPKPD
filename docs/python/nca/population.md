@@ -7,7 +7,7 @@ Multi-subject non-compartmental analysis with summary statistics.
 ## Overview
 
 ```python
-from openpkpd.nca import run_population_nca, summarize_population_nca
+from neopkpd.nca import run_population_nca, summarize_population_nca
 
 pop_result = run_population_nca(data, dose=100.0)
 summary = summarize_population_nca(pop_result)
@@ -56,7 +56,7 @@ data = pd.DataFrame({
 ### Basic Usage
 
 ```python
-from openpkpd.nca import run_population_nca
+from neopkpd.nca import run_population_nca
 
 pop_result = run_population_nca(
     data,
@@ -74,7 +74,7 @@ for subject_id, result in pop_result.individual_results.items():
 ### With Configuration
 
 ```python
-from openpkpd.nca import run_population_nca, NCAConfig
+from neopkpd.nca import run_population_nca, NCAConfig
 
 config = NCAConfig(
     method="lin_log_mixed",
@@ -109,7 +109,7 @@ pop_result = run_population_nca(
 ### Generate Summary
 
 ```python
-from openpkpd.nca import summarize_population_nca
+from neopkpd.nca import summarize_population_nca
 
 summary = summarize_population_nca(pop_result)
 
@@ -161,7 +161,7 @@ summary = summarize_population_nca(
 ### By Single Variable
 
 ```python
-from openpkpd.nca import stratified_population_nca
+from neopkpd.nca import stratified_population_nca
 
 # Stratify by formulation
 stratified = stratified_population_nca(
@@ -297,7 +297,7 @@ if pop_result.failed_subjects:
 
 ```python
 import pandas as pd
-from openpkpd.nca import (
+from neopkpd.nca import (
     run_population_nca, summarize_population_nca,
     stratified_population_nca, NCAConfig
 )

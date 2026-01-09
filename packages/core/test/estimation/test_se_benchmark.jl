@@ -1,13 +1,13 @@
 # Benchmark Tests for Standard Error Computation
 #
-# Compares OpenPKPD SE computation against trusted references:
+# Compares NeoPKPD SE computation against trusted references:
 # 1. NONMEM theophylline dataset
 # 2. Analytical solutions for simple models
 #
 # These tests ensure SEs are mathematically valid and match industry standards.
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using LinearAlgebra
 using StableRNGs
 

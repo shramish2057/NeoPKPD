@@ -1,6 +1,6 @@
 # Non-Compartmental Analysis
 
-The `openpkpd.nca` module provides FDA/EMA-compliant non-compartmental analysis with comprehensive exposure metrics.
+The `neopkpd.nca` module provides FDA/EMA-compliant non-compartmental analysis with comprehensive exposure metrics.
 
 ---
 
@@ -49,7 +49,7 @@ The `openpkpd.nca` module provides FDA/EMA-compliant non-compartmental analysis 
 ### Basic NCA
 
 ```python
-from openpkpd.nca import run_nca
+from neopkpd.nca import run_nca
 
 # Concentration-time data
 times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
@@ -71,7 +71,7 @@ print(f"CL/F: {result.cl_f:.2f} L/h")
 ### With Configuration
 
 ```python
-from openpkpd.nca import run_nca, NCAConfig
+from neopkpd.nca import run_nca, NCAConfig
 
 config = NCAConfig(
     method="log_linear",           # AUC calculation method
@@ -121,7 +121,7 @@ config = NCAConfig(method="lin_log_mixed")
 ## Individual Functions
 
 ```python
-from openpkpd import nca
+from neopkpd import nca
 
 # Peak metrics
 cmax = nca.nca_cmax(times, conc)
@@ -140,7 +140,7 @@ lambda_z, t_half, r_squared = nca.estimate_lambda_z(times, conc)
 ## Population NCA
 
 ```python
-from openpkpd.nca import run_population_nca, summarize_population_nca
+from neopkpd.nca import run_population_nca, summarize_population_nca
 
 # Run NCA for all subjects
 pop_results = run_population_nca(population_result, dose=100.0)
@@ -157,7 +157,7 @@ print(f"AUC: {summary['auc_0_inf']['mean']:.2f} (CV: {summary['auc_0_inf']['cv']
 ## Bioequivalence
 
 ```python
-from openpkpd.nca import bioequivalence_90ci, tost_analysis, be_conclusion
+from neopkpd.nca import bioequivalence_90ci, tost_analysis, be_conclusion
 
 # 90% CI for geometric mean ratio
 lower, upper = bioequivalence_90ci(test_auc, reference_auc)

@@ -1,6 +1,6 @@
 # Change policy
 
-OpenPKPD treats numerical behavior as versioned scientific infrastructure.
+NeoPKPD treats numerical behavior as versioned scientific infrastructure.
 
 ## Golden artifacts
 

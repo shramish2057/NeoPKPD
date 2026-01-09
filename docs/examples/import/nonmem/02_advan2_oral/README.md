@@ -16,11 +16,11 @@ Import a one-compartment oral model with first-order absorption from NONMEM.
 |------|-------------|
 | [run002.ctl](run002.ctl) | NONMEM control file |
 | [convert.py](convert.py) | Python conversion |
-| [expected.json](expected.json) | Expected OpenPKPD spec |
+| [expected.json](expected.json) | Expected NeoPKPD spec |
 
 ## Parameter Mapping
 
-| NONMEM | OpenPKPD |
+| NONMEM | NeoPKPD |
 |--------|----------|
 | THETA(1) = Ka | params.Ka |
 | THETA(2) = CL | params.CL |

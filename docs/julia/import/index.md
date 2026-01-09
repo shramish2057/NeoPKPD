@@ -1,6 +1,6 @@
 # Model Import
 
-OpenPKPD can import models from other pharmacometrics platforms, enabling migration and interoperability.
+NeoPKPD can import models from other pharmacometrics platforms, enabling migration and interoperability.
 
 ---
 
@@ -58,7 +58,7 @@ OpenPKPD can import models from other pharmacometrics platforms, enabling migrat
 ### Quick Start
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Import NONMEM control stream
 model = import_nonmem("run001.ctl")
@@ -68,14 +68,14 @@ println("Model type: ", model.advan)
 println("THETA: ", model.theta)
 println("OMEGA: ", model.omega)
 
-# Convert to OpenPKPD ModelSpec
+# Convert to NeoPKPD ModelSpec
 spec = to_model_spec(model)
 ```
 
 ### CLI Usage
 
 ```bash
-./bin/openpkpd import --input run001.ctl --format nonmem --out model.json
+./bin/neopkpd import --input run001.ctl --format nonmem --out model.json
 ```
 
 ---
@@ -98,7 +98,7 @@ spec = to_model_spec(model)
 # Import Monolix project
 model = import_monolix("project.mlxtran")
 
-# Convert to OpenPKPD
+# Convert to NeoPKPD
 spec = to_model_spec(model)
 ```
 
@@ -164,14 +164,14 @@ end
 
 ## Migration Workflow
 
-### NONMEM to OpenPKPD
+### NONMEM to NeoPKPD
 
 ```mermaid
 graph LR
     A[NONMEM .ctl] --> B[import_nonmem]
     B --> C[ParsedModel]
     C --> D[to_model_spec]
-    D --> E[OpenPKPD ModelSpec]
+    D --> E[NeoPKPD ModelSpec]
     E --> F[Simulate/Estimate]
 ```
 
@@ -189,7 +189,7 @@ println("Parameters: ", parsed.theta)
 println("Random effects: ", parsed.omega)
 ```
 
-3. **Convert to OpenPKPD**
+3. **Convert to NeoPKPD**
 ```julia
 spec = to_model_spec(parsed)
 ```
@@ -228,7 +228,7 @@ nm_pred = load_nonmem_output("run001.tab")
 For unsupported features:
 
 1. Simplify the NONMEM code before import
-2. Manually define the OpenPKPD model
+2. Manually define the NeoPKPD model
 3. Use the CLI `--validate` flag to check import accuracy
 
 ---

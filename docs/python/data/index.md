@@ -1,6 +1,6 @@
 # Data Import
 
-The `openpkpd.data` module provides utilities for importing and preparing PK/PD data from various formats.
+The `neopkpd.data` module provides utilities for importing and preparing PK/PD data from various formats.
 
 ---
 
@@ -49,7 +49,7 @@ The `openpkpd.data` module provides utilities for importing and preparing PK/PD 
 ### Import CDISC Data
 
 ```python
-from openpkpd.data import import_cdisc
+from neopkpd.data import import_cdisc
 
 # Import from CSV files
 data = import_cdisc(
@@ -67,7 +67,7 @@ print(f"Observations: {len(data.dv)}")
 ### Import from XPT
 
 ```python
-from openpkpd.data import import_cdisc
+from neopkpd.data import import_cdisc
 
 data = import_cdisc(
     pc_path="pc.xpt",
@@ -126,7 +126,7 @@ Common variables:
 ### Standard Format
 
 ```python
-from openpkpd.data import read_pk_data
+from neopkpd.data import read_pk_data
 
 # Expected columns: ID, TIME, DV, AMT, EVID, CMT
 data = read_pk_data("pk_data.csv")
@@ -146,7 +146,7 @@ data = read_pk_data(
 ### NONMEM Format
 
 ```python
-from openpkpd.data import read_nonmem_data
+from neopkpd.data import read_nonmem_data
 
 # Standard NONMEM dataset
 data = read_nonmem_data("data.csv")
@@ -160,7 +160,7 @@ print(data.to_dataframe())
 ## XPT Import
 
 ```python
-from openpkpd.data import read_xpt
+from neopkpd.data import read_xpt
 
 # Single file
 pc_data = read_xpt("pc.xpt")
@@ -180,7 +180,7 @@ data = {
 ### Time Calculation
 
 ```python
-from openpkpd.data import calculate_time_after_dose
+from neopkpd.data import calculate_time_after_dose
 
 data = calculate_time_after_dose(
     observations=obs_df,
@@ -193,7 +193,7 @@ data = calculate_time_after_dose(
 ### BLQ Handling
 
 ```python
-from openpkpd.data import handle_blq
+from neopkpd.data import handle_blq
 
 # Replace BLQ with LLOQ/2
 data = handle_blq(
@@ -212,7 +212,7 @@ data = handle_blq(data, lloq=0.1, method="drop")
 ### Merge Demographics
 
 ```python
-from openpkpd.data import merge_demographics
+from neopkpd.data import merge_demographics
 
 merged = merge_demographics(
     pk_data=pc_data,
@@ -263,8 +263,8 @@ class CDISCData:
 ### Complete Workflow
 
 ```python
-from openpkpd.data import import_cdisc, handle_blq, calculate_time_after_dose
-import openpkpd
+from neopkpd.data import import_cdisc, handle_blq, calculate_time_after_dose
+import neopkpd
 
 # Import CDISC data
 data = import_cdisc(
@@ -283,7 +283,7 @@ data = calculate_time_after_dose(data)
 est_data = data.to_estimation_data()
 
 # Run NCA
-from openpkpd.nca import run_population_nca
+from neopkpd.nca import run_population_nca
 nca_results = run_population_nca(est_data)
 ```
 

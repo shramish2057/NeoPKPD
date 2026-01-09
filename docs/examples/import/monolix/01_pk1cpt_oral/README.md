@@ -15,12 +15,12 @@ Import a one-compartment oral model from Monolix project.
 |------|-------------|
 | [project.mlxtran](project.mlxtran) | Monolix project file |
 | [convert.py](convert.py) | Python conversion |
-| [expected.json](expected.json) | Expected OpenPKPD spec |
+| [expected.json](expected.json) | Expected NeoPKPD spec |
 
 ## Conversion
 
 ```python
-from openpkpd import import_monolix
+from neopkpd import import_monolix
 
 model = import_monolix("project.mlxtran")
 print(model.spec)
@@ -28,7 +28,7 @@ print(model.spec)
 
 ## Parameter Mapping
 
-| Monolix | OpenPKPD |
+| Monolix | NeoPKPD |
 |---------|----------|
 | ka_pop | params.Ka |
 | V_pop | params.V |

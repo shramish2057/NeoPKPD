@@ -1,8 +1,8 @@
-# openpkpd
+# neopkpd
 
-**Python bindings for OpenPKPD pharmacometric simulations**
+**Python bindings for NeoPKPD pharmacometric simulations**
 
-The `openpkpd` Python package provides a comprehensive interface to the OpenPKPD Julia simulation engine, enabling seamless integration with Python data science workflows.
+The `neopkpd` Python package provides a comprehensive interface to the NeoPKPD Julia simulation engine, enabling seamless integration with Python data science workflows.
 
 ## Installation
 
@@ -27,13 +27,13 @@ pip install -e ".[all]"
 ## Quick Start
 
 ```python
-import openpkpd
+import neopkpd
 
 # Initialize Julia (required once per session)
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Run a simple simulation
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -49,41 +49,41 @@ print("Concentrations:", result["observations"]["conc"])
 
 ```python
 # One-compartment IV bolus
-result = openpkpd.simulate_pk_iv_bolus(cl=5.0, v=50.0, ...)
+result = neopkpd.simulate_pk_iv_bolus(cl=5.0, v=50.0, ...)
 
 # IV infusion (specify duration)
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0, "duration": 1.0}],  # 1-hour infusion
     ...
 )
 
 # One-compartment oral
-result = openpkpd.simulate_pk_oral_first_order(ka=1.5, cl=5.0, v=50.0, ...)
+result = neopkpd.simulate_pk_oral_first_order(ka=1.5, cl=5.0, v=50.0, ...)
 
 # Two-compartment models
-result = openpkpd.simulate_pk_twocomp_iv_bolus(cl=5.0, v1=50.0, q=2.0, v2=100.0, ...)
-result = openpkpd.simulate_pk_twocomp_oral(ka=1.5, cl=5.0, v1=50.0, q=2.0, v2=100.0, ...)
+result = neopkpd.simulate_pk_twocomp_iv_bolus(cl=5.0, v1=50.0, q=2.0, v2=100.0, ...)
+result = neopkpd.simulate_pk_twocomp_oral(ka=1.5, cl=5.0, v1=50.0, q=2.0, v2=100.0, ...)
 
 # Three-compartment
-result = openpkpd.simulate_pk_threecomp_iv_bolus(cl=5.0, v1=10.0, q2=20.0, v2=50.0, q3=2.0, v3=200.0, ...)
+result = neopkpd.simulate_pk_threecomp_iv_bolus(cl=5.0, v1=10.0, q2=20.0, v2=50.0, q3=2.0, v3=200.0, ...)
 
 # Advanced models
-result = openpkpd.simulate_pk_transit_absorption(ktr=2.0, n_transit=3, cl=5.0, v=50.0, ...)
-result = openpkpd.simulate_pk_michaelis_menten(vmax=10.0, km=2.0, v=50.0, ...)
+result = neopkpd.simulate_pk_transit_absorption(ktr=2.0, n_transit=3, cl=5.0, v=50.0, ...)
+result = neopkpd.simulate_pk_michaelis_menten(vmax=10.0, km=2.0, v=50.0, ...)
 
 # PK-PD models
-result = openpkpd.simulate_pkpd_direct_emax(cl=5.0, v=50.0, e0=0.0, emax=100.0, ec50=2.0, ...)
-result = openpkpd.simulate_pkpd_sigmoid_emax(cl=5.0, v=50.0, e0=10.0, emax=40.0, ec50=0.8, gamma=2.0, ...)
-result = openpkpd.simulate_pkpd_biophase_equilibration(cl=5.0, v=50.0, ke0=0.5, e0=0.0, emax=100.0, ec50=1.0, ...)
-result = openpkpd.simulate_pkpd_indirect_response(cl=5.0, v=50.0, kin=10.0, kout=0.5, ic50=2.0, imax=0.9, ...)
+result = neopkpd.simulate_pkpd_direct_emax(cl=5.0, v=50.0, e0=0.0, emax=100.0, ec50=2.0, ...)
+result = neopkpd.simulate_pkpd_sigmoid_emax(cl=5.0, v=50.0, e0=10.0, emax=40.0, ec50=0.8, gamma=2.0, ...)
+result = neopkpd.simulate_pkpd_biophase_equilibration(cl=5.0, v=50.0, ke0=0.5, e0=0.0, emax=100.0, ec50=1.0, ...)
+result = neopkpd.simulate_pkpd_indirect_response(cl=5.0, v=50.0, kin=10.0, kout=0.5, ic50=2.0, imax=0.9, ...)
 ```
 
 ### Population Simulation
 
 ```python
 # Population with IIV
-result = openpkpd.simulate_population_iv_bolus(
+result = neopkpd.simulate_population_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -101,7 +101,7 @@ print("5th percentile:", result["summaries"]["conc"]["quantiles"]["0.05"])
 ### Parameter Estimation (NLME)
 
 ```python
-from openpkpd.estimation import estimate, EstimationConfig, FOCEIMethod
+from neopkpd.estimation import estimate, EstimationConfig, FOCEIMethod
 
 config = EstimationConfig(
     method=FOCEIMethod(max_inner_iter=100, inner_tol=1e-6),
@@ -125,7 +125,7 @@ print("AIC:", result.aic)
 ### Non-Compartmental Analysis (NCA)
 
 ```python
-from openpkpd.nca import run_nca, NCAConfig
+from neopkpd.nca import run_nca, NCAConfig
 
 result = run_nca(
     times=[0, 0.5, 1, 2, 4, 8, 12, 24],
@@ -143,7 +143,7 @@ print(f"t1/2: {result.t_half:.2f}")
 ### Visual Predictive Check (VPC)
 
 ```python
-from openpkpd.analysis import compute_vpc, VPCConfig
+from neopkpd.analysis import compute_vpc, VPCConfig
 
 config = VPCConfig(
     pi_levels=[0.05, 0.50, 0.95],
@@ -157,14 +157,14 @@ config = VPCConfig(
 vpc_result = compute_vpc(observed_data, pop_spec, grid, solver, config=config)
 
 # Visualize
-from openpkpd import viz
+from neopkpd import viz
 viz.plot_vpc(vpc_result)
 ```
 
 ### Clinical Trial Simulation
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # Define design
 design = trial.parallel_design(n_arms=2)
@@ -197,7 +197,7 @@ print(f"Power: {power_result.power:.1%}")
 ### Model Import
 
 ```python
-from openpkpd.import_ import parse_nonmem, parse_monolix
+from neopkpd.import_ import parse_nonmem, parse_monolix
 
 # Import NONMEM control file
 model_spec, pop_spec, mapping = parse_nonmem("run001.ctl")
@@ -209,19 +209,19 @@ model_spec, pop_spec, mapping = parse_monolix("project.mlxtran")
 ### CDISC Data Import
 
 ```python
-from openpkpd.data import read_cdisc_csv, cdisc_to_population
+from neopkpd.data import read_cdisc_csv, cdisc_to_population
 
 # Read CDISC domains
 dataset = read_cdisc_csv("pc.csv", "ex.csv", "dm.csv")
 
-# Convert to OpenPKPD format
+# Convert to NeoPKPD format
 pop_spec, observed = cdisc_to_population(dataset, model_spec)
 ```
 
 ### Sensitivity Analysis
 
 ```python
-result = openpkpd.run_sensitivity(
+result = neopkpd.run_sensitivity(
     model_kind="OneCompIVBolus",
     params={"CL": 5.0, "V": 50.0},
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -238,7 +238,7 @@ print("Max relative delta:", result.metrics.max_rel_delta)
 ### Visualization
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Set backend
 viz.set_backend("matplotlib")  # or "plotly"
@@ -271,7 +271,7 @@ viz.plot_tornado(sensitivity_analysis)
 ## Module Structure
 
 ```
-openpkpd/
+neopkpd/
 ├── __init__.py           # Core simulation functions
 ├── _core.py              # Julia bridge utilities
 ├── simulations/          # PK/PD simulation wrappers
@@ -316,9 +316,9 @@ openpkpd/
 
 ```python
 import numpy as np
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_iv_bolus(...)
+result = neopkpd.simulate_pk_iv_bolus(...)
 t = np.array(result["t"])
 conc = np.array(result["observations"]["conc"])
 

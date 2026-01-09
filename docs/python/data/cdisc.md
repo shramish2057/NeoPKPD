@@ -6,10 +6,10 @@ Comprehensive guide for importing CDISC/SDTM and ADaM formatted data in Python.
 
 ## Overview
 
-The `openpkpd.data` module provides utilities for importing data from CDISC (Clinical Data Interchange Standards Consortium) formats.
+The `neopkpd.data` module provides utilities for importing data from CDISC (Clinical Data Interchange Standards Consortium) formats.
 
 ```python
-from openpkpd.data import import_cdisc
+from neopkpd.data import import_cdisc
 
 data = import_cdisc(
     pc_path="pc.csv",
@@ -25,7 +25,7 @@ data = import_cdisc(
 ### Basic Import
 
 ```python
-from openpkpd.data import import_cdisc
+from neopkpd.data import import_cdisc
 
 # Import from CSV files
 data = import_cdisc(
@@ -123,7 +123,7 @@ pc_data = pd.DataFrame({
 
 #### Route Mapping
 
-| EX Route | OpenPKPD Route |
+| EX Route | NeoPKPD Route |
 |----------|----------------|
 | ORAL | `"oral"` |
 | INTRAVENOUS | `"iv_bolus"` |
@@ -164,7 +164,7 @@ pc_data = pd.DataFrame({
 ### import_cdisc()
 
 ```python
-from openpkpd.data import import_cdisc
+from neopkpd.data import import_cdisc
 
 def import_cdisc(
     pc_path: str,
@@ -206,7 +206,7 @@ def import_cdisc(
 ### Individual Domain Functions
 
 ```python
-from openpkpd.data import read_cdisc_pc, read_cdisc_ex, read_cdisc_dm
+from neopkpd.data import read_cdisc_pc, read_cdisc_ex, read_cdisc_dm
 
 # Read individual domains
 pc = read_cdisc_pc("pc.csv")
@@ -214,7 +214,7 @@ ex = read_cdisc_ex("ex.csv")
 dm = read_cdisc_dm("dm.csv")
 
 # Combine manually
-from openpkpd.data import cdisc_to_observed_data
+from neopkpd.data import cdisc_to_observed_data
 data = cdisc_to_observed_data(pc, ex, dm)
 ```
 
@@ -276,7 +276,7 @@ class SubjectData:
 ### Accessing Data
 
 ```python
-from openpkpd.data import import_cdisc
+from neopkpd.data import import_cdisc
 
 data = import_cdisc("pc.csv", "ex.csv", "dm.csv")
 
@@ -390,7 +390,7 @@ if data.validation_warnings:
 ### Manual Validation
 
 ```python
-from openpkpd.data import validate_cdisc_dataset
+from neopkpd.data import validate_cdisc_dataset
 
 validation = validate_cdisc_dataset(
     pc_path="pc.csv",
@@ -470,7 +470,7 @@ print(df.head())
 ### To NONMEM Format
 
 ```python
-from openpkpd.data import export_nonmem_data
+from neopkpd.data import export_nonmem_data
 
 export_nonmem_data(data, "nonmem_data.csv")
 
@@ -482,7 +482,7 @@ export_nonmem_data(data, "nonmem_data.csv")
 
 ```python
 # Direct use with NCA
-from openpkpd.nca import run_population_nca
+from neopkpd.nca import run_population_nca
 
 pop_result = run_population_nca(
     data.to_dataframe(),
@@ -499,7 +499,7 @@ pop_result = run_population_nca(
 
 ```python
 import pandas as pd
-from openpkpd.data import import_cdisc, validate_cdisc_dataset
+from neopkpd.data import import_cdisc, validate_cdisc_dataset
 
 # Step 1: Validate data
 print("Validating CDISC data...")
@@ -564,7 +564,7 @@ if data.validation_warnings:
 
 # Step 6: Use with NCA
 print("\n--- Running Population NCA ---")
-from openpkpd.nca import run_population_nca, summarize_population_nca
+from neopkpd.nca import run_population_nca, summarize_population_nca
 
 df = data.to_dataframe()
 pop_result = run_population_nca(
@@ -592,7 +592,7 @@ print("Saved to analysis_dataset.csv")
 ### ADPC Dataset
 
 ```python
-from openpkpd.data import import_adam_adpc
+from neopkpd.data import import_adam_adpc
 
 adpc = import_adam_adpc("adpc.csv")
 
@@ -607,7 +607,7 @@ adpc = import_adam_adpc("adpc.csv")
 ### ADSL Dataset
 
 ```python
-from openpkpd.data import import_adam_adsl
+from neopkpd.data import import_adam_adsl
 
 adsl = import_adam_adsl("adsl.csv")
 ```
@@ -615,7 +615,7 @@ adsl = import_adam_adsl("adsl.csv")
 ### Combined Import
 
 ```python
-from openpkpd.data import import_adam
+from neopkpd.data import import_adam
 
 data = import_adam(
     adpc_path="adpc.csv",
@@ -630,7 +630,7 @@ data = import_adam(
 Import pre-calculated PK parameters:
 
 ```python
-from openpkpd.data import read_cdisc_pp
+from neopkpd.data import read_cdisc_pp
 
 pp = read_cdisc_pp("pp.csv")
 

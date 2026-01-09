@@ -1,19 +1,19 @@
 # Test suite for XPT (SAS Transport) Reader
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 
 @testset "XPT Reader" begin
 
     @testset "XPT Types" begin
-        @test isdefined(OpenPKPDCore, :XPTVariable)
-        @test isdefined(OpenPKPDCore, :XPTDataset)
+        @test isdefined(NeoPKPDCore, :XPTVariable)
+        @test isdefined(NeoPKPDCore, :XPTDataset)
     end
 
     @testset "XPT Functions" begin
-        @test isdefined(OpenPKPDCore, :read_xpt)
-        @test isdefined(OpenPKPDCore, :read_cdisc_xpt)
-        @test isdefined(OpenPKPDCore, :read_cdisc_from_xpt)
+        @test isdefined(NeoPKPDCore, :read_xpt)
+        @test isdefined(NeoPKPDCore, :read_cdisc_xpt)
+        @test isdefined(NeoPKPDCore, :read_cdisc_from_xpt)
     end
 
     @testset "IBM to IEEE Conversion" begin
@@ -22,46 +22,46 @@ using OpenPKPDCore
 
         # Test zero
         zero_bytes = UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-        @test OpenPKPDCore.ibm_to_ieee(zero_bytes) == 0.0
+        @test NeoPKPDCore.ibm_to_ieee(zero_bytes) == 0.0
 
         # Test missing value (all 0x2E which is '.' in EBCDIC)
         missing_bytes = fill(UInt8(0x2E), 8)
-        @test isnan(OpenPKPDCore.ibm_to_ieee(missing_bytes))
+        @test isnan(NeoPKPDCore.ibm_to_ieee(missing_bytes))
     end
 
     @testset "EBCDIC to ASCII" begin
         # Test EBCDIC conversion for common characters
         # Space is 0x40 in EBCDIC
         space_bytes = UInt8[0x40]
-        @test strip(OpenPKPDCore.ebcdic_to_ascii(space_bytes)) == ""
+        @test strip(NeoPKPDCore.ebcdic_to_ascii(space_bytes)) == ""
 
         # Test null termination
         null_bytes = UInt8[0xC1, 0xC2, 0x00, 0xC3]  # "AB" then null
-        result = OpenPKPDCore.ebcdic_to_ascii(null_bytes)
+        result = NeoPKPDCore.ebcdic_to_ascii(null_bytes)
         @test result == "AB"
     end
 
     @testset "Read String" begin
         bytes = Vector{UInt8}("HELLO   ")
-        result = OpenPKPDCore.read_string(bytes, 1, 8)
+        result = NeoPKPDCore.read_string(bytes, 1, 8)
         @test result == "HELLO"
 
         # Test out of bounds
-        result2 = OpenPKPDCore.read_string(bytes, 1, 100)
+        result2 = NeoPKPDCore.read_string(bytes, 1, 100)
         @test result2 == ""
     end
 
     @testset "Big Endian Integer Reading" begin
         # Test 16-bit big endian
         bytes16 = UInt8[0x01, 0x00]  # 256 in big endian
-        @test OpenPKPDCore.read_int16_be(bytes16, 1) == 256
+        @test NeoPKPDCore.read_int16_be(bytes16, 1) == 256
 
         bytes16_2 = UInt8[0x00, 0x05]  # 5 in big endian
-        @test OpenPKPDCore.read_int16_be(bytes16_2, 1) == 5
+        @test NeoPKPDCore.read_int16_be(bytes16_2, 1) == 5
 
         # Test 32-bit big endian
         bytes32 = UInt8[0x00, 0x00, 0x01, 0x00]  # 256 in big endian
-        @test OpenPKPDCore.read_int32_be(bytes32, 1) == 256
+        @test NeoPKPDCore.read_int32_be(bytes32, 1) == 256
     end
 
     @testset "XPT Variable Structure" begin
@@ -106,9 +106,9 @@ using OpenPKPDCore
 
     @testset "XPT CDISC Integration" begin
         # Test that XPT reader functions can be called with CDISC domain readers
-        @test isdefined(OpenPKPDCore, :read_pc_xpt)
-        @test isdefined(OpenPKPDCore, :read_ex_xpt)
-        @test isdefined(OpenPKPDCore, :read_dm_xpt)
+        @test isdefined(NeoPKPDCore, :read_pc_xpt)
+        @test isdefined(NeoPKPDCore, :read_ex_xpt)
+        @test isdefined(NeoPKPDCore, :read_dm_xpt)
     end
 
     @testset "Error Handling" begin

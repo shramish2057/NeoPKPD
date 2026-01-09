@@ -1,15 +1,15 @@
-site_name: OpenPKPD
-site_url: https://shramish2057.github.io/OpenPKPD/
+site_name: NeoPKPD
+site_url: https://shramish2057.github.io/NeoPKPD/
 site_description: Transparent, validated pharmacokinetics and pharmacodynamics modeling infrastructure
-site_author: OpenPKPD contributors
+site_author: NeoPKPD contributors
 
-repo_name: shramish2057/OpenPKPD
-repo_url: https://github.com/shramish2057/OpenPKPD
+repo_name: shramish2057/NeoPKPD
+repo_url: https://github.com/shramish2057/NeoPKPD
 edit_uri: edit/main/docs/
 
 theme:
   name: material
-  logo: assets/logo.svg
+  logo: assets/logo.png
   favicon: assets/favicon.png
   features:
     - navigation.tabs
@@ -272,6 +272,6 @@ extra_css:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/shramish2057/OpenPKPD
+      link: https://github.com/shramish2057/NeoPKPD
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/openpkpd/
+      link: https://pypi.org/project/neopkpd/

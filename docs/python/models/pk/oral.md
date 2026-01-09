@@ -7,7 +7,7 @@ Single-compartment pharmacokinetic model with first-order oral absorption.
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_oral_first_order(
+neopkpd.simulate_pk_oral_first_order(
     ka: float,
     cl: float,
     v: float,
@@ -79,9 +79,9 @@ $$C(t) = \frac{F \cdot D \cdot K_a}{V \cdot (K_a - k)} \cdot (e^{-kt} - e^{-K_a 
 ### Single Oral Dose
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_oral_first_order(
+result = neopkpd.simulate_pk_oral_first_order(
     ka=1.5,       # Absorption rate (1/h)
     cl=10.0,      # Clearance (L/h)
     v=50.0,       # Volume (L)
@@ -104,7 +104,7 @@ print(f"Tmax: {t[cmax_idx]:.2f} h")
 
 ```python
 # Drug with 30-minute lag and 60% bioavailability
-result = openpkpd.simulate_pk_oral_first_order(
+result = neopkpd.simulate_pk_oral_first_order(
     ka=1.5,
     cl=10.0,
     v=50.0,
@@ -131,7 +131,7 @@ result = openpkpd.simulate_pk_oral_first_order(
 # 250 mg every 12 hours for 5 days
 doses = [{"time": i * 12.0, "amount": 250.0} for i in range(10)]
 
-result = openpkpd.simulate_pk_oral_first_order(
+result = neopkpd.simulate_pk_oral_first_order(
     ka=1.5,
     cl=10.0,
     v=50.0,
@@ -159,7 +159,7 @@ print(f"Cavg,ss: {sum(ss_conc)/len(ss_conc):.2f} mg/L")
 # 100 mg every 8 hours
 doses = [{"time": i * 8.0, "amount": 100.0} for i in range(15)]
 
-result = openpkpd.simulate_pk_oral_first_order(
+result = neopkpd.simulate_pk_oral_first_order(
     ka=2.0, cl=8.0, v=40.0,
     doses=doses,
     t0=0.0, t1=120.0,
@@ -172,13 +172,13 @@ result = openpkpd.simulate_pk_oral_first_order(
 ## Absorption Rate Effects
 
 ```python
-import openpkpd
+import neopkpd
 
 # Compare different Ka values (same AUC, different profiles)
 ka_values = [0.5, 1.0, 2.0, 4.0]
 
 for ka in ka_values:
-    result = openpkpd.simulate_pk_oral_first_order(
+    result = neopkpd.simulate_pk_oral_first_order(
         ka=ka, cl=10.0, v=50.0,
         doses=[{"time": 0.0, "amount": 500.0}],
         t0=0.0, t1=24.0,
@@ -208,7 +208,7 @@ When Ka < k (elimination faster than absorption):
 
 ```python
 # Standard case: Ka > k (absorption-rate limited)
-result_standard = openpkpd.simulate_pk_oral_first_order(
+result_standard = neopkpd.simulate_pk_oral_first_order(
     ka=2.0, cl=10.0, v=50.0,  # k = 0.2/h, Ka = 2.0/h
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=48.0,
@@ -216,7 +216,7 @@ result_standard = openpkpd.simulate_pk_oral_first_order(
 )
 
 # Flip-flop case: Ka < k (elimination-rate limited)
-result_flipflop = openpkpd.simulate_pk_oral_first_order(
+result_flipflop = neopkpd.simulate_pk_oral_first_order(
     ka=0.1, cl=10.0, v=50.0,  # k = 0.2/h, Ka = 0.1/h
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=48.0,
@@ -251,7 +251,7 @@ tmax_theoretical = calculate_tmax(ka, cl, v)
 print(f"Theoretical Tmax: {tmax_theoretical:.2f} h")
 
 # Verify with simulation
-result = openpkpd.simulate_pk_oral_first_order(
+result = neopkpd.simulate_pk_oral_first_order(
     ka=ka, cl=cl, v=v,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,
@@ -271,7 +271,7 @@ print(f"Simulated Tmax: {tmax_simulated:.2f} h")
 ```python
 import numpy as np
 
-result = openpkpd.simulate_pk_oral_first_order(
+result = neopkpd.simulate_pk_oral_first_order(
     ka=1.5, cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=120.0,  # Long enough for complete elimination
@@ -293,10 +293,10 @@ print(f"Theoretical (Dose/CL): {500/10:.1f} mg*h/L")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pk_profile
+import neopkpd
+from neopkpd.viz import plot_pk_profile
 
-result = openpkpd.simulate_pk_oral_first_order(
+result = neopkpd.simulate_pk_oral_first_order(
     ka=1.5, cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,

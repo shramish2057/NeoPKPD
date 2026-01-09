@@ -7,7 +7,7 @@ One-compartment model with saturable (capacity-limited) elimination kinetics.
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_michaelis_menten(
+neopkpd.simulate_pk_michaelis_menten(
     vmax: float,
     km: float,
     v: float,
@@ -56,9 +56,9 @@ $$C = \frac{A}{V}$$
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_michaelis_menten(
+result = neopkpd.simulate_pk_michaelis_menten(
     vmax=500.0,   # Maximum rate (mg/h)
     km=10.0,      # Km (mg/L)
     v=50.0,       # Volume (L)
@@ -86,7 +86,7 @@ print(f"C at 24h: {conc[96]:.3f} mg/L (C < Km: linear)")
 With Michaelis-Menten kinetics, half-life increases with dose:
 
 ```python
-import openpkpd
+import neopkpd
 
 doses_list = [100.0, 500.0, 1000.0, 2000.0]
 
@@ -94,7 +94,7 @@ print("Dose (mg) | C0 (mg/L) | t1/2 (h)")
 print("-" * 40)
 
 for dose in doses_list:
-    result = openpkpd.simulate_pk_michaelis_menten(
+    result = neopkpd.simulate_pk_michaelis_menten(
         vmax=500.0, km=10.0, v=50.0,
         doses=[{"time": 0.0, "amount": dose}],
         t0=0.0, t1=96.0,
@@ -131,7 +131,7 @@ for dose in doses_list:
 AUC increases more than proportionally with dose:
 
 ```python
-import openpkpd
+import neopkpd
 import numpy as np
 
 doses_list = [100.0, 200.0, 500.0, 1000.0]
@@ -141,7 +141,7 @@ print("Dose (mg) | AUC (mg*h/L)")
 print("-" * 30)
 
 for dose in doses_list:
-    result = openpkpd.simulate_pk_michaelis_menten(
+    result = neopkpd.simulate_pk_michaelis_menten(
         vmax=500.0, km=10.0, v=50.0,
         doses=[{"time": 0.0, "amount": dose}],
         t0=0.0, t1=120.0,
@@ -167,7 +167,7 @@ print(f"AUC ratio: {auc_values[-1] / auc_values[0]:.2f}")
 ## Clinical Example: Phenytoin
 
 ```python
-import openpkpd
+import neopkpd
 
 # Phenytoin typical parameters (for 70 kg patient)
 # Vmax ≈ 7 mg/kg/day, Km ≈ 4-6 mg/L, V ≈ 0.65 L/kg
@@ -178,7 +178,7 @@ v = 0.65 * 70         # L
 # Loading dose
 loading = 15 * 70  # 15 mg/kg = 1050 mg
 
-result = openpkpd.simulate_pk_michaelis_menten(
+result = neopkpd.simulate_pk_michaelis_menten(
     vmax=vmax, km=km, v=v,
     doses=[{"time": 0.0, "amount": loading}],
     t0=0.0, t1=24.0,
@@ -224,10 +224,10 @@ print("\nWARNING: If R >= Vmax, concentrations increase indefinitely!")
 ## Comparison with Linear Model
 
 ```python
-import openpkpd
+import neopkpd
 
 # Michaelis-Menten at low dose (approximately linear)
-result_mm = openpkpd.simulate_pk_michaelis_menten(
+result_mm = neopkpd.simulate_pk_michaelis_menten(
     vmax=500.0, km=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],  # Low dose: C0 = 2 mg/L << Km
     t0=0.0, t1=24.0,
@@ -235,7 +235,7 @@ result_mm = openpkpd.simulate_pk_michaelis_menten(
 )
 
 # Equivalent linear model: CL = Vmax/Km = 50 L/h
-result_linear = openpkpd.simulate_pk_iv_bolus(
+result_linear = neopkpd.simulate_pk_iv_bolus(
     cl=50.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -256,14 +256,14 @@ print(f"Linear at 4h: {lin_conc[40]:.3f} mg/L")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pk_profile
+import neopkpd
+from neopkpd.viz import plot_pk_profile
 
 # Compare different doses
 doses = [100.0, 500.0, 1000.0]
 
 for dose in doses:
-    result = openpkpd.simulate_pk_michaelis_menten(
+    result = neopkpd.simulate_pk_michaelis_menten(
         vmax=500.0, km=10.0, v=50.0,
         doses=[{"time": 0.0, "amount": dose}],
         t0=0.0, t1=48.0,

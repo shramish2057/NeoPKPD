@@ -117,7 +117,7 @@ end
 ### Basic Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define PD parameters
 # E0 = 70 (baseline), Emax = 40 (reduction), EC50 = 1.5 mg/L
@@ -151,7 +151,7 @@ C = 5.0 mg/L: Effect = 39.2
 ## Coupled PK-PD Simulation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # PK model: One-compartment oral
 pk_params = OneCompOralFirstOrderParams(1.5, 5.0, 30.0)  # Ka, CL, V

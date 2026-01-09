@@ -1,13 +1,13 @@
 # Monolix Model Import
 
-Import Monolix project files (.mlxtran) into OpenPKPD Python.
+Import Monolix project files (.mlxtran) into NeoPKPD Python.
 
 ---
 
 ## Overview
 
 ```python
-from openpkpd.import_ import import_monolix
+from neopkpd.import_ import import_monolix
 
 model = import_monolix("project.mlxtran")
 print(f"Model: {model.model_kind}")
@@ -21,7 +21,7 @@ print(f"Parameters: {model.params}")
 ### Basic Import
 
 ```python
-from openpkpd.import_ import import_monolix
+from neopkpd.import_ import import_monolix
 
 # Import Monolix project
 model = import_monolix("project.mlxtran")
@@ -52,7 +52,7 @@ model = import_monolix("project.mlxtran", doses=doses)
 
 ### One-Compartment Models
 
-| Monolix Library Model | OpenPKPD Model |
+| Monolix Library Model | NeoPKPD Model |
 |----------------------|----------------|
 | `pk_bolus1cpt_Vk_PLASMA` | `OneCompIVBolus` |
 | `pk_bolus1cpt_VCl_PLASMA` | `OneCompIVBolus` |
@@ -62,7 +62,7 @@ model = import_monolix("project.mlxtran", doses=doses)
 
 ### Two-Compartment Models
 
-| Monolix Library Model | OpenPKPD Model |
+| Monolix Library Model | NeoPKPD Model |
 |----------------------|----------------|
 | `pk_bolus2cpt_V1k12k21k_PLASMA` | `TwoCompIVBolus` |
 | `pk_bolus2cpt_V1ClQ2V2_PLASMA` | `TwoCompIVBolus` |
@@ -71,13 +71,13 @@ model = import_monolix("project.mlxtran", doses=doses)
 
 ### Three-Compartment Models
 
-| Monolix Library Model | OpenPKPD Model |
+| Monolix Library Model | NeoPKPD Model |
 |----------------------|----------------|
 | `pk_bolus3cpt_V1ClQ2V2Q3V3_PLASMA` | `ThreeCompIVBolus` |
 
 ### Special Models
 
-| Monolix Library Model | OpenPKPD Model |
+| Monolix Library Model | NeoPKPD Model |
 |----------------------|----------------|
 | `pk_bolus1cpt_VVmKm_PLASMA` | `MichaelisMentenElimination` |
 
@@ -92,7 +92,7 @@ class ImportedModel:
 
     source_format: str          # "monolix"
     source_file: str            # Path to mlxtran file
-    model_kind: str             # OpenPKPD model name
+    model_kind: str             # NeoPKPD model name
 
     # Fixed effects
     params: dict[str, float]    # Parameter values
@@ -151,7 +151,7 @@ for i, name in enumerate(model.omega_names):
 
 ### Variability Transformations
 
-| Monolix Variability | OpenPKPD Transform | Formula |
+| Monolix Variability | NeoPKPD Transform | Formula |
 |---------------------|-------------------|---------|
 | `lognormal` | `exponential` | θᵢ = θ_pop · e^ηᵢ |
 | `normal` | `additive` | θᵢ = θ_pop + ηᵢ |
@@ -178,7 +178,7 @@ print(f"Sigma value: {model.sigma_init}")
 
 ### Error Model Mapping
 
-| Monolix Error | OpenPKPD Type |
+| Monolix Error | NeoPKPD Type |
 |---------------|---------------|
 | `proportional` | `proportional` |
 | `constant` | `additive` |
@@ -220,8 +220,8 @@ for effect in effects:
 ### Simulation
 
 ```python
-from openpkpd.import_ import import_monolix
-from openpkpd import simulate
+from neopkpd.import_ import import_monolix
+from neopkpd import simulate
 
 # Import model
 model = import_monolix("project.mlxtran")
@@ -243,7 +243,7 @@ print(f"Cmax: {max(result.concentrations):.2f}")
 ### Population Simulation
 
 ```python
-from openpkpd import simulate_population
+from neopkpd import simulate_population
 
 pop_result = simulate_population(
     model_kind=model.model_kind,
@@ -319,8 +319,8 @@ for param in expected:
 ## Complete Example
 
 ```python
-from openpkpd.import_ import import_monolix
-from openpkpd import simulate
+from neopkpd.import_ import import_monolix
+from neopkpd import simulate
 import math
 
 # Import Monolix project
@@ -415,7 +415,7 @@ pk_bolus1cpt_VVmKm_PLASMA    → Michaelis-Menten elimination
 ### Using import_model()
 
 ```python
-from openpkpd.import_ import import_model
+from neopkpd.import_ import import_model
 
 # Auto-detect format from extension
 model = import_model("run001.ctl")      # → NONMEM

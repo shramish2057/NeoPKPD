@@ -1,6 +1,6 @@
 # Tutorial: Getting Started with Julia
 
-This tutorial provides a comprehensive introduction to using OpenPKPD with Julia. By the end, you'll be able to run simulations, analyze populations, and perform parameter estimation.
+This tutorial provides a comprehensive introduction to using NeoPKPD with Julia. By the end, you'll be able to run simulations, analyze populations, and perform parameter estimation.
 
 ---
 
@@ -9,11 +9,11 @@ This tutorial provides a comprehensive introduction to using OpenPKPD with Julia
 Ensure you have:
 
 - Julia 1.10 or later installed
-- OpenPKPD repository cloned
+- NeoPKPD repository cloned
 - Julia dependencies installed
 
 ```bash
-julia --project=core/OpenPKPDCore -e 'using Pkg; Pkg.instantiate()'
+julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
 ```
 
 ---
@@ -24,9 +24,9 @@ julia --project=core/OpenPKPDCore -e 'using Pkg; Pkg.instantiate()'
 
 ```julia
 # Start Julia with the project
-# julia --project=core/OpenPKPDCore
+# julia --project=core/NeoPKPDCore
 
-using OpenPKPDCore
+using NeoPKPDCore
 ```
 
 ### One-Compartment IV Bolus

@@ -1,15 +1,15 @@
 # Monolix Import
 
-Comprehensive guide for importing Monolix project files (.mlxtran) into OpenPKPD.
+Comprehensive guide for importing Monolix project files (.mlxtran) into NeoPKPD.
 
 ---
 
 ## Overview
 
-OpenPKPD can parse Monolix project files and convert them to native OpenPKPD model specifications, enabling migration from Monolix workflows.
+NeoPKPD can parse Monolix project files and convert them to native NeoPKPD model specifications, enabling migration from Monolix workflows.
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 result = import_monolix("project.mlxtran")
 println("Model: $(result.model_type)")
@@ -23,7 +23,7 @@ println("Parameters: $(result.parameters)")
 ### Basic Import
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Import Monolix project file
 result = import_monolix("project.mlxtran")
@@ -54,7 +54,7 @@ result = import_monolix("project.mlxtran"; doses=doses)
 
 ### Pharmacokinetic Models
 
-| Monolix Model | OpenPKPD Model |
+| Monolix Model | NeoPKPD Model |
 |---------------|----------------|
 | `pk_bolus1cpt_Vk_PLASMA` | `:OneCompIVBolus` |
 | `pk_bolus1cpt_VCl_PLASMA` | `:OneCompIVBolus` |
@@ -190,7 +190,7 @@ end
 
 ### Parameter Transformations
 
-| Monolix Variability | OpenPKPD Transformation | Formula |
+| Monolix Variability | NeoPKPD Transformation | Formula |
 |---------------------|-------------------------|---------|
 | `lognormal` | `:exponential` | $\theta_i = \theta_{pop} \cdot e^{\eta_i}$ |
 | `normal` | `:additive` | $\theta_i = \theta_{pop} + \eta_i$ |
@@ -277,8 +277,8 @@ end
 | Model Type | Reason | Workaround |
 |------------|--------|------------|
 | PD models | Complex dynamics | Manual definition |
-| Turnover models | Indirect response | Use OpenPKPD IRM |
-| Transit compartment | Absorption | Use OpenPKPD transit |
+| Turnover models | Indirect response | Use NeoPKPD IRM |
+| Transit compartment | Absorption | Use NeoPKPD transit |
 | Mixture models | Subpopulations | Not supported |
 | Markov models | State transitions | Not supported |
 | Time-to-event | Survival | Not supported |
@@ -399,7 +399,7 @@ end
 ### Julia Import Code
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Import Monolix project
 result = import_monolix("project.mlxtran")
@@ -552,5 +552,5 @@ Tmax: 1.5
 
 - [NONMEM Import](nonmem.md) - Import NONMEM control files
 - [CDISC Import](cdisc.md) - Import CDISC data
-- [Model Specification](../models/index.md) - OpenPKPD model types
+- [Model Specification](../models/index.md) - NeoPKPD model types
 

@@ -9,7 +9,7 @@ Comprehensive guide for simulating oral absorption with inter-individual and int
 Population oral simulation models the variability in absorption, clearance, and volume across subjects following oral administration.
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 
 result = simulate_population_oral(
     ka=1.5, cl=10.0, v=50.0,
@@ -94,7 +94,7 @@ def simulate_population_oral(
 ### Single Dose
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 
 result = simulate_population_oral(
     ka=1.5,         # Absorption rate (/hr)
@@ -231,7 +231,7 @@ for subj_idx in range(5):
 ## Two-Compartment Oral
 
 ```python
-from openpkpd import simulate_population_twocomp_oral
+from neopkpd import simulate_population_twocomp_oral
 
 result = simulate_population_twocomp_oral(
     ka=1.5,         # Absorption rate
@@ -391,7 +391,7 @@ for metric in ["Cmax", "Tmax", "AUC", "t_half"]:
 ## Complete Example
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 import numpy as np
 import matplotlib.pyplot as plt
 

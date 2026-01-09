@@ -77,7 +77,7 @@ NCA calculates pharmacokinetic parameters directly from concentration-time data 
 ### Basic NCA
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Concentration-time data
 times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
@@ -199,14 +199,14 @@ end
 
 ## FDA/EMA Compliance
 
-OpenPKPD NCA calculations follow regulatory guidance:
+NeoPKPD NCA calculations follow regulatory guidance:
 
 - **FDA Guidance for Industry: Bioavailability and Bioequivalence Studies**
 - **EMA Guideline on the Investigation of Bioequivalence**
 
 ### Key Requirements
 
-| Requirement | OpenPKPD Implementation |
+| Requirement | NeoPKPD Implementation |
 |-------------|------------------------|
 | λz from ≥3 points | Configurable minimum |
 | R² > 0.9 for λz | Configurable threshold |

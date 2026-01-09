@@ -82,7 +82,7 @@ Binning groups observations by time for percentile calculation.
 Creates bins with approximately equal numbers of observations:
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # 10 bins with equal observation counts
 binning = QuantileBinning(10)
@@ -137,7 +137,7 @@ config = VPCConfig(binning = KMeansBinning(10))
 ### Basic Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define observed data structure
 observed = ObservedData(
@@ -347,7 +347,7 @@ println("  95th percentile: $(coverage_95 * 100)%")
 ## Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 using Random
 
 # ================================================

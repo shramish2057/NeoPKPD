@@ -1,6 +1,6 @@
 # Clinical Trial Simulation
 
-OpenPKPD provides comprehensive clinical trial simulation capabilities for study design, power analysis, and decision-making.
+NeoPKPD provides comprehensive clinical trial simulation capabilities for study design, power analysis, and decision-making.
 
 ---
 
@@ -70,7 +70,7 @@ graph TB
 ### Parallel Design
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define trial design
 design = ParallelDesign(

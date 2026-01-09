@@ -27,7 +27,7 @@ Examples demonstrating import of models from NONMEM and Monolix.
 ## Import Workflow
 
 ```python
-from openpkpd import import_nonmem, import_monolix
+from neopkpd import import_nonmem, import_monolix
 
 # Import NONMEM model
 model = import_nonmem("run001.ctl")
@@ -55,10 +55,10 @@ result = simulate(model.spec, t_end=24.0)
 Each import example includes:
 1. Original source file
 2. Import script
-3. Expected OpenPKPD specification
+3. Expected NeoPKPD specification
 4. Validation by comparing simulations
 
 ## See Also
 
 - [Data Import](../data/README.md) - CDISC data import
-- [Models](../models/README.md) - OpenPKPD model specifications
+- [Models](../models/README.md) - NeoPKPD model specifications

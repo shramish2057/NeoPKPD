@@ -1,5 +1,5 @@
 """
-Tests for OpenPKPD NCA (Non-Compartmental Analysis) module.
+Tests for NeoPKPD NCA (Non-Compartmental Analysis) module.
 
 These tests verify the Python bindings to the Julia NCA implementation.
 Comprehensive coverage of:
@@ -14,8 +14,8 @@ Comprehensive coverage of:
 
 import math
 import pytest
-import openpkpd
-from openpkpd.nca import (
+import neopkpd
+from neopkpd.nca import (
     # Full workflow
     run_nca,
     NCAConfig,
@@ -104,7 +104,7 @@ SS_TAU = 12.0
 @pytest.fixture(scope="module")
 def init():
     """Initialize Julia once for all tests."""
-    openpkpd.init_julia()
+    neopkpd.init_julia()
 
 
 # ============================================================================
@@ -622,8 +622,8 @@ class TestImports:
     """Test that all NCA functions are properly importable."""
 
     def test_import_from_main_package(self):
-        """Test imports from main openpkpd package."""
-        from openpkpd import (
+        """Test imports from main neopkpd package."""
+        from neopkpd import (
             run_nca, NCAConfig, NCAResult,
             nca_cmax, nca_tmax, nca_cmin,
             auc_0_t, auc_0_inf, auc_0_tau,
@@ -637,8 +637,8 @@ class TestImports:
         assert callable(nca_cmax)
 
     def test_import_from_nca_module(self):
-        """Test imports from openpkpd.nca module."""
-        from openpkpd.nca import (
+        """Test imports from neopkpd.nca module."""
+        from neopkpd.nca import (
             nca_ctrough, nca_c_at_time, time_above_concentration,
             nca_cl, nca_vz, nca_mrt_iv, nca_cl_ss,
             nca_vss_from_aumc, nca_vc, nca_mean_absorption_time,

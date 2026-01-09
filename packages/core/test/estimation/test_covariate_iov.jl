@@ -1,7 +1,7 @@
 # Test suite for Covariate-on-IIV and IOV integration in FOCE-I
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using LinearAlgebra
 
 @testset "Covariate-IIV and IOV Integration" begin
@@ -166,7 +166,7 @@ using LinearAlgebra
             covariate_on_iiv=[wt_effect]
         )
 
-        result = OpenPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test isfinite(result.ofv)
@@ -216,7 +216,7 @@ using LinearAlgebra
             iov_specs=[iov_cl]
         )
 
-        result = OpenPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test isfinite(result.ofv)
@@ -254,7 +254,7 @@ using LinearAlgebra
             compute_se=false
         )
 
-        result = OpenPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test isfinite(result.ofv)

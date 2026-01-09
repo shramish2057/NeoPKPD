@@ -39,7 +39,7 @@ The Laplacian method is preferred when:
 ### Basic Laplacian Estimation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 
 # Observed data (sparse sampling)
@@ -157,7 +157,7 @@ The main difference is that Laplacian doesn't include the "interaction" term in 
 ## Sparse Data Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 
 # Very sparse: 1-2 observations per subject

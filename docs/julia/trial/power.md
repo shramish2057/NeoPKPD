@@ -9,7 +9,7 @@ Comprehensive guide for sample size calculation and power analysis in clinical t
 Power analysis enables determination of the sample size required to detect a clinically meaningful effect with adequate statistical power.
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Calculate sample size for parallel design
 result = power_analysis(
@@ -575,7 +575,7 @@ end
 ## Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # ============================================
 # Power Analysis for Phase III Parallel Study

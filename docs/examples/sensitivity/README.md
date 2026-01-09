@@ -30,7 +30,7 @@ Sensitivity analysis examines how changes in model parameters affect outputs:
 ## Usage
 
 ```python
-from openpkpd import compute_sensitivity
+from neopkpd import compute_sensitivity
 
 result = compute_sensitivity(
     model_spec,

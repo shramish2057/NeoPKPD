@@ -1,4 +1,4 @@
-# OpenPKPD Makefile
+# NeoPKPD Makefile
 # Comprehensive build, test, and documentation targets
 
 .PHONY: all help install test test-julia test-python test-all docs docs-serve clean lint validate
@@ -8,7 +8,7 @@ all: test
 
 # Help
 help:
-	@echo "OpenPKPD Build System"
+	@echo "NeoPKPD Build System"
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
@@ -92,7 +92,7 @@ test-simulate:
 
 validate:
 	@echo "Validating golden artifacts..."
-	./packages/cli/bin/openpkpd validate-golden
+	./packages/cli/bin/neopkpd validate-golden
 
 validate-golden: validate
 
@@ -125,18 +125,18 @@ lint: lint-python
 
 lint-python:
 	@echo "Linting Python code..."
-	cd packages/python && python3 -m ruff check openpkpd/ tests/ || true
-	cd packages/python && python3 -m mypy openpkpd/ --ignore-missing-imports || true
+	cd packages/python && python3 -m ruff check neopkpd/ tests/ || true
+	cd packages/python && python3 -m mypy neopkpd/ --ignore-missing-imports || true
 
 # ============================================================================
 # CLI
 # ============================================================================
 
 cli-help:
-	./packages/cli/bin/openpkpd help
+	./packages/cli/bin/neopkpd help
 
 cli-version:
-	./packages/cli/bin/openpkpd version
+	./packages/cli/bin/neopkpd version
 
 # ============================================================================
 # Development
@@ -159,8 +159,8 @@ clean:
 	rm -rf site/
 	rm -rf packages/python/.pytest_cache/
 	rm -rf packages/python/__pycache__/
-	rm -rf packages/python/openpkpd/__pycache__/
-	rm -rf packages/python/openpkpd/**/__pycache__/
+	rm -rf packages/python/neopkpd/__pycache__/
+	rm -rf packages/python/neopkpd/**/__pycache__/
 	rm -rf packages/python/*.egg-info/
 	rm -rf .pytest_cache/
 	rm -rf packages/core/.pytest_cache/

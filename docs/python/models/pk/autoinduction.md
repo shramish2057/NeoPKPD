@@ -7,7 +7,7 @@ PK model for drugs that induce their own metabolism, leading to time-varying cle
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_autoinduction(
+neopkpd.simulate_pk_autoinduction(
     cl0: float,
     v: float,
     emax: float,
@@ -84,10 +84,10 @@ Initial condition: $E(0) = 1.0$ (baseline enzyme)
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
 # Single dose - minimal induction
-result = openpkpd.simulate_pk_autoinduction(
+result = neopkpd.simulate_pk_autoinduction(
     cl0=10.0,     # Baseline clearance (L/h)
     v=50.0,       # Volume (L)
     emax=2.0,     # Max 3-fold increase in enzyme
@@ -114,12 +114,12 @@ print(f"  Enzyme at 48h: {enzyme[-1]:.2f}")
 ## Chronic Dosing - Time-Varying Clearance
 
 ```python
-import openpkpd
+import neopkpd
 
 # Daily dosing for 2 weeks
 doses = [{"time": i * 24.0, "amount": 200.0} for i in range(14)]
 
-result = openpkpd.simulate_pk_autoinduction(
+result = neopkpd.simulate_pk_autoinduction(
     cl0=10.0, v=50.0, emax=2.0, ec50=5.0, kenz=0.05,
     doses=doses,
     t0=0.0, t1=336.0,  # 14 days
@@ -147,7 +147,7 @@ print(f"  Effective clearance: {10.0 * enzyme[312]:.1f} L/h")
 ## Clinical Example: Carbamazepine
 
 ```python
-import openpkpd
+import neopkpd
 
 # Carbamazepine-like autoinduction
 # Enzyme t1/2 ~3-5 days, full induction ~2-4 weeks
@@ -157,7 +157,7 @@ kenz = 0.693 / (4 * 24)  # ~4 day enzyme half-life
 # BID dosing for 4 weeks
 doses = [{"time": i * 12.0, "amount": 200.0} for i in range(56)]
 
-result = openpkpd.simulate_pk_autoinduction(
+result = neopkpd.simulate_pk_autoinduction(
     cl0=2.0,      # Initial low clearance
     v=80.0,       # Volume
     emax=1.5,     # Can increase enzyme 2.5-fold
@@ -189,7 +189,7 @@ for week in range(4):
 ## Dose Adjustment for Autoinduction
 
 ```python
-import openpkpd
+import neopkpd
 
 # Strategy: Increase dose over time to maintain target concentration
 target_conc = 6.0  # Target trough
@@ -207,7 +207,7 @@ doses = (
     [{"time": (14 + i) * 24.0, "amount": 400.0} for i in range(7)]   # Week 3
 )
 
-result = openpkpd.simulate_pk_autoinduction(
+result = neopkpd.simulate_pk_autoinduction(
     cl0=5.0, v=50.0, emax=1.5, ec50=4.0, kenz=kenz,
     doses=doses,
     t0=0.0, t1=504.0,
@@ -231,14 +231,14 @@ for week, dose in enumerate([200, 300, 400]):
 ## Time to Steady State
 
 ```python
-import openpkpd
+import neopkpd
 
 # With autoinduction, steady state takes longer
 kenz = 0.693 / (4 * 24)  # 4-day enzyme half-life
 
 doses = [{"time": i * 24.0, "amount": 200.0} for i in range(42)]  # 6 weeks
 
-result = openpkpd.simulate_pk_autoinduction(
+result = neopkpd.simulate_pk_autoinduction(
     cl0=5.0, v=50.0, emax=2.0, ec50=3.0, kenz=kenz,
     doses=doses,
     t0=0.0, t1=1008.0,
@@ -265,14 +265,14 @@ print(f"Final enzyme level: {e_ss:.2f}x baseline")
 ## Drug Washout - Enzyme Recovery
 
 ```python
-import openpkpd
+import neopkpd
 
 kenz = 0.693 / (5 * 24)
 
 # 2 weeks dosing, then stop
 doses = [{"time": i * 24.0, "amount": 200.0} for i in range(14)]
 
-result = openpkpd.simulate_pk_autoinduction(
+result = neopkpd.simulate_pk_autoinduction(
     cl0=5.0, v=50.0, emax=2.0, ec50=3.0, kenz=kenz,
     doses=doses,
     t0=0.0, t1=672.0,  # Continue simulation 2 more weeks
@@ -294,13 +294,13 @@ print(f"  Recovery t1/2: ~{0.693/kenz/24:.1f} days")
 ## Comparison: With vs Without Autoinduction
 
 ```python
-import openpkpd
+import neopkpd
 
 # Daily dosing for 2 weeks
 doses = [{"time": i * 24.0, "amount": 200.0} for i in range(14)]
 
 # With autoinduction
-result_auto = openpkpd.simulate_pk_autoinduction(
+result_auto = neopkpd.simulate_pk_autoinduction(
     cl0=5.0, v=50.0, emax=1.5, ec50=3.0, kenz=0.693/(3*24),
     doses=doses,
     t0=0.0, t1=336.0,
@@ -308,7 +308,7 @@ result_auto = openpkpd.simulate_pk_autoinduction(
 )
 
 # Without autoinduction (standard IV)
-result_linear = openpkpd.simulate_pk_iv_bolus(
+result_linear = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=doses,
     t0=0.0, t1=336.0,

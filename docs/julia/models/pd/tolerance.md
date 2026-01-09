@@ -9,7 +9,7 @@ PD models for tolerance development through counter-regulation or receptor regul
 ### Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # PK setup
 pk_model = OneCompIVBolus()
@@ -69,7 +69,7 @@ $$E_{net} = E_0 + E_{drug} - \alpha \cdot M$$
 ## Basic Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 pk_model = OneCompIVBolus()
 pk_params = OneCompIVBolusParams(5.0, 50.0)
@@ -103,7 +103,7 @@ println("Tolerance: $((1 - last_peak/first_peak) * 100)%")
 ### Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # PK setup
 pk_model = OneCompIVBolus()
@@ -163,7 +163,7 @@ $$E_{net} = E_0 + R \cdot E_{drug}$$
 ## Down-Regulation Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 pk_model = OneCompIVBolus()
 pk_params = OneCompIVBolusParams(5.0, 50.0)

@@ -9,7 +9,7 @@ Comprehensive guide for crossover clinical trial simulation with within-subject 
 Crossover designs allow each subject to receive multiple treatments in different periods, enabling within-subject comparisons with reduced variability.
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 design = CrossoverDesign(
     n_periods = 2,
@@ -120,7 +120,7 @@ design = partial_replicate_3x3(
 ### Complete Crossover Setup
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Design
 design = crossover_2x2(
@@ -397,7 +397,7 @@ println("ABEL conclusion: $(abel_result.is_bioequivalent)")
 ## Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # ===================================
 # Bioequivalence Crossover Study

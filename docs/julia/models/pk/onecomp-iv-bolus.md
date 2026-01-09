@@ -114,7 +114,7 @@ end
 ### Basic Simulation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define parameters
 params = OneCompIVBolusParams(5.0, 50.0)  # CL=5 L/h, V=50 L

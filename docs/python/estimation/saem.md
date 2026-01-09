@@ -9,7 +9,7 @@ Stochastic Approximation Expectation Maximization (SAEM) is a robust estimation 
 SAEM alternates between MCMC sampling of random effects and stochastic parameter updates, making it more robust for challenging datasets.
 
 ```python
-from openpkpd.estimation import estimate, EstimationConfig, SAEMMethod
+from neopkpd.estimation import estimate, EstimationConfig, SAEMMethod
 
 config = EstimationConfig(
     method=SAEMMethod(
@@ -43,7 +43,7 @@ result = estimate(data, "OneCompIVBolus", config)
 ### SAEMMethod Parameters
 
 ```python
-from openpkpd.estimation import SAEMMethod
+from neopkpd.estimation import SAEMMethod
 
 method = SAEMMethod(
     # Iteration control
@@ -72,7 +72,7 @@ method = SAEMMethod(
 ### Full Configuration
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     EstimationConfig, SAEMMethod, BLQConfig, BLQMethod
 )
 
@@ -166,7 +166,7 @@ plt.show()
 SAEM doesn't directly produce analytical SEs. Use bootstrap:
 
 ```python
-from openpkpd.estimation import run_bootstrap, BootstrapConfig
+from neopkpd.estimation import run_bootstrap, BootstrapConfig
 
 # Run bootstrap after SAEM
 bootstrap_config = BootstrapConfig(
@@ -212,7 +212,7 @@ method = SAEMMethod(
 ## Example: Complex Model with High IIV
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     estimate, EstimationConfig, SAEMMethod,
     BLQConfig, BLQMethod
 )

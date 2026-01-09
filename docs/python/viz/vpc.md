@@ -6,7 +6,7 @@ Comprehensive guide to Visual Predictive Check visualization in Python with dual
 
 ## Overview
 
-OpenPKPD provides 5 specialized VPC visualization functions:
+NeoPKPD provides 5 specialized VPC visualization functions:
 
 | Function | Description |
 |----------|-------------|
@@ -17,7 +17,7 @@ OpenPKPD provides 5 specialized VPC visualization functions:
 | `plot_vpc_ci` | Detailed confidence interval visualization |
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Set backend
 viz.set_backend("matplotlib")  # or "plotly"
@@ -71,7 +71,7 @@ class VPCPercentileData:
 ### Accessor Functions
 
 ```python
-from openpkpd.vpc import (
+from neopkpd.vpc import (
     get_bin_midpoints,
     get_observed_percentile,
     get_simulated_median,
@@ -124,14 +124,14 @@ def plot_vpc(
 ### Basic Usage
 
 ```python
-from openpkpd import viz
-import openpkpd
+from neopkpd import viz
+import neopkpd
 
 # Initialize Julia connection
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Compute VPC (example)
-vpc_result = openpkpd.compute_vpc(
+vpc_result = neopkpd.compute_vpc(
     observed_data=observed,
     population_spec=pop_spec,
     grid={"t0": 0.0, "t1": 24.0, "saveat": 0.5},
@@ -226,7 +226,7 @@ def plot_pcvpc(
 
 ```python
 # Compute pcVPC
-pcvpc_result = openpkpd.compute_pcvpc(
+pcvpc_result = neopkpd.compute_pcvpc(
     observed_data=observed,
     population_spec=pop_spec,
     grid=grid,
@@ -291,7 +291,7 @@ def plot_stratified_vpc(
 
 ```python
 # Compute stratified VPC
-stratified_result = openpkpd.compute_stratified_vpc(
+stratified_result = neopkpd.compute_stratified_vpc(
     observed_data=observed,
     population_spec=pop_spec,
     grid=grid,
@@ -379,10 +379,10 @@ def plot_vpc_with_blq(
 ### Usage
 
 ```python
-from openpkpd.vpc import BLQMethod
+from neopkpd.vpc import BLQMethod
 
 # Compute VPC with BLQ handling
-vpc_result, blq_stats = openpkpd.compute_vpc_with_blq(
+vpc_result, blq_stats = neopkpd.compute_vpc_with_blq(
     observed_data=observed,
     population_spec=pop_spec,
     grid=grid,
@@ -420,7 +420,7 @@ Lower panel: %BLQ comparison (25% height)
 ### BLQ Methods
 
 ```python
-from openpkpd.vpc import BLQMethod
+from neopkpd.vpc import BLQMethod
 
 # Available methods (Beal 2001)
 BLQMethod.M1  # Discard all BLQ observations
@@ -489,9 +489,9 @@ fig = viz.plot_vpc_ci(
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
-from openpkpd.vpc import VPCConfig, QuantileBinning
+import neopkpd
+from neopkpd import viz
+from neopkpd.vpc import VPCConfig, QuantileBinning
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -500,13 +500,13 @@ import matplotlib.pyplot as plt
 # ================================================
 
 # 1. Initialize
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 print("=== VPC Visualization Example ===\n")
 
 # 2. Simulate population data (for demonstration)
-pop_result = openpkpd.simulate_population_oral(
+pop_result = neopkpd.simulate_population_oral(
     ka=1.5, cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0, saveat=0.5,
@@ -549,7 +549,7 @@ vpc_config = {
     "n_bins": 7
 }
 
-vpc_result = openpkpd.compute_vpc(
+vpc_result = neopkpd.compute_vpc(
     observed_data=observed_data,
     population_spec=pop_spec,
     grid=grid,

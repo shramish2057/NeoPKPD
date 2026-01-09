@@ -1,5 +1,5 @@
 # Model Import Module
-# Import NONMEM and Monolix models to OpenPKPD format
+# Import NONMEM and Monolix models to NeoPKPD format
 #
 # This module provides parsers for external pharmacometrics tools:
 # - NONMEM: Parse .ctl control files
@@ -25,7 +25,7 @@ export import_nonmem, import_monolix, ImportResult
 Result of importing an external model file.
 
 Fields:
-- model_type: The OpenPKPD model type symbol (e.g., :OneCompOralFirstOrder)
+- model_type: The NeoPKPD model type symbol (e.g., :OneCompOralFirstOrder)
 - parameters: Dictionary of parameter name => value
 - spec: Full ModelSpec ready for simulation
 - iiv: Inter-individual variability specification (if present)
@@ -46,7 +46,7 @@ end
 """
     import_nonmem(filepath::AbstractString; doses::Vector{DoseEvent}=DoseEvent[], name::String="") -> ImportResult
 
-Import a NONMEM control file and convert to OpenPKPD format.
+Import a NONMEM control file and convert to NeoPKPD format.
 
 # Arguments
 - `filepath`: Path to the NONMEM .ctl control file
@@ -72,8 +72,8 @@ function import_nonmem(
     # Read and parse the control file
     ctl = read_nonmem_control(filepath)
 
-    # Convert to OpenPKPD
-    conversion = convert_nonmem_to_openpkpd(ctl; doses=doses, name=name)
+    # Convert to NeoPKPD
+    conversion = convert_nonmem_to_neopkpd(ctl; doses=doses, name=name)
 
     # Check for errors
     if !isempty(conversion.errors)
@@ -109,7 +109,7 @@ end
 """
     import_monolix(filepath::AbstractString; doses::Vector{DoseEvent}=DoseEvent[], name::String="") -> ImportResult
 
-Import a Monolix project file and convert to OpenPKPD format.
+Import a Monolix project file and convert to NeoPKPD format.
 
 # Arguments
 - `filepath`: Path to the Monolix .mlxtran project file
@@ -134,8 +134,8 @@ function import_monolix(
     # Read and parse the project file
     project = read_monolix_project(filepath)
 
-    # Convert to OpenPKPD
-    conversion = convert_monolix_to_openpkpd(project; doses=doses, name=name)
+    # Convert to NeoPKPD
+    conversion = convert_monolix_to_neopkpd(project; doses=doses, name=name)
 
     # Check for errors
     if !isempty(conversion.errors)

@@ -1,6 +1,6 @@
-# OpenPKPD Examples
+# NeoPKPD Examples
 
-Comprehensive examples covering all OpenPKPD features across Julia, Python, and CLI interfaces.
+Comprehensive examples covering all NeoPKPD features across Julia, Python, and CLI interfaces.
 
 ## Quick Navigation
 
@@ -27,7 +27,7 @@ Complete workflows from data to analysis:
 |----------|-------------|
 | [FIH Dose Exploration](use_cases/fih_dose_exploration/README.md) | First-in-human dose selection |
 | [PKPD Biomarker](use_cases/pkpd_biomarker_turnover/README.md) | Biomarker turnover modeling |
-| [NONMEM Migration](use_cases/nonmem_migration/README.md) | Migrate NONMEM models to OpenPKPD |
+| [NONMEM Migration](use_cases/nonmem_migration/README.md) | Migrate NONMEM models to NeoPKPD |
 | [Theophylline Analysis](use_cases/real_world_theophylline/README.md) | Real-world PK analysis |
 | [Bioequivalence Study](use_cases/bioequivalence_study/README.md) | Complete BE workflow |
 | [Population PKPD](use_cases/population_pkpd_analysis/README.md) | Full population analysis |
@@ -49,7 +49,7 @@ Validation against published datasets:
 ### Julia (5 minutes)
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Create a one-compartment IV bolus model
 model = create_model_spec("OneCompIVBolus",
@@ -68,7 +68,7 @@ println("Cmax: ", maximum(result.observations["conc"]))
 ### Python (5 minutes)
 
 ```python
-from openpkpd import simulate, create_model_spec
+from neopkpd import simulate, create_model_spec
 
 # Create model
 model = create_model_spec("OneCompIVBolus",
@@ -87,10 +87,10 @@ print(f"Cmax: {max(result['observations']['conc'])}")
 
 ```bash
 # Run simulation
-./bin/openpkpd simulate --spec quickstart/spec.json --out result.json
+./bin/neopkpd simulate --spec quickstart/spec.json --out result.json
 
 # Compute metrics
-./bin/openpkpd metrics --artifact result.json --metrics cmax,tmax,auc
+./bin/neopkpd metrics --artifact result.json --metrics cmax,tmax,auc
 ```
 
 ---
@@ -247,7 +247,7 @@ docs/examples/
 ./docs/examples/run_all.sh
 
 # Run specific category
-julia --project=core/OpenPKPDCore docs/examples/models/run_all.jl
+julia --project=core/NeoPKPDCore docs/examples/models/run_all.jl
 python docs/examples/estimation/run_all.py
 ```
 
@@ -255,7 +255,7 @@ python docs/examples/estimation/run_all.py
 
 ```bash
 # Validate against expected outputs
-julia --project=core/OpenPKPDCore docs/examples/validate_outputs.jl
+julia --project=core/NeoPKPDCore docs/examples/validate_outputs.jl
 ```
 
 ---
@@ -268,4 +268,4 @@ julia --project=core/OpenPKPDCore docs/examples/validate_outputs.jl
 4. Include a README.md explaining the example
 5. Follow the naming convention: `01_descriptive_name/`
 
-See the [CONTRIBUTING guide](https://github.com/shramish2057/OpenPKPD/blob/main/CONTRIBUTING.md) for guidelines.
+See the [CONTRIBUTING guide](https://github.com/shramish2057/NeoPKPD/blob/main/CONTRIBUTING.md) for guidelines.

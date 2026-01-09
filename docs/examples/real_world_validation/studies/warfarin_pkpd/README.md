@@ -50,7 +50,7 @@
 
 This is **simulation-only validation** using fixed literature-derived parameters:
 1. Parse warfarin dataset with both PK and PD observations
-2. Simulate coupled PKPD using OpenPKPD
+2. Simulate coupled PKPD using NeoPKPD
 3. Compute RMSE separately for PK (concentration) and PD (response) endpoints
 4. Compare against expected output (deterministic replay)
 
@@ -66,7 +66,7 @@ Summary:
 
 ```bash
 # Run simulation (from repository root)
-julia --project=core/OpenPKPDCore \
+julia --project=core/NeoPKPDCore \
   docs/examples/real_world_validation/datasets/warfarin_nlmixr2data/run.jl
 
 # Copy to expected (first time or when regenerating)
@@ -75,7 +75,7 @@ cp docs/examples/real_world_validation/studies/warfarin_pkpd/output/*.json \
    docs/examples/real_world_validation/studies/warfarin_pkpd/expected/
 
 # Validate
-julia --project=core/OpenPKPDCore \
+julia --project=core/NeoPKPDCore \
   docs/examples/real_world_validation/datasets/warfarin_nlmixr2data/validate.jl
 ```
 

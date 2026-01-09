@@ -1,18 +1,18 @@
 # Backends & Themes
 
-Configure visualization backends and styling for OpenPKPD plots.
+Configure visualization backends and styling for NeoPKPD plots.
 
 ---
 
 ## Overview
 
-OpenPKPD supports dual visualization backends:
+NeoPKPD supports dual visualization backends:
 
 - **Matplotlib**: Static, publication-quality figures
 - **Plotly**: Interactive, web-embeddable plots
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Set backend globally
 viz.set_backend("matplotlib")  # or "plotly"
@@ -72,7 +72,7 @@ fig.write_image("plot.png", scale=2)  # Static image (requires kaleido)
 
 ```python
 # Set theme
-viz.set_theme("openpkpd")      # Default professional theme
+viz.set_theme("neopkpd")      # Default professional theme
 viz.set_theme("publication")    # Minimal for publications
 viz.set_theme("presentation")   # Bold for slides
 
@@ -84,7 +84,7 @@ print(viz.available_themes())
 
 | Theme | Use Case | Font Size | Line Width |
 |-------|----------|-----------|------------|
-| `openpkpd` | General use | Medium | Medium |
+| `neopkpd` | General use | Medium | Medium |
 | `publication` | Journal figures | Small | Thin |
 | `presentation` | Slides | Large | Thick |
 
@@ -94,7 +94,7 @@ print(viz.available_themes())
 
 ```python
 # Access color palette
-colors = viz.OPENPKPD_COLORS
+colors = viz.NEOPKPD_COLORS
 
 print(colors)
 # {

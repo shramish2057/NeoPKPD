@@ -1,5 +1,5 @@
 """
-Comprehensive tests for OpenPKPD model import module.
+Comprehensive tests for NeoPKPD model import module.
 
 Tests cover:
 - NONMEM control file parsing (ADVAN1-4, 10, 11)
@@ -323,8 +323,8 @@ populationParameters()
 @pytest.fixture(scope="module")
 def julia_initialized():
     """Initialize Julia once for all tests that need it."""
-    import openpkpd
-    openpkpd.init_julia()
+    import neopkpd
+    neopkpd.init_julia()
     return True
 
 
@@ -357,7 +357,7 @@ class TestEnums:
 
     def test_error_model_type_values(self):
         """Test ErrorModelType enum values."""
-        from openpkpd.import_ import ErrorModelType
+        from neopkpd.import_ import ErrorModelType
 
         assert ErrorModelType.PROPORTIONAL.value == "proportional"
         assert ErrorModelType.ADDITIVE.value == "additive"
@@ -367,7 +367,7 @@ class TestEnums:
 
     def test_iiv_transformation_values(self):
         """Test IIVTransformation enum values."""
-        from openpkpd.import_ import IIVTransformation
+        from neopkpd.import_ import IIVTransformation
 
         assert IIVTransformation.EXPONENTIAL.value == "exponential"
         assert IIVTransformation.ADDITIVE.value == "additive"
@@ -376,7 +376,7 @@ class TestEnums:
 
     def test_covariate_effect_type_values(self):
         """Test CovariateEffectType enum values."""
-        from openpkpd.import_ import CovariateEffectType
+        from neopkpd.import_ import CovariateEffectType
 
         assert CovariateEffectType.POWER.value == "power"
         assert CovariateEffectType.LINEAR.value == "linear"
@@ -384,7 +384,7 @@ class TestEnums:
 
     def test_omega_structure_values(self):
         """Test OmegaStructure enum values."""
-        from openpkpd.import_ import OmegaStructure
+        from neopkpd.import_ import OmegaStructure
 
         assert OmegaStructure.DIAGONAL.value == "diagonal"
         assert OmegaStructure.BLOCK.value == "block"
@@ -396,7 +396,7 @@ class TestNONMEMTypes:
 
     def test_theta_spec_creation(self):
         """Test THETASpec dataclass."""
-        from openpkpd.import_ import THETASpec
+        from neopkpd.import_ import THETASpec
 
         theta = THETASpec(init=5.0, lower=0.0, upper=100.0, fixed=False, name="CL")
         assert theta.init == 5.0
@@ -407,7 +407,7 @@ class TestNONMEMTypes:
 
     def test_theta_spec_defaults(self):
         """Test THETASpec default values."""
-        from openpkpd.import_ import THETASpec
+        from neopkpd.import_ import THETASpec
 
         theta = THETASpec(init=10.0)
         assert theta.lower == float('-inf')
@@ -417,7 +417,7 @@ class TestNONMEMTypes:
 
     def test_omega_block_creation(self):
         """Test OMEGABlock dataclass."""
-        from openpkpd.import_ import OMEGABlock, OmegaStructure
+        from neopkpd.import_ import OMEGABlock, OmegaStructure
 
         # Diagonal omega
         omega_diag = OMEGABlock(values=[0.09, 0.0625])
@@ -430,7 +430,7 @@ class TestNONMEMTypes:
 
     def test_sigma_block_creation(self):
         """Test SIGMABlock dataclass."""
-        from openpkpd.import_ import SIGMABlock
+        from neopkpd.import_ import SIGMABlock
 
         sigma = SIGMABlock(values=[1.0], fixed=True)
         assert sigma.values == [1.0]
@@ -438,7 +438,7 @@ class TestNONMEMTypes:
 
     def test_subroutine_spec(self):
         """Test SubroutineSpec dataclass."""
-        from openpkpd.import_ import SubroutineSpec
+        from neopkpd.import_ import SubroutineSpec
 
         sub = SubroutineSpec(advan=1, trans=2)
         assert sub.advan == 1
@@ -447,7 +447,7 @@ class TestNONMEMTypes:
 
     def test_data_spec(self):
         """Test DataSpec dataclass."""
-        from openpkpd.import_ import DataSpec
+        from neopkpd.import_ import DataSpec
 
         data = DataSpec(filename="data.csv", ignore=["@", "C"])
         assert data.filename == "data.csv"
@@ -456,7 +456,7 @@ class TestNONMEMTypes:
 
     def test_input_column(self):
         """Test InputColumn dataclass."""
-        from openpkpd.import_ import InputColumn
+        from neopkpd.import_ import InputColumn
 
         col = InputColumn(name="AMT", drop=False, alias="DOSE")
         assert col.name == "AMT"
@@ -465,7 +465,7 @@ class TestNONMEMTypes:
 
     def test_pk_covariate_effect(self):
         """Test PKCovariateEffect dataclass."""
-        from openpkpd.import_ import PKCovariateEffect, CovariateEffectType
+        from neopkpd.import_ import PKCovariateEffect, CovariateEffectType
 
         effect = PKCovariateEffect(
             covariate="WT",
@@ -480,7 +480,7 @@ class TestNONMEMTypes:
 
     def test_pk_assignment(self):
         """Test PKAssignment dataclass."""
-        from openpkpd.import_ import PKAssignment, IIVTransformation
+        from neopkpd.import_ import PKAssignment, IIVTransformation
 
         assignment = PKAssignment(
             target="CL",
@@ -495,7 +495,7 @@ class TestNONMEMTypes:
 
     def test_scaling_factor(self):
         """Test ScalingFactor dataclass."""
-        from openpkpd.import_ import ScalingFactor
+        from neopkpd.import_ import ScalingFactor
 
         scaling = ScalingFactor(compartment=1, parameter="V")
         assert scaling.compartment == 1
@@ -503,7 +503,7 @@ class TestNONMEMTypes:
 
     def test_pk_block(self):
         """Test PKBlock dataclass."""
-        from openpkpd.import_ import PKBlock
+        from neopkpd.import_ import PKBlock
 
         pk = PKBlock(raw_code=["TVCL = THETA(1)", "CL = TVCL * EXP(ETA(1))"])
         assert len(pk.raw_code) == 2
@@ -512,7 +512,7 @@ class TestNONMEMTypes:
 
     def test_error_block(self):
         """Test ErrorBlock dataclass."""
-        from openpkpd.import_ import ErrorBlock, ErrorModelType
+        from neopkpd.import_ import ErrorBlock, ErrorModelType
 
         error = ErrorBlock(error_type=ErrorModelType.PROPORTIONAL)
         assert error.error_type == ErrorModelType.PROPORTIONAL
@@ -520,7 +520,7 @@ class TestNONMEMTypes:
 
     def test_unsupported_construct(self):
         """Test UnsupportedConstruct dataclass."""
-        from openpkpd.import_ import UnsupportedConstruct
+        from neopkpd.import_ import UnsupportedConstruct
 
         unsup = UnsupportedConstruct(
             construct="IF statement",
@@ -533,7 +533,7 @@ class TestNONMEMTypes:
 
     def test_nonmem_control_file(self):
         """Test NONMEMControlFile dataclass."""
-        from openpkpd.import_ import NONMEMControlFile, THETASpec, SubroutineSpec
+        from neopkpd.import_ import NONMEMControlFile, THETASpec, SubroutineSpec
 
         thetas = [THETASpec(init=5.0), THETASpec(init=50.0)]
         subroutines = SubroutineSpec(advan=1, trans=2)
@@ -556,7 +556,7 @@ class TestMonolixTypes:
 
     def test_monolix_model_type(self):
         """Test MonolixModelType dataclass."""
-        from openpkpd.import_ import MonolixModelType
+        from neopkpd.import_ import MonolixModelType
 
         mt = MonolixModelType(lib="pklib", model="pk_oral1cpt_kaVCl_PLASMA")
         assert mt.lib == "pklib"
@@ -564,7 +564,7 @@ class TestMonolixTypes:
 
     def test_monolix_structural_model(self):
         """Test MonolixStructuralModel dataclass."""
-        from openpkpd.import_ import MonolixStructuralModel, MonolixModelType
+        from neopkpd.import_ import MonolixStructuralModel, MonolixModelType
 
         mt = MonolixModelType(lib="pklib", model="pk_oral1cpt_kaVCl_PLASMA")
         model = MonolixStructuralModel(
@@ -580,7 +580,7 @@ class TestMonolixTypes:
 
     def test_monolix_parameter(self):
         """Test MonolixParameter dataclass."""
-        from openpkpd.import_ import MonolixParameter
+        from neopkpd.import_ import MonolixParameter
 
         param = MonolixParameter(
             name="ka",
@@ -596,7 +596,7 @@ class TestMonolixTypes:
 
     def test_monolix_observation(self):
         """Test MonolixObservation dataclass."""
-        from openpkpd.import_ import MonolixObservation
+        from neopkpd.import_ import MonolixObservation
 
         obs = MonolixObservation(
             name="Cc",
@@ -609,7 +609,7 @@ class TestMonolixTypes:
 
     def test_monolix_dataset(self):
         """Test MonolixDataset dataclass."""
-        from openpkpd.import_ import MonolixDataset
+        from neopkpd.import_ import MonolixDataset
 
         data = MonolixDataset(filename="data.csv", id_column="SUBJ")
         assert data.filename == "data.csv"
@@ -618,7 +618,7 @@ class TestMonolixTypes:
 
     def test_monolix_project(self):
         """Test MonolixProject dataclass."""
-        from openpkpd.import_ import MonolixProject, MonolixParameter
+        from neopkpd.import_ import MonolixProject, MonolixParameter
 
         params = [
             MonolixParameter(name="ka", value=1.5),
@@ -635,7 +635,7 @@ class TestMonolixTypes:
 
     def test_unsupported_monolix_construct(self):
         """Test UnsupportedMonolixConstruct dataclass."""
-        from openpkpd.import_ import UnsupportedMonolixConstruct
+        from neopkpd.import_ import UnsupportedMonolixConstruct
 
         unsup = UnsupportedMonolixConstruct(
             construct="PD model",
@@ -650,7 +650,7 @@ class TestImportedModel:
 
     def test_imported_model_creation(self):
         """Test ImportedModel dataclass."""
-        from openpkpd.import_ import ImportedModel
+        from neopkpd.import_ import ImportedModel
 
         model = ImportedModel(
             source_format="nonmem",
@@ -676,7 +676,7 @@ class TestModelMappings:
 
     def test_advan_trans_map_contents(self):
         """Test ADVAN_TRANS_MAP contains expected mappings."""
-        from openpkpd.import_ import ADVAN_TRANS_MAP
+        from neopkpd.import_ import ADVAN_TRANS_MAP
 
         # ADVAN1
         assert (1, 1) in ADVAN_TRANS_MAP
@@ -698,7 +698,7 @@ class TestModelMappings:
 
     def test_get_model_mapping(self):
         """Test get_model_mapping function."""
-        from openpkpd.import_ import get_model_mapping
+        from neopkpd.import_ import get_model_mapping
 
         # Supported combinations
         result = get_model_mapping(1, 2)
@@ -720,7 +720,7 @@ class TestModelMappings:
 
     def test_monolix_model_map_contents(self):
         """Test MONOLIX_MODEL_MAP contains expected mappings."""
-        from openpkpd.import_ import MONOLIX_MODEL_MAP
+        from neopkpd.import_ import MONOLIX_MODEL_MAP
 
         assert "pk_bolus1cpt_VCl_PLASMA" in MONOLIX_MODEL_MAP
         assert MONOLIX_MODEL_MAP["pk_bolus1cpt_VCl_PLASMA"] == "OneCompIVBolus"
@@ -730,7 +730,7 @@ class TestModelMappings:
 
     def test_get_monolix_model_mapping_exact(self):
         """Test get_monolix_model_mapping with exact match."""
-        from openpkpd.import_ import get_monolix_model_mapping
+        from neopkpd.import_ import get_monolix_model_mapping
 
         result = get_monolix_model_mapping("pk_bolus1cpt_VCl_PLASMA")
         assert result == "OneCompIVBolus"
@@ -740,7 +740,7 @@ class TestModelMappings:
 
     def test_get_monolix_model_mapping_pattern(self):
         """Test get_monolix_model_mapping with pattern matching."""
-        from openpkpd.import_ import get_monolix_model_mapping
+        from neopkpd.import_ import get_monolix_model_mapping
 
         # Pattern matching for variations
         result = get_monolix_model_mapping("pk_oral_custom_1cpt_model")
@@ -754,7 +754,7 @@ class TestModelMappings:
 
     def test_get_monolix_model_mapping_unknown(self):
         """Test get_monolix_model_mapping with unknown model."""
-        from openpkpd.import_ import get_monolix_model_mapping
+        from neopkpd.import_ import get_monolix_model_mapping
 
         result = get_monolix_model_mapping("completely_unknown_model")
         assert result is None
@@ -769,7 +769,7 @@ class TestNONMEMParsing:
 
     def test_parse_advan1_onecomp(self, julia_initialized, temp_ctl_file):
         """Test parsing ADVAN1 one-compartment model."""
-        from openpkpd.import_ import parse_nonmem_control
+        from neopkpd.import_ import parse_nonmem_control
 
         ctl = parse_nonmem_control(temp_ctl_file)
 
@@ -781,7 +781,7 @@ class TestNONMEMParsing:
 
     def test_parse_nonmem_control_text(self, julia_initialized):
         """Test parsing control file text directly."""
-        from openpkpd.import_ import parse_nonmem_control_text
+        from neopkpd.import_ import parse_nonmem_control_text
 
         ctl = parse_nonmem_control_text(NONMEM_ADVAN2_ORAL)
 
@@ -791,7 +791,7 @@ class TestNONMEMParsing:
 
     def test_parse_advan4_twocomp(self, julia_initialized):
         """Test parsing ADVAN4 two-compartment model."""
-        from openpkpd.import_ import parse_nonmem_control_text
+        from neopkpd.import_ import parse_nonmem_control_text
 
         ctl = parse_nonmem_control_text(NONMEM_ADVAN4_TWOCOMP)
 
@@ -801,7 +801,7 @@ class TestNONMEMParsing:
 
     def test_check_unsupported_constructs_advan6(self, julia_initialized):
         """Test detection of unsupported ADVAN6."""
-        from openpkpd.import_ import parse_nonmem_control_text, check_unsupported_constructs
+        from neopkpd.import_ import parse_nonmem_control_text, check_unsupported_constructs
 
         ctl = parse_nonmem_control_text(NONMEM_UNSUPPORTED)
         unsupported = check_unsupported_constructs(ctl)
@@ -812,7 +812,7 @@ class TestNONMEMParsing:
 
     def test_check_unsupported_constructs_des(self, julia_initialized):
         """Test detection of unsupported $DES."""
-        from openpkpd.import_ import parse_nonmem_control_text, check_unsupported_constructs
+        from neopkpd.import_ import parse_nonmem_control_text, check_unsupported_constructs
 
         ctl = parse_nonmem_control_text(NONMEM_UNSUPPORTED)
         unsupported = check_unsupported_constructs(ctl)
@@ -823,7 +823,7 @@ class TestNONMEMParsing:
 
     def test_validate_nonmem_import(self, julia_initialized, temp_ctl_file):
         """Test NONMEM validation function."""
-        from openpkpd.import_ import validate_nonmem_import
+        from neopkpd.import_ import validate_nonmem_import
 
         result = validate_nonmem_import(temp_ctl_file)
 
@@ -838,7 +838,7 @@ class TestMonolixParsing:
 
     def test_parse_monolix_1cpt_oral(self, julia_initialized, temp_mlxtran_file):
         """Test parsing one-compartment oral Monolix project."""
-        from openpkpd.import_ import parse_monolix_project
+        from neopkpd.import_ import parse_monolix_project
 
         project = parse_monolix_project(temp_mlxtran_file)
 
@@ -848,7 +848,7 @@ class TestMonolixParsing:
 
     def test_parse_monolix_project_text(self, julia_initialized):
         """Test parsing Monolix project text directly."""
-        from openpkpd.import_ import parse_monolix_project_text
+        from neopkpd.import_ import parse_monolix_project_text
 
         project = parse_monolix_project_text(MONOLIX_PK2CPT_IV)
 
@@ -860,7 +860,7 @@ class TestMonolixParsing:
 
     def test_validate_monolix_import(self, julia_initialized, temp_mlxtran_file):
         """Test Monolix validation function."""
-        from openpkpd.import_ import validate_monolix_import
+        from neopkpd.import_ import validate_monolix_import
 
         result = validate_monolix_import(temp_mlxtran_file)
 
@@ -873,7 +873,7 @@ class TestImportFunctions:
 
     def test_import_nonmem_advan1(self, julia_initialized, temp_ctl_file):
         """Test importing NONMEM ADVAN1 model."""
-        from openpkpd.import_ import import_nonmem
+        from neopkpd.import_ import import_nonmem
 
         doses = [{"time": 0.0, "amount": 100.0}]
         model = import_nonmem(temp_ctl_file, doses=doses)
@@ -887,7 +887,7 @@ class TestImportFunctions:
 
     def test_import_monolix_1cpt(self, julia_initialized, temp_mlxtran_file):
         """Test importing Monolix one-compartment model."""
-        from openpkpd.import_ import import_monolix
+        from neopkpd.import_ import import_monolix
 
         doses = [{"time": 0.0, "amount": 100.0}]
         model = import_monolix(temp_mlxtran_file, doses=doses)
@@ -897,7 +897,7 @@ class TestImportFunctions:
 
     def test_import_model_auto_detect_ctl(self, julia_initialized, temp_ctl_file):
         """Test import_model auto-detects .ctl files."""
-        from openpkpd.import_ import import_model
+        from neopkpd.import_ import import_model
 
         doses = [{"time": 0.0, "amount": 100.0}]
         model = import_model(temp_ctl_file, doses=doses)
@@ -906,7 +906,7 @@ class TestImportFunctions:
 
     def test_import_model_auto_detect_mlxtran(self, julia_initialized, temp_mlxtran_file):
         """Test import_model auto-detects .mlxtran files."""
-        from openpkpd.import_ import import_model
+        from neopkpd.import_ import import_model
 
         doses = [{"time": 0.0, "amount": 100.0}]
         model = import_model(temp_mlxtran_file, doses=doses)
@@ -915,7 +915,7 @@ class TestImportFunctions:
 
     def test_import_model_explicit_format(self, julia_initialized, temp_ctl_file):
         """Test import_model with explicit format."""
-        from openpkpd.import_ import import_model
+        from neopkpd.import_ import import_model
 
         doses = [{"time": 0.0, "amount": 100.0}]
         model = import_model(temp_ctl_file, format="nonmem", doses=doses)
@@ -924,7 +924,7 @@ class TestImportFunctions:
 
     def test_import_model_invalid_format(self, julia_initialized):
         """Test import_model raises error for invalid format."""
-        from openpkpd.import_ import import_model
+        from neopkpd.import_ import import_model
 
         with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
             f.write(b"some text")
@@ -942,11 +942,11 @@ class TestRealExampleFiles:
     @pytest.fixture
     def example_dir(self):
         """Get the examples directory."""
-        return Path("/Users/shramishkafle/Desktop/openpkpd/docs/examples/import")
+        return Path("/Users/shramishkafle/Desktop/neopkpd/docs/examples/import")
 
     def test_import_real_advan1(self, julia_initialized, example_dir):
         """Test importing real ADVAN1 example."""
-        from openpkpd.import_ import import_nonmem
+        from neopkpd.import_ import import_nonmem
 
         ctl_path = example_dir / "nonmem" / "01_advan1_onecomp" / "run001.ctl"
         if not ctl_path.exists():
@@ -959,7 +959,7 @@ class TestRealExampleFiles:
 
     def test_import_real_advan2(self, julia_initialized, example_dir):
         """Test importing real ADVAN2 example."""
-        from openpkpd.import_ import import_nonmem
+        from neopkpd.import_ import import_nonmem
 
         ctl_path = example_dir / "nonmem" / "02_advan2_oral" / "run002.ctl"
         if not ctl_path.exists():
@@ -972,7 +972,7 @@ class TestRealExampleFiles:
 
     def test_import_real_advan4(self, julia_initialized, example_dir):
         """Test importing real ADVAN4 example."""
-        from openpkpd.import_ import import_nonmem
+        from neopkpd.import_ import import_nonmem
 
         ctl_path = example_dir / "nonmem" / "03_advan4_twocomp" / "run003.ctl"
         if not ctl_path.exists():
@@ -985,7 +985,7 @@ class TestRealExampleFiles:
 
     def test_import_real_monolix_1cpt(self, julia_initialized, example_dir):
         """Test importing real Monolix 1-cpt example."""
-        from openpkpd.import_ import import_monolix
+        from neopkpd.import_ import import_monolix
 
         mlx_path = example_dir / "monolix" / "01_pk1cpt_oral" / "project.mlxtran"
         if not mlx_path.exists():
@@ -998,7 +998,7 @@ class TestRealExampleFiles:
 
     def test_import_real_monolix_2cpt(self, julia_initialized, example_dir):
         """Test importing real Monolix 2-cpt example."""
-        from openpkpd.import_ import import_monolix
+        from neopkpd.import_ import import_monolix
 
         mlx_path = example_dir / "monolix" / "02_pk2cpt_iv" / "project.mlxtran"
         if not mlx_path.exists():
@@ -1015,14 +1015,14 @@ class TestEdgeCases:
 
     def test_empty_theta_list(self):
         """Test NONMEMControlFile with empty theta list."""
-        from openpkpd.import_ import NONMEMControlFile
+        from neopkpd.import_ import NONMEMControlFile
 
         ctl = NONMEMControlFile(problem="Test")
         assert ctl.theta_specs == []
 
     def test_legacy_properties_without_subroutines(self):
         """Test legacy properties when subroutines is None."""
-        from openpkpd.import_ import NONMEMControlFile
+        from neopkpd.import_ import NONMEMControlFile
 
         ctl = NONMEMControlFile(problem="Test", subroutines=None)
         assert ctl.advan == 0
@@ -1030,14 +1030,14 @@ class TestEdgeCases:
 
     def test_legacy_properties_without_data(self):
         """Test legacy properties when data is None."""
-        from openpkpd.import_ import NONMEMControlFile
+        from neopkpd.import_ import NONMEMControlFile
 
         ctl = NONMEMControlFile(problem="Test", data=None)
         assert ctl.data_file is None
 
     def test_monolix_project_legacy_properties(self):
         """Test MonolixProject legacy properties."""
-        from openpkpd.import_ import MonolixProject
+        from neopkpd.import_ import MonolixProject
 
         project = MonolixProject()
         assert project.model_type == "unknown"
@@ -1050,7 +1050,7 @@ class TestExports:
 
     def test_all_exports_available(self):
         """Test that __all__ exports are importable."""
-        from openpkpd import import_
+        from neopkpd import import_
 
         expected_exports = [
             # Enums

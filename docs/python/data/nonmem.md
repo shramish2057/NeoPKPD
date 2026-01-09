@@ -1,13 +1,13 @@
 # NONMEM Model Import
 
-Import NONMEM control stream files (.ctl, .mod) into OpenPKPD Python.
+Import NONMEM control stream files (.ctl, .mod) into NeoPKPD Python.
 
 ---
 
 ## Overview
 
 ```python
-from openpkpd.import_ import import_nonmem
+from neopkpd.import_ import import_nonmem
 
 model = import_nonmem("run001.ctl")
 print(f"Model: {model.model_kind}")
@@ -21,7 +21,7 @@ print(f"Parameters: {model.params}")
 ### Basic Import
 
 ```python
-from openpkpd.import_ import import_nonmem
+from neopkpd.import_ import import_nonmem
 
 # Import NONMEM control file
 model = import_nonmem("run001.ctl")
@@ -61,7 +61,7 @@ class ImportedModel:
     source_file: str            # Path to source file
 
     # Model type
-    model_kind: str             # OpenPKPD model name
+    model_kind: str             # NeoPKPD model name
 
     # Fixed effects
     params: dict[str, float]    # Parameter name → value
@@ -300,8 +300,8 @@ for effect in effects:
 ### Simulation
 
 ```python
-from openpkpd.import_ import import_nonmem
-from openpkpd import simulate
+from neopkpd.import_ import import_nonmem
+from neopkpd import simulate
 
 # Import model
 model = import_nonmem("run001.ctl")
@@ -324,8 +324,8 @@ print(f"Cmax: {max(result.concentrations):.2f}")
 ### Population Simulation
 
 ```python
-from openpkpd.import_ import import_nonmem
-from openpkpd import simulate_population
+from neopkpd.import_ import import_nonmem
+from neopkpd import simulate_population
 
 model = import_nonmem("run001.ctl")
 
@@ -403,8 +403,8 @@ for w in model.warnings:
 ## Complete Example
 
 ```python
-from openpkpd.import_ import import_nonmem
-from openpkpd import simulate
+from neopkpd.import_ import import_nonmem
+from neopkpd import simulate
 import math
 
 # Import NONMEM control file

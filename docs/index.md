@@ -1,6 +1,6 @@
-# OpenPKPD Documentation
+# NeoPKPD Documentation
 
-**OpenPKPD** is a transparent, validated pharmacokinetics and pharmacodynamics (PK/PD) modeling infrastructure built for reproducibility and scientific rigor.
+**NeoPKPD** is a transparent, validated pharmacokinetics and pharmacodynamics (PK/PD) modeling infrastructure built for reproducibility and scientific rigor.
 
 <div class="grid cards" markdown>
 
@@ -36,16 +36,16 @@
 
 ### Multi-Language Support
 
-OpenPKPD provides native implementations in both **Julia** (high-performance core) and **Python** (data science integration):
+NeoPKPD provides native implementations in both **Julia** (high-performance core) and **Python** (data science integration):
 
 === "Python"
 
     ```python
-    import openpkpd
+    import neopkpd
 
-    openpkpd.init_julia()
+    neopkpd.init_julia()
 
-    result = openpkpd.simulate_pk_oral(
+    result = neopkpd.simulate_pk_oral(
         ka=1.5, cl=5.0, v=50.0,
         doses=[{"time": 0.0, "amount": 100.0}],
         t0=0.0, t1=24.0, saveat=0.5
@@ -57,7 +57,7 @@ OpenPKPD provides native implementations in both **Julia** (high-performance cor
 === "Julia"
 
     ```julia
-    using OpenPKPDCore
+    using NeoPKPDCore
 
     params = OneCompOralParams(1.5, 5.0, 50.0)  # Ka, CL, V
     doses = [DoseEvent(0.0, 100.0)]
@@ -73,7 +73,7 @@ OpenPKPD provides native implementations in both **Julia** (high-performance cor
 === "CLI"
 
     ```bash
-    openpkpd simulate \
+    neopkpd simulate \
       --model onecomp-oral \
       --params ka=1.5,cl=5.0,v=50.0 \
       --dose "time=0,amount=100" \
@@ -118,24 +118,24 @@ Every simulation produces deterministic, versioned artifacts:
 === "Python"
 
     ```bash
-    pip install openpkpd
+    pip install neopkpd
     ```
 
 === "Julia"
 
     ```julia
     using Pkg
-    Pkg.add("OpenPKPDCore")
+    Pkg.add("NeoPKPDCore")
     ```
 
 === "CLI"
 
     ```bash
     # After Python installation
-    pip install openpkpd
+    pip install neopkpd
 
     # Verify installation
-    openpkpd --version
+    neopkpd --version
     ```
 
 ### Your First Simulation
@@ -143,14 +143,14 @@ Every simulation produces deterministic, versioned artifacts:
 === "Python"
 
     ```python
-    import openpkpd
-    from openpkpd import viz
+    import neopkpd
+    from neopkpd import viz
 
     # Initialize Julia backend
-    openpkpd.init_julia()
+    neopkpd.init_julia()
 
     # Simulate one-compartment oral PK
-    result = openpkpd.simulate_pk_oral(
+    result = neopkpd.simulate_pk_oral(
         ka=1.5,      # Absorption rate constant (1/hr)
         cl=5.0,      # Clearance (L/hr)
         v=50.0,      # Volume of distribution (L)
@@ -173,7 +173,7 @@ Every simulation produces deterministic, versioned artifacts:
 === "Julia"
 
     ```julia
-    using OpenPKPDCore
+    using NeoPKPDCore
 
     # Define model parameters
     params = OneCompOralParams(
@@ -206,7 +206,7 @@ Every simulation produces deterministic, versioned artifacts:
 
     ```python
     # Simulate 100 subjects with inter-individual variability
-    pop_result = openpkpd.simulate_population_oral(
+    pop_result = neopkpd.simulate_population_oral(
         ka=1.5, cl=5.0, v=50.0,
         doses=[{"time": 0.0, "amount": 100.0}],
         t0=0.0, t1=24.0, saveat=0.5,
@@ -252,7 +252,7 @@ Every simulation produces deterministic, versioned artifacts:
 
     ```python
     # Run NCA on concentration-time data
-    nca_result = openpkpd.run_nca(
+    nca_result = neopkpd.run_nca(
         times=[0, 0.5, 1, 2, 4, 8, 12, 24],
         concentrations=[0, 5.2, 8.1, 6.3, 3.8, 1.9, 0.9, 0.2],
         dose=100.0,
@@ -288,7 +288,7 @@ Every simulation produces deterministic, versioned artifacts:
 
 ### Pharmacokinetic Models
 
-OpenPKPD implements standard PK models with validated ODE solvers:
+NeoPKPD implements standard PK models with validated ODE solvers:
 
 | Model | Compartments | Routes | Key Parameters |
 |-------|--------------|--------|----------------|
@@ -362,7 +362,7 @@ Fit models to observed data:
 Publication-quality plots with dual backend support:
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Set backend: matplotlib (static) or plotly (interactive)
 viz.set_backend("matplotlib")
@@ -442,7 +442,7 @@ graph TB
     end
 
     subgraph "Core Engine"
-        CORE[OpenPKPDCore.jl]
+        CORE[NeoPKPDCore.jl]
         MODELS[Model Library]
         SOLVERS[ODE Solvers]
         POP[Population Engine]
@@ -483,7 +483,7 @@ graph TB
 ## Version Information
 
 ```
-OpenPKPD Version: 0.1.0
+NeoPKPD Version: 0.1.0
 Event Semantics: 1.0.0
 Solver Semantics: 1.0.0
 Artifact Schema: 1.0.0
@@ -505,11 +505,11 @@ Artifact Schema: 1.0.0
 
 - **Documentation**: You're here!
 - **Examples**: [Working examples](examples/README.md) for all features
-- **Issues**: [GitHub Issues](https://github.com/openpkpd/OpenPKPD/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/openpkpd/OpenPKPD/discussions)
+- **Issues**: [GitHub Issues](https://github.com/neopkpd/NeoPKPD/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/neopkpd/NeoPKPD/discussions)
 
 ---
 
 ## License
 
-OpenPKPD is open source software released under the MIT License. See the [repository](https://github.com/openpkpd/OpenPKPD) for details.
+NeoPKPD is open source software released under the MIT License. See the [repository](https://github.com/neopkpd/NeoPKPD) for details.

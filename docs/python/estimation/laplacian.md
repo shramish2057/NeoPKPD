@@ -7,7 +7,7 @@ The Laplacian approximation provides fast, efficient parameter estimation partic
 ## Overview
 
 ```python
-from openpkpd.estimation import estimate, EstimationConfig, LaplacianMethod
+from neopkpd.estimation import estimate, EstimationConfig, LaplacianMethod
 
 config = EstimationConfig(
     method=LaplacianMethod(),
@@ -37,7 +37,7 @@ result = estimate(data, "OneCompIVBolus", config)
 ### LaplacianMethod Parameters
 
 ```python
-from openpkpd.estimation import LaplacianMethod
+from neopkpd.estimation import LaplacianMethod
 
 method = LaplacianMethod(
     max_inner_iter=50,     # Max iterations for eta mode
@@ -50,7 +50,7 @@ method = LaplacianMethod(
 ### Full Configuration
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     EstimationConfig, LaplacianMethod, BLQConfig, BLQMethod
 )
 
@@ -74,7 +74,7 @@ config = EstimationConfig(
 ## Sparse Data Example
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     estimate, EstimationConfig, LaplacianMethod, EstimationData
 )
 

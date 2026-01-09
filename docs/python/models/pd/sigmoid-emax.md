@@ -7,7 +7,7 @@ Extended Emax model with Hill coefficient (gamma) controlling the steepness of t
 ## Function Signature
 
 ```python
-openpkpd.simulate_pkpd_sigmoid_emax(
+neopkpd.simulate_pkpd_sigmoid_emax(
     cl: float,
     v: float,
     doses: list[dict],
@@ -63,9 +63,9 @@ $$E(C) = E_0 + \frac{E_{max} \cdot C^\gamma}{EC_{50}^\gamma + C^\gamma}$$
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pkpd_sigmoid_emax(
+result = neopkpd.simulate_pkpd_sigmoid_emax(
     cl=5.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -89,7 +89,7 @@ print(f"Max effect: {max(effect):.1f}")
 ## Comparing Gamma Values
 
 ```python
-import openpkpd
+import neopkpd
 
 gamma_values = [0.5, 1.0, 2.0, 3.0, 5.0]
 
@@ -97,7 +97,7 @@ print("Gamma | Max Effect | Time > 50% effect")
 print("-" * 45)
 
 for gamma in gamma_values:
-    result = openpkpd.simulate_pkpd_sigmoid_emax(
+    result = neopkpd.simulate_pkpd_sigmoid_emax(
         cl=5.0, v=50.0,
         doses=[{"time": 0.0, "amount": 500.0}],
         e0=0.0, emax=100.0, ec50=2.0, gamma=gamma,
@@ -127,7 +127,7 @@ for gamma in gamma_values:
 Higher gamma = narrower therapeutic window:
 
 ```python
-import openpkpd
+import neopkpd
 
 # Calculate concentration at EC10 and EC90 for different gamma
 ec50 = 2.0
@@ -149,10 +149,10 @@ for gamma in [1.0, 2.0, 3.0, 5.0]:
 ## Clinical Example: Neuromuscular Blockade
 
 ```python
-import openpkpd
+import neopkpd
 
 # Rocuronium: steep response (gamma = 3-4)
-result = openpkpd.simulate_pkpd_sigmoid_emax(
+result = neopkpd.simulate_pkpd_sigmoid_emax(
     cl=3.0, v=15.0,
     doses=[{"time": 0.0, "amount": 50.0}],
     e0=100.0,      # 100% baseline twitch
@@ -183,7 +183,7 @@ if recovery_idx:
 ## Therapeutic Index
 
 ```python
-import openpkpd
+import neopkpd
 
 # Drug with narrow therapeutic index (high gamma)
 ec50_efficacy = 2.0
@@ -210,12 +210,12 @@ for c in [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]:
 ## Multiple Dosing with Steep Response
 
 ```python
-import openpkpd
+import neopkpd
 
 # With steep gamma, small concentration changes cause large effect changes
 doses = [{"time": i * 8.0, "amount": 200.0} for i in range(6)]
 
-result = openpkpd.simulate_pkpd_sigmoid_emax(
+result = neopkpd.simulate_pkpd_sigmoid_emax(
     cl=5.0, v=50.0,
     doses=doses,
     e0=0.0, emax=100.0, ec50=2.0, gamma=4.0,
@@ -236,10 +236,10 @@ print(f"Fluctuation: {max(effect) - min(effect):.1f}")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pkpd_profile
+import neopkpd
+from neopkpd.viz import plot_pkpd_profile
 
-result = openpkpd.simulate_pkpd_sigmoid_emax(
+result = neopkpd.simulate_pkpd_sigmoid_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     e0=0.0, emax=100.0, ec50=2.0, gamma=3.0,

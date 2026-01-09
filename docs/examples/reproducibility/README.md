@@ -8,11 +8,11 @@ Examples demonstrating artifact creation, replay, and version validation.
 |---------|-------------|
 | Artifact Creation | Create reproducible simulation artifacts |
 | Artifact Replay | Replay and validate artifacts |
-| Version Validation | Validate across OpenPKPD versions |
+| Version Validation | Validate across NeoPKPD versions |
 
 ## Overview
 
-OpenPKPD ensures reproducibility through:
+NeoPKPD ensures reproducibility through:
 - Deterministic simulation with seeds
 - Artifact serialization with full state
 - Version-aware replay and validation

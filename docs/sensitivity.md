@@ -1,6 +1,6 @@
 # Sensitivity Analysis
 
-OpenPKPD provides tools for analyzing how parameter changes affect model outputs, essential for understanding model behavior and identifying critical parameters.
+NeoPKPD provides tools for analyzing how parameter changes affect model outputs, essential for understanding model behavior and identifying critical parameters.
 
 ## Overview
 
@@ -10,7 +10,7 @@ Sensitivity analysis answers questions like:
 - Which parameters have the largest impact on drug exposure?
 - How does population variability affect therapeutic outcomes?
 
-OpenPKPD supports both **single-subject** and **population-level** sensitivity analysis.
+NeoPKPD supports both **single-subject** and **population-level** sensitivity analysis.
 
 ---
 
@@ -69,7 +69,7 @@ end
 
 ## Sensitivity Metrics
 
-OpenPKPD computes three metrics comparing base and perturbed output series:
+NeoPKPD computes three metrics comparing base and perturbed output series:
 
 ```julia
 struct SensitivityMetric
@@ -119,7 +119,7 @@ end
 ### Example: CL Sensitivity
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define model
 params = OneCompIVBolusParams(5.0, 50.0)
@@ -216,7 +216,7 @@ end
 ### Example: Population CL Sensitivity
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define population
 params = OneCompIVBolusParams(5.0, 50.0)
@@ -370,7 +370,7 @@ replayed = replay_sensitivity_execution(artifact)
 ## Complete Example: Parameter Ranking
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Model setup
 params = OneCompOralFirstOrderParams(1.5, 5.0, 50.0)

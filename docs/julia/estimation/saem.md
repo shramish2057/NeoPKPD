@@ -40,7 +40,7 @@ SAEM is preferred over FOCE-I when:
 ### Basic SAEM Estimation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 
 # Create observed data
@@ -315,7 +315,7 @@ config = EstimationConfig(
 ## Example: Complex Model with High IIV
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 
 # Simulate data with high variability

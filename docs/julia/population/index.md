@@ -6,7 +6,7 @@ Population pharmacokinetic/pharmacodynamic (PopPK/PD) modeling accounts for vari
 
 ## Overview
 
-OpenPKPD supports comprehensive population modeling including:
+NeoPKPD supports comprehensive population modeling including:
 
 - **Inter-Individual Variability (IIV)** - Parameter differences between subjects
 - **Inter-Occasion Variability (IOV)** - Parameter changes within a subject over time
@@ -71,7 +71,7 @@ graph LR
 ### Basic Population Simulation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Typical parameters
 typical_params = OneCompIVBolusParams(5.0, 50.0)  # CL=5, V=50

@@ -117,7 +117,7 @@ end
 ### Basic Simulation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define parameters
 # 5 transit compartments, Ktr = 0.5/h

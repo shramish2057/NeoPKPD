@@ -7,7 +7,7 @@ Advanced PK model for drugs that bind to their pharmacological target, forming d
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_tmdd_custom(
+neopkpd.simulate_pk_tmdd_custom(
     kel: float,
     kon: float,
     koff: float,
@@ -86,9 +86,9 @@ Where:
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_tmdd_custom(
+result = neopkpd.simulate_pk_tmdd_custom(
     kel=0.1,      # Drug elimination (1/h)
     kon=0.01,     # Association rate
     koff=0.001,   # Dissociation rate
@@ -116,7 +116,7 @@ print(f"Free drug at 24h: {conc[24]:.3f} mg/L")
 TMDD causes characteristic non-linear PK:
 
 ```python
-import openpkpd
+import neopkpd
 
 doses_list = [50.0, 100.0, 200.0, 500.0, 1000.0]
 
@@ -125,7 +125,7 @@ print("-" * 45)
 
 auc_ref = None
 for dose in doses_list:
-    result = openpkpd.simulate_pk_tmdd_custom(
+    result = neopkpd.simulate_pk_tmdd_custom(
         kel=0.1, kon=0.01, koff=0.001,
         ksyn=1.0, kdeg=0.1, kint=0.05, v=50.0,
         doses=[{"time": 0.0, "amount": dose}],
@@ -155,12 +155,12 @@ for dose in doses_list:
 ## Target-Mediated Clearance
 
 ```python
-import openpkpd
+import neopkpd
 
 # At low concentrations: high clearance (receptor-mediated)
 # At high concentrations: low clearance (receptor saturated)
 
-result = openpkpd.simulate_pk_tmdd_custom(
+result = neopkpd.simulate_pk_tmdd_custom(
     kel=0.05,      # Low linear elimination
     kon=0.1,       # Fast binding
     koff=0.01,     # Slow unbinding (high affinity)
@@ -190,10 +190,10 @@ print(f"  Conc at 72h: {conc[144]:.5f} mg/L")
 ## Clinical Example: Monoclonal Antibody
 
 ```python
-import openpkpd
+import neopkpd
 
 # Typical mAb TMDD parameters
-result = openpkpd.simulate_pk_tmdd_custom(
+result = neopkpd.simulate_pk_tmdd_custom(
     kel=0.01,        # Slow linear elimination (typical mAb)
     kon=0.1,         # Fast target binding
     koff=0.001,      # Very slow unbinding (high affinity)
@@ -224,9 +224,9 @@ print(f"  Complex at 24h: {rl_complex[4]:.2f}")
 ## Receptor Dynamics
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_tmdd_custom(
+result = neopkpd.simulate_pk_tmdd_custom(
     kel=0.1, kon=0.05, koff=0.005,
     ksyn=1.0, kdeg=0.1, kint=0.1, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -252,12 +252,12 @@ print(f"  R at 168h: {r_free[168]:.2f} (recovering)")
 ## Multiple Dosing
 
 ```python
-import openpkpd
+import neopkpd
 
 # Weekly dosing of mAb
 doses = [{"time": i * 168.0, "amount": 200.0} for i in range(4)]
 
-result = openpkpd.simulate_pk_tmdd_custom(
+result = neopkpd.simulate_pk_tmdd_custom(
     kel=0.01, kon=0.1, koff=0.001,
     ksyn=0.1, kdeg=0.05, kint=0.02, v=3.0,
     doses=doses,
@@ -279,13 +279,13 @@ print(f"  Receptor suppression at week 4: {r_free[-1] / (0.1/0.05) * 100:.1f}% o
 ## Dose Selection Considerations
 
 ```python
-import openpkpd
+import neopkpd
 
 # Find dose needed for >90% receptor occupancy
 r_baseline = 1.0 / 0.1  # ksyn / kdeg
 
 for dose in [10, 50, 100, 200, 500]:
-    result = openpkpd.simulate_pk_tmdd_custom(
+    result = neopkpd.simulate_pk_tmdd_custom(
         kel=0.1, kon=0.05, koff=0.005,
         ksyn=1.0, kdeg=0.1, kint=0.1, v=50.0,
         doses=[{"time": 0.0, "amount": float(dose)}],

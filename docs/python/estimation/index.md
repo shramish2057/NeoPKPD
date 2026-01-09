@@ -1,6 +1,6 @@
 # Parameter Estimation
 
-OpenPKPD Python provides comprehensive parameter estimation capabilities for population PK/PD modeling through seamless integration with the Julia estimation engine.
+NeoPKPD Python provides comprehensive parameter estimation capabilities for population PK/PD modeling through seamless integration with the Julia estimation engine.
 
 ---
 
@@ -9,7 +9,7 @@ OpenPKPD Python provides comprehensive parameter estimation capabilities for pop
 Estimate population parameters from observed data using industry-standard methods:
 
 ```python
-from openpkpd.estimation import estimate, EstimationConfig, FOCEIMethod
+from neopkpd.estimation import estimate, EstimationConfig, FOCEIMethod
 
 # Configure and run estimation
 config = EstimationConfig(
@@ -44,13 +44,13 @@ print(f"OFV: {result.ofv}")
 ### Installation
 
 ```bash
-pip install openpkpd
+pip install neopkpd
 ```
 
 ### Basic FOCE-I Estimation
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     estimate,
     EstimationConfig,
     FOCEIMethod,
@@ -102,7 +102,7 @@ print(f"AIC = {result.aic:.2f}")
 ### EstimationConfig
 
 ```python
-from openpkpd.estimation import EstimationConfig, FOCEIMethod
+from neopkpd.estimation import EstimationConfig, FOCEIMethod
 
 config = EstimationConfig(
     # Method
@@ -142,7 +142,7 @@ config = EstimationConfig(
 
 ```python
 # FOCE-I
-from openpkpd.estimation import FOCEIMethod
+from neopkpd.estimation import FOCEIMethod
 method = FOCEIMethod(
     centered=False,        # FOCE-I (not FOCE)
     compute_cwres=True,    # Compute CWRES
@@ -150,7 +150,7 @@ method = FOCEIMethod(
 )
 
 # SAEM
-from openpkpd.estimation import SAEMMethod
+from neopkpd.estimation import SAEMMethod
 method = SAEMMethod(
     n_burn=200,            # Burn-in iterations
     n_iter=300,            # Main iterations
@@ -160,7 +160,7 @@ method = SAEMMethod(
 )
 
 # Laplacian
-from openpkpd.estimation import LaplacianMethod
+from neopkpd.estimation import LaplacianMethod
 method = LaplacianMethod(
     max_inner_iter=50,     # Inner optimization iterations
     inner_tol=1e-6         # Inner tolerance
@@ -174,7 +174,7 @@ method = LaplacianMethod(
 Handle Below Limit of Quantification observations:
 
 ```python
-from openpkpd.estimation import BLQConfig, BLQMethod
+from neopkpd.estimation import BLQConfig, BLQMethod
 
 # M1: Discard BLQ observations
 blq_config = BLQConfig(method=BLQMethod.M1, lloq=0.1)
@@ -240,7 +240,7 @@ result.runtime            # Execution time
 ### Accessing Residuals
 
 ```python
-from openpkpd.estimation import compute_diagnostics
+from neopkpd.estimation import compute_diagnostics
 
 # Get diagnostics
 diagnostics = compute_diagnostics(result)
@@ -271,7 +271,7 @@ print(f"Epsilon shrinkage: {result.epsilon_shrinkage*100:.1f}%")
 ### Likelihood Ratio Test
 
 ```python
-from openpkpd.estimation import likelihood_ratio_test
+from neopkpd.estimation import likelihood_ratio_test
 
 # Compare nested models
 chi_sq, p_value = likelihood_ratio_test(
@@ -301,7 +301,7 @@ print(f"ΔAIC = {delta_aic:.2f}")
 ## Bootstrap Analysis
 
 ```python
-from openpkpd.estimation import run_bootstrap, BootstrapConfig
+from neopkpd.estimation import run_bootstrap, BootstrapConfig
 
 # Configure bootstrap
 bootstrap_config = BootstrapConfig(
@@ -334,7 +334,7 @@ print(f"Success rate: {bootstrap_result.success_rate*100:.1f}%")
 ## Example: Complete Analysis
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     estimate, run_bootstrap,
     EstimationConfig, BootstrapConfig,
     FOCEIMethod, BLQConfig, BLQMethod

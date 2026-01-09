@@ -70,11 +70,11 @@ C(t) = (Dose/V) × exp(-CL/V × t)
 
 ```bash
 # Julia
-julia --project=core/OpenPKPDCore julia.jl
+julia --project=core/NeoPKPDCore julia.jl
 
 # Python
 python python.py
 
 # CLI
-./bin/openpkpd simulate --spec cli.json
+./bin/neopkpd simulate --spec cli.json
 ```

@@ -1,5 +1,5 @@
-# Development tools for OpenPKPD repository
-# Core package is in core/OpenPKPDCore/
+# Development tools for NeoPKPD repository
+# Core package is in core/NeoPKPDCore/
 
 [deps]
 JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"

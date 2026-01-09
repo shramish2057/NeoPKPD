@@ -9,7 +9,7 @@
 # =============================================================================
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 using Statistics
 

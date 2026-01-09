@@ -31,7 +31,7 @@ Mechanism-based PD models where drug affects the production (Kin) or elimination
 ### Function Signature
 
 ```python
-openpkpd.simulate_pkpd_irm1(
+neopkpd.simulate_pkpd_irm1(
     cl: float, v: float, doses: list[dict],
     kin: float, kout: float, r0: float,
     imax: float, ic50: float,
@@ -53,14 +53,14 @@ Where: $I(C) = \frac{I_{max} \cdot C}{IC_{50} + C}$
 ### Example: Corticosteroid Effect on Cortisol
 
 ```python
-import openpkpd
+import neopkpd
 
 # Cortisol dynamics: baseline 15 mcg/dL, t1/2 ~1.5 h
 kout = 0.693 / 1.5  # 0.46/h
 r0 = 15.0
 kin = kout * r0
 
-result = openpkpd.simulate_pkpd_irm1(
+result = neopkpd.simulate_pkpd_irm1(
     cl=2.0, v=50.0,
     doses=[{"time": 0.0, "amount": 10.0}],
     kin=kin, kout=kout, r0=r0,
@@ -87,14 +87,14 @@ Where: $S(C) = \frac{S_{max} \cdot C}{SC_{50} + C}$
 ### Example: EPO Effect on Red Blood Cells
 
 ```python
-import openpkpd
+import neopkpd
 
 # RBC dynamics: long turnover
 kout = 0.693 / (30 * 24)  # 30-day half-life
 r0 = 5.0  # million/mcL
 kin = kout * r0
 
-result = openpkpd.simulate_pkpd_irm2(
+result = neopkpd.simulate_pkpd_irm2(
     cl=0.5, v=10.0,
     doses=[{"time": i * 168, "amount": 100.0} for i in range(4)],  # Weekly
     kin=kin, kout=kout, r0=r0,
@@ -115,7 +115,7 @@ print(f"Maximum RBC: {max(response):.2f} million/mcL")
 ### Function (simpler signature)
 
 ```python
-openpkpd.simulate_pkpd_indirect_response(
+neopkpd.simulate_pkpd_indirect_response(
     cl: float, v: float, doses: list[dict],
     kin: float, kout: float, r0: float,
     imax: float, ic50: float,
@@ -133,14 +133,14 @@ $$\frac{dR}{dt} = K_{in} - K_{out} \cdot (1 - I(C)) \cdot R$$
 ### Example: Warfarin Effect
 
 ```python
-import openpkpd
+import neopkpd
 
 # Clotting factor dynamics
 kout = 0.693 / 36.0  # 36-hour half-life
 r0 = 100.0  # % of normal
 kin = kout * r0
 
-result = openpkpd.simulate_pkpd_indirect_response(
+result = neopkpd.simulate_pkpd_indirect_response(
     cl=0.1, v=10.0,
     doses=[{"time": 0.0, "amount": 5.0}],
     kin=kin, kout=kout, r0=r0,
@@ -166,13 +166,13 @@ $$\frac{dR}{dt} = K_{in} - K_{out} \cdot (1 + S(C)) \cdot R$$
 ### Example: Laxative Effect
 
 ```python
-import openpkpd
+import neopkpd
 
 kout = 0.693 / 12.0  # 12-hour transit
 r0 = 100.0
 kin = kout * r0
 
-result = openpkpd.simulate_pkpd_irm4(
+result = neopkpd.simulate_pkpd_irm4(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 200.0}],
     kin=kin, kout=kout, r0=r0,
@@ -191,7 +191,7 @@ print(f"Theoretical minimum: {r0 / (1 + 5.0):.1f}")
 ## Comparing IRM Types
 
 ```python
-import openpkpd
+import neopkpd
 
 # Same baseline and turnover
 kout = 0.1  # 1/h
@@ -202,7 +202,7 @@ kin = kout * r0
 doses = [{"time": 0.0, "amount": 100.0}]
 
 # IRM-I: Inhibit production → Decrease
-result_irm1 = openpkpd.simulate_pkpd_irm1(
+result_irm1 = neopkpd.simulate_pkpd_irm1(
     cl=2.0, v=20.0, doses=doses,
     kin=kin, kout=kout, r0=r0,
     imax=0.8, ic50=2.0,
@@ -210,7 +210,7 @@ result_irm1 = openpkpd.simulate_pkpd_irm1(
 )
 
 # IRM-II: Stimulate production → Increase
-result_irm2 = openpkpd.simulate_pkpd_irm2(
+result_irm2 = neopkpd.simulate_pkpd_irm2(
     cl=2.0, v=20.0, doses=doses,
     kin=kin, kout=kout, r0=r0,
     smax=3.0, sc50=2.0,
@@ -218,7 +218,7 @@ result_irm2 = openpkpd.simulate_pkpd_irm2(
 )
 
 # IRM-IV: Stimulate elimination → Decrease
-result_irm4 = openpkpd.simulate_pkpd_irm4(
+result_irm4 = neopkpd.simulate_pkpd_irm4(
     cl=2.0, v=20.0, doses=doses,
     kin=kin, kout=kout, r0=r0,
     smax=4.0, sc50=2.0,
@@ -275,10 +275,10 @@ print(f"IRM-IV steady state: {r0 / (1 + smax):.1f}")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pkpd_profile
+import neopkpd
+from neopkpd.viz import plot_pkpd_profile
 
-result = openpkpd.simulate_pkpd_irm1(
+result = neopkpd.simulate_pkpd_irm1(
     cl=2.0, v=20.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     kin=10.0, kout=0.1, r0=100.0,

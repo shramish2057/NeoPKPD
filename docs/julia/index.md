@@ -1,12 +1,12 @@
 # Julia Documentation
 
-Welcome to the Julia documentation for OpenPKPD. The Julia core (`OpenPKPDCore.jl`) provides the foundation for all PK/PD modeling capabilities.
+Welcome to the Julia documentation for NeoPKPD. The Julia core (`NeoPKPDCore.jl`) provides the foundation for all PK/PD modeling capabilities.
 
 ---
 
 ## Why Julia?
 
-OpenPKPD uses Julia as its core language for several reasons:
+NeoPKPD uses Julia as its core language for several reasons:
 
 - **Performance**: Near-native speed through JIT compilation
 - **Mathematical Expressiveness**: Natural syntax for differential equations
@@ -18,7 +18,7 @@ OpenPKPD uses Julia as its core language for several reasons:
 ## Quick Start
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # One-compartment IV bolus simulation
 params = OneCompIVBolusParams(5.0, 50.0)  # CL=5 L/h, V=50 L
@@ -42,7 +42,7 @@ println(result.observations[:conc])
 
     ---
 
-    Step-by-step introduction to OpenPKPD Julia API
+    Step-by-step introduction to NeoPKPD Julia API
 
     [:octicons-arrow-right-24: Start Tutorial](tutorial.md)
 

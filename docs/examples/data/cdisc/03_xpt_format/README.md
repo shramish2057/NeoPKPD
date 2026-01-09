@@ -18,7 +18,7 @@ XPT (SAS Transport) is the standard format for CDISC submission packages:
 ## Usage
 
 ```python
-from openpkpd.data import load_cdisc_xpt
+from neopkpd.data import load_cdisc_xpt
 
 # Load from XPT files
 data = load_cdisc_xpt(

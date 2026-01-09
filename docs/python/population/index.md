@@ -1,6 +1,6 @@
 # Population Modeling
 
-Comprehensive guide for population pharmacokinetic and pharmacodynamic modeling in OpenPKPD Python.
+Comprehensive guide for population pharmacokinetic and pharmacodynamic modeling in NeoPKPD Python.
 
 ---
 
@@ -9,7 +9,7 @@ Comprehensive guide for population pharmacokinetic and pharmacodynamic modeling 
 Population modeling accounts for variability between and within individuals, enabling realistic simulations and personalized predictions.
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 
 # Simulate 100 subjects with IIV
 result = simulate_population_oral(
@@ -100,7 +100,7 @@ For larger ω: $CV = \sqrt{e^{\omega^2} - 1}$
 ### Basic Population Simulation
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 
 # Define parameters
 ka = 1.5        # Absorption rate (/hr)
@@ -166,7 +166,7 @@ print(f"CV(Cmax): {np.std(all_cmax)/np.mean(all_cmax)*100:.1f}%")
 ### simulate_population_iv_bolus
 
 ```python
-from openpkpd import simulate_population_iv_bolus
+from neopkpd import simulate_population_iv_bolus
 
 result = simulate_population_iv_bolus(
     cl=10.0,                    # Clearance (L/hr)
@@ -184,7 +184,7 @@ result = simulate_population_iv_bolus(
 ### simulate_population_oral
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 
 result = simulate_population_oral(
     ka=1.5,                     # Absorption rate (/hr)
@@ -244,7 +244,7 @@ class PopulationResult:
 
 ```python
 import numpy as np
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 
 # Define correlation between CL and V
 # Variance: CL=0.09, V=0.04
@@ -307,7 +307,7 @@ for ind in result.individuals[:5]:
 ## Complete Example
 
 ```python
-from openpkpd import simulate_population_oral
+from neopkpd import simulate_population_oral
 import numpy as np
 
 # =========================================

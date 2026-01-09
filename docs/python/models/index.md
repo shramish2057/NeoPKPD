@@ -1,6 +1,6 @@
 # Models Reference
 
-Python simulation functions for all PK and PD models supported by OpenPKPD.
+Python simulation functions for all PK and PD models supported by NeoPKPD.
 
 ---
 
@@ -81,11 +81,11 @@ doses = [
 ### One-Compartment IV Bolus
 
 ```python
-import openpkpd
+import neopkpd
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -100,7 +100,7 @@ print("Concentrations:", result["observations"]["conc"][:5])
 ### Two-Compartment with Distribution
 
 ```python
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=10.0,
     v1=20.0,
     q=15.0,
@@ -115,7 +115,7 @@ result = openpkpd.simulate_pk_twocomp_iv_bolus(
 ### Direct Emax PD
 
 ```python
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     e0=0.0,

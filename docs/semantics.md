@@ -1,13 +1,13 @@
 # Semantics
 
-OpenPKPD uses **semantic versioning** for numerical behavior to ensure reproducibility across versions.
+NeoPKPD uses **semantic versioning** for numerical behavior to ensure reproducibility across versions.
 
 ## Version Constants
 
 Three independent version numbers track different aspects of system behavior:
 
 ```julia
-OPENPKPD_VERSION = "0.1.0"           # Software version
+NEOPKPD_VERSION = "0.1.0"           # Software version
 EVENT_SEMANTICS_VERSION = "1.0.0"    # Dose event handling
 SOLVER_SEMANTICS_VERSION = "1.0.0"   # ODE solver behavior
 ARTIFACT_SCHEMA_VERSION = "1.0.0"    # JSON artifact format
@@ -195,14 +195,14 @@ When replaying artifacts:
 
 ### Forward Compatibility
 
-Newer OpenPKPD versions can replay older artifacts:
+Newer NeoPKPD versions can replay older artifacts:
 
 - Missing fields use defaults
 - Schema upgrades are automatic
 
 ### Backward Compatibility
 
-Older OpenPKPD versions may not replay newer artifacts:
+Older NeoPKPD versions may not replay newer artifacts:
 
 - Unknown fields are ignored
 - Missing required fields cause errors
@@ -305,7 +305,7 @@ l2_norm_delta = sqrt(sum((base[i] - pert[i])^2))
 ### Verifying Semantics Match
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Check current versions
 println("Event semantics: ", EVENT_SEMANTICS_VERSION)

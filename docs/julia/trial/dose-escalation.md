@@ -9,7 +9,7 @@ Comprehensive guide for Phase I dose escalation trial simulation with multiple e
 Dose escalation designs are used in Phase I trials to identify the maximum tolerated dose (MTD) while minimizing patient exposure to toxic doses.
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # 3+3 design
 design = ThreePlusThree(
@@ -656,7 +656,7 @@ constraints = EscalationConstraints(
 ## Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # =======================================
 # Phase I Dose Escalation Trial Simulation

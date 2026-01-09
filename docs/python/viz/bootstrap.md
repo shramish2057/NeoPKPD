@@ -9,7 +9,7 @@ Bootstrap analysis visualization for parameter uncertainty.
 Bootstrap plots visualize parameter distributions and confidence intervals from resampling analysis.
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 fig = viz.plot_bootstrap_distributions(bootstrap_result)
 ```
@@ -138,14 +138,14 @@ fig = viz.plot_bootstrap_correlation(
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Run bootstrap analysis
-bootstrap_result = openpkpd.bootstrap_estimation(
+bootstrap_result = neopkpd.bootstrap_estimation(
     observed_data=data,
     model_spec=model,
     n_bootstrap=1000,

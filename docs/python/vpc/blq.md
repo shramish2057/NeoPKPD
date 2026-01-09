@@ -9,8 +9,8 @@ Comprehensive guide to handling Below Limit of Quantification (BLQ) data in VPC.
 BLQ observations occur when drug concentrations fall below the assay's Lower Limit of Quantification (LLOQ). Proper handling is essential for accurate VPC interpretation.
 
 ```python
-from openpkpd.vpc import BLQMethod, handle_blq
-from openpkpd import compute_vpc_with_blq
+from neopkpd.vpc import BLQMethod, handle_blq
+from neopkpd import compute_vpc_with_blq
 
 # Compute VPC with BLQ handling
 vpc_result, blq_stats = compute_vpc_with_blq(
@@ -28,7 +28,7 @@ vpc_result, blq_stats = compute_vpc_with_blq(
 Seven methods for handling BLQ data (Beal 2001):
 
 ```python
-from openpkpd.vpc import BLQMethod
+from neopkpd.vpc import BLQMethod
 
 class BLQMethod(Enum):
     M1 = "M1"  # Discard all BLQ
@@ -73,7 +73,7 @@ blq_method = BLQMethod.M3  # Keep for special handling
 Apply BLQ handling to concentration data:
 
 ```python
-from openpkpd.vpc import handle_blq, BLQMethod
+from neopkpd.vpc import handle_blq, BLQMethod
 import numpy as np
 
 def handle_blq(
@@ -109,7 +109,7 @@ def handle_blq(
 ### Usage
 
 ```python
-from openpkpd.vpc import handle_blq, BLQMethod
+from neopkpd.vpc import handle_blq, BLQMethod
 import numpy as np
 
 # Sample data with BLQ
@@ -144,8 +144,8 @@ print(f"M7 result: {values_m7}")
 Compute VPC with BLQ statistics:
 
 ```python
-from openpkpd import compute_vpc_with_blq
-from openpkpd.vpc import VPCConfig, BLQMethod
+from neopkpd import compute_vpc_with_blq
+from neopkpd.vpc import VPCConfig, BLQMethod
 
 def compute_vpc_with_blq(
     observed_data: dict,
@@ -171,10 +171,10 @@ def compute_vpc_with_blq(
 ### Usage
 
 ```python
-import openpkpd
-from openpkpd.vpc import VPCConfig, BLQMethod
+import neopkpd
+from neopkpd.vpc import VPCConfig, BLQMethod
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Configuration with LLOQ
 config = VPCConfig(
@@ -184,7 +184,7 @@ config = VPCConfig(
 )
 
 # Compute VPC with BLQ
-vpc_result, blq_stats = openpkpd.compute_vpc_with_blq(
+vpc_result, blq_stats = neopkpd.compute_vpc_with_blq(
     observed_data=observed_data,
     population_spec=population_spec,
     grid=grid,
@@ -223,7 +223,7 @@ class BLQBinStats:
 ### Accessing BLQ Data
 
 ```python
-from openpkpd.vpc import get_blq_observed, get_blq_simulated
+from neopkpd.vpc import get_blq_observed, get_blq_simulated
 
 # Extract BLQ data for plotting
 blq_obs = get_blq_observed(vpc_result)  # np.ndarray of observed %BLQ
@@ -237,7 +237,7 @@ blq_sim_med, blq_sim_lo, blq_sim_hi = get_blq_simulated(vpc_result)
 ### VPC with BLQ Panel
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Two-panel plot: VPC + BLQ fraction
 fig = viz.plot_vpc_with_blq(
@@ -307,16 +307,16 @@ plt.savefig("blq_comparison.png", dpi=300)
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
-from openpkpd.vpc import VPCConfig, BLQMethod, handle_blq
+import neopkpd
+from neopkpd import viz
+from neopkpd.vpc import VPCConfig, BLQMethod, handle_blq
 import numpy as np
 
 # ================================================
 # VPC with BLQ Handling Example
 # ================================================
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 print("=== VPC with BLQ Analysis ===\n")
 
@@ -388,7 +388,7 @@ config = VPCConfig(
 
 # 5. Compute VPC with BLQ handling
 print("\nComputing VPC with BLQ handling (M4)...")
-vpc_result, blq_stats = openpkpd.compute_vpc_with_blq(
+vpc_result, blq_stats = neopkpd.compute_vpc_with_blq(
     observed_data=observed_data,
     population_spec=population_spec,
     grid=grid,

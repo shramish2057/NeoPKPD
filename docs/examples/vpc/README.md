@@ -29,7 +29,7 @@ VPC compares simulated data from the model to observed data:
 ## Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Generate VPC
 vpc_result = compute_vpc(

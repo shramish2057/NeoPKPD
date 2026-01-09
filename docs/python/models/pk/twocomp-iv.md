@@ -7,7 +7,7 @@ Two-compartment mammillary model with central and peripheral compartments, exhib
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_twocomp_iv_bolus(
+neopkpd.simulate_pk_twocomp_iv_bolus(
     cl: float,
     v1: float,
     q: float,
@@ -86,9 +86,9 @@ where $\alpha > \beta$ (distribution and terminal phases).
 ### Single IV Bolus
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=10.0,      # Clearance (L/h)
     v1=20.0,      # Central volume (L)
     q=15.0,       # Inter-compartmental clearance (L/h)
@@ -107,7 +107,7 @@ print(f"C0: {result['observations']['conc'][0]:.1f} mg/L")  # 500/20 = 25 mg/L
 
 ```python
 # 500 mg over 2 hours
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=10.0, v1=20.0, q=15.0, v2=50.0,
     doses=[{"time": 0.0, "amount": 500.0, "duration": 2.0}],
     t0=0.0, t1=48.0,
@@ -124,10 +124,10 @@ print(f"Cmax: {cmax:.2f} mg/L (at end of infusion)")
 ## Distribution Phases
 
 ```python
-import openpkpd
+import neopkpd
 import numpy as np
 
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=10.0, v1=20.0, q=15.0, v2=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,
@@ -192,7 +192,7 @@ print(f"Vss: {vss} L")
 # 500 mg every 8 hours for 3 days
 doses = [{"time": i * 8.0, "amount": 500.0} for i in range(9)]
 
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=10.0, v1=20.0, q=15.0, v2=50.0,
     doses=doses,
     t0=0.0, t1=72.0,
@@ -215,9 +215,9 @@ print(f"Cmin,ss: {min(ss_conc):.2f} mg/L")
 ## Compartment Amounts
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=10.0, v1=20.0, q=15.0, v2=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,
@@ -243,10 +243,10 @@ for i, time in enumerate(t):
 ## Clinical Example: Vancomycin
 
 ```python
-import openpkpd
+import neopkpd
 
 # Typical vancomycin parameters
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=4.5,       # L/h
     v1=15.0,      # L (central)
     q=4.0,        # L/h
@@ -275,10 +275,10 @@ print(f"Trough (12h): {conc[idx_trough]:.1f} mg/L")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pk_profile
+import neopkpd
+from neopkpd.viz import plot_pk_profile
 
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=10.0, v1=20.0, q=15.0, v2=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,

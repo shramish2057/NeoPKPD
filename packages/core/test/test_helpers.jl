@@ -1,7 +1,7 @@
-# Test helper functions for OpenPKPDCore
+# Test helper functions for NeoPKPDCore
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 
 """
 Analytic solution for one-compartment IV bolus concentration.

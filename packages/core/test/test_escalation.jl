@@ -1,7 +1,7 @@
 # Test suite for Dose Escalation Simulation
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 
 @testset "Dose Escalation" begin
@@ -41,7 +41,7 @@ using StableRNGs
     end
 
     @testset "CohortResult" begin
-        @test isdefined(OpenPKPDCore, :CohortResult)
+        @test isdefined(NeoPKPDCore, :CohortResult)
 
         # Create a mock cohort result
         cohort = CohortResult(
@@ -64,7 +64,7 @@ using StableRNGs
     end
 
     @testset "EscalationResult" begin
-        @test isdefined(OpenPKPDCore, :EscalationResult)
+        @test isdefined(NeoPKPDCore, :EscalationResult)
     end
 
     @testset "3+3 Logic" begin
@@ -79,8 +79,8 @@ using StableRNGs
             escalation_rule=ThreePlusThree())
 
         # Test helper functions exist
-        @test isdefined(OpenPKPDCore, :simulate_escalation)
-        @test isdefined(OpenPKPDCore, :simulate_3plus3)
+        @test isdefined(NeoPKPDCore, :simulate_escalation)
+        @test isdefined(NeoPKPDCore, :simulate_3plus3)
     end
 
     @testset "mTPI Decision" begin
@@ -88,7 +88,7 @@ using StableRNGs
         design = DoseEscalationDesign([10.0, 25.0, 50.0];
             escalation_rule=mTPI())
 
-        @test isdefined(OpenPKPDCore, :simulate_mtpi)
+        @test isdefined(NeoPKPDCore, :simulate_mtpi)
     end
 
     @testset "CRM Model" begin
@@ -96,7 +96,7 @@ using StableRNGs
         design = DoseEscalationDesign([10.0, 25.0, 50.0, 100.0];
             escalation_rule=CRM(skeleton=[0.05, 0.15, 0.25, 0.40]))
 
-        @test isdefined(OpenPKPDCore, :simulate_crm)
+        @test isdefined(NeoPKPDCore, :simulate_crm)
     end
 
     @testset "Full 3+3 Simulation" begin

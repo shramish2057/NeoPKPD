@@ -7,7 +7,7 @@ PK model for drugs with multiple absorption sites or mechanisms, each with disti
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_parallel_absorption(
+neopkpd.simulate_pk_parallel_absorption(
     ka1: float,
     ka2: float,
     f1: float,
@@ -79,9 +79,9 @@ Initial conditions after dose D:
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_parallel_absorption(
+result = neopkpd.simulate_pk_parallel_absorption(
     ka1=2.0,      # Fast absorption (1/h)
     ka2=0.5,      # Slow absorption (1/h)
     f1=0.6,       # 60% to fast pathway
@@ -107,7 +107,7 @@ print(f"Cmax: {conc[tmax_idx]:.2f} mg/L")
 ## Effect of Fraction Split
 
 ```python
-import openpkpd
+import neopkpd
 
 f1_values = [0.2, 0.4, 0.6, 0.8]
 
@@ -115,7 +115,7 @@ print("F1 (fast) | Cmax (mg/L) | Tmax (h)")
 print("-" * 40)
 
 for f1 in f1_values:
-    result = openpkpd.simulate_pk_parallel_absorption(
+    result = neopkpd.simulate_pk_parallel_absorption(
         ka1=3.0, ka2=0.3, f1=f1, cl=10.0, v=50.0,
         doses=[{"time": 0.0, "amount": 500.0}],
         t0=0.0, t1=24.0,
@@ -137,10 +137,10 @@ for f1 in f1_values:
 ## Biphasic Absorption Profile
 
 ```python
-import openpkpd
+import neopkpd
 
 # Strong separation between fast and slow components
-result = openpkpd.simulate_pk_parallel_absorption(
+result = neopkpd.simulate_pk_parallel_absorption(
     ka1=5.0,      # Very fast component
     ka2=0.2,      # Very slow component
     f1=0.3,       # 30% fast, 70% slow
@@ -172,10 +172,10 @@ for i, (time, c) in enumerate(local_max):
 ## Clinical Example: Extended-Release Formulation
 
 ```python
-import openpkpd
+import neopkpd
 
 # ER formulation with immediate release coat + slow release core
-result = openpkpd.simulate_pk_parallel_absorption(
+result = neopkpd.simulate_pk_parallel_absorption(
     ka1=2.5,      # IR coat: fast
     ka2=0.15,     # ER core: slow
     f1=0.25,      # 25% IR, 75% ER
@@ -205,10 +205,10 @@ print(f"  Fluctuation: {(conc[cmax_idx] - conc[-1]) / conc[cmax_idx] * 100:.1f}%
 ## Comparison with Single Absorption
 
 ```python
-import openpkpd
+import neopkpd
 
 # Parallel absorption
-result_parallel = openpkpd.simulate_pk_parallel_absorption(
+result_parallel = neopkpd.simulate_pk_parallel_absorption(
     ka1=3.0, ka2=0.5, f1=0.5, cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,
@@ -218,7 +218,7 @@ result_parallel = openpkpd.simulate_pk_parallel_absorption(
 # Single absorption (weighted average ka)
 ka_avg = 0.5 * 3.0 + 0.5 * 0.5  # 1.75
 
-result_single = openpkpd.simulate_pk_oral_first_order(
+result_single = neopkpd.simulate_pk_oral_first_order(
     ka=ka_avg, cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,
@@ -247,12 +247,12 @@ print(f"  Single AUC: {auc_single:.1f} mg*h/L")
 ## Multiple Dosing
 
 ```python
-import openpkpd
+import neopkpd
 
 # Twice daily dosing
 doses = [{"time": i * 12.0, "amount": 250.0} for i in range(6)]
 
-result = openpkpd.simulate_pk_parallel_absorption(
+result = neopkpd.simulate_pk_parallel_absorption(
     ka1=2.0, ka2=0.3, f1=0.4, cl=10.0, v=50.0,
     doses=doses,
     t0=0.0, t1=72.0,
@@ -277,10 +277,10 @@ print(f"  Fluctuation: {(max(ss_conc) - min(ss_conc)) / min(ss_conc) * 100:.1f}%
 ## Food Effect Simulation
 
 ```python
-import openpkpd
+import neopkpd
 
 # Fasted: faster absorption, smaller fraction
-result_fasted = openpkpd.simulate_pk_parallel_absorption(
+result_fasted = neopkpd.simulate_pk_parallel_absorption(
     ka1=3.0, ka2=0.8, f1=0.7, cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,
@@ -288,7 +288,7 @@ result_fasted = openpkpd.simulate_pk_parallel_absorption(
 )
 
 # Fed: slower absorption, larger slow fraction
-result_fed = openpkpd.simulate_pk_parallel_absorption(
+result_fed = neopkpd.simulate_pk_parallel_absorption(
     ka1=1.5, ka2=0.3, f1=0.4, cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=24.0,

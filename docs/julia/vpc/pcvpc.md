@@ -62,7 +62,7 @@ For each observation:
 ### Basic Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Observed data with variable dosing
 observed = ObservedData(
@@ -329,7 +329,7 @@ println("Prediction-corrected simulated CI: [$sim_lower, $sim_upper]")
 ## Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 using Random
 
 # ================================================

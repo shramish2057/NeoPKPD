@@ -40,7 +40,7 @@ Examples demonstrating clinical trial design and simulation capabilities.
 ## Usage
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # Simple parallel study
 spec = trial.TrialSpec(

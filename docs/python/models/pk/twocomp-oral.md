@@ -7,7 +7,7 @@ Two-compartment model with first-order oral absorption, combining absorption kin
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_twocomp_oral(
+neopkpd.simulate_pk_twocomp_oral(
     ka: float,
     cl: float,
     v1: float,
@@ -77,9 +77,9 @@ $$\frac{dA_2}{dt} = \frac{Q}{V_1} \cdot A_1 - \frac{Q}{V_2} \cdot A_2$$
 ### Single Oral Dose
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_twocomp_oral(
+result = neopkpd.simulate_pk_twocomp_oral(
     ka=1.2,       # Absorption rate (1/h)
     cl=8.0,       # Clearance (L/h)
     v1=25.0,      # Central volume (L)
@@ -104,7 +104,7 @@ print(f"Tmax: {t[cmax_idx]:.2f} h")
 
 ```python
 # 30-minute lag, 80% bioavailability
-result = openpkpd.simulate_pk_twocomp_oral(
+result = neopkpd.simulate_pk_twocomp_oral(
     ka=1.2, cl=8.0, v1=25.0, q=12.0, v2=60.0,
     doses=[{"time": 0.0, "amount": 400.0}],
     t0=0.0, t1=48.0,
@@ -121,7 +121,7 @@ print(f"Effective dose: {400 * 0.8:.0f} mg")
 ## Absorption Rate Effects
 
 ```python
-import openpkpd
+import neopkpd
 
 # Compare fast vs slow absorption
 ka_values = [0.5, 1.0, 2.0, 4.0]
@@ -130,7 +130,7 @@ print("Ka (1/h) | Cmax (mg/L) | Tmax (h)")
 print("-" * 40)
 
 for ka in ka_values:
-    result = openpkpd.simulate_pk_twocomp_oral(
+    result = neopkpd.simulate_pk_twocomp_oral(
         ka=ka, cl=8.0, v1=25.0, q=12.0, v2=60.0,
         doses=[{"time": 0.0, "amount": 400.0}],
         t0=0.0, t1=24.0,
@@ -154,7 +154,7 @@ for ka in ka_values:
 # 400 mg every 12 hours for 7 days
 doses = [{"time": i * 12.0, "amount": 400.0} for i in range(14)]
 
-result = openpkpd.simulate_pk_twocomp_oral(
+result = neopkpd.simulate_pk_twocomp_oral(
     ka=1.2, cl=8.0, v1=25.0, q=12.0, v2=60.0,
     doses=doses,
     t0=0.0, t1=168.0,
@@ -178,7 +178,7 @@ print(f"Fluctuation: {(max(ss_conc) - min(ss_conc)) / min(ss_conc) * 100:.1f}%")
 ## Food Effect Study Design
 
 ```python
-import openpkpd
+import neopkpd
 
 # Fasted: Fast absorption
 params_fasted = {
@@ -198,14 +198,14 @@ params_fed = {
     "v2": 60.0
 }
 
-result_fasted = openpkpd.simulate_pk_twocomp_oral(
+result_fasted = neopkpd.simulate_pk_twocomp_oral(
     **params_fasted,
     doses=[{"time": 0.0, "amount": 400.0}],
     t0=0.0, t1=48.0,
     saveat=[i * 0.25 for i in range(193)]
 )
 
-result_fed = openpkpd.simulate_pk_twocomp_oral(
+result_fed = neopkpd.simulate_pk_twocomp_oral(
     **params_fed,
     doses=[{"time": 0.0, "amount": 400.0}],
     t0=0.0, t1=48.0,
@@ -230,11 +230,11 @@ print(f"Fed/Fasted Cmax ratio: {cmax_fed/cmax_fasted:.2f}")
 ## Comparison: One-Comp vs Two-Comp
 
 ```python
-import openpkpd
+import neopkpd
 import numpy as np
 
 # Two-compartment oral
-result_2comp = openpkpd.simulate_pk_twocomp_oral(
+result_2comp = neopkpd.simulate_pk_twocomp_oral(
     ka=1.2, cl=8.0, v1=25.0, q=12.0, v2=60.0,
     doses=[{"time": 0.0, "amount": 400.0}],
     t0=0.0, t1=48.0,
@@ -242,7 +242,7 @@ result_2comp = openpkpd.simulate_pk_twocomp_oral(
 )
 
 # One-compartment oral (same total volume)
-result_1comp = openpkpd.simulate_pk_oral_first_order(
+result_1comp = neopkpd.simulate_pk_oral_first_order(
     ka=1.2, cl=8.0, v=85.0,  # V = V1 + V2
     doses=[{"time": 0.0, "amount": 400.0}],
     t0=0.0, t1=48.0,
@@ -262,10 +262,10 @@ print(f"1-comp Cmax: {max(result_1comp['observations']['conc']):.2f} mg/L")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pk_profile
+import neopkpd
+from neopkpd.viz import plot_pk_profile
 
-result = openpkpd.simulate_pk_twocomp_oral(
+result = neopkpd.simulate_pk_twocomp_oral(
     ka=1.2, cl=8.0, v1=25.0, q=12.0, v2=60.0,
     doses=[{"time": 0.0, "amount": 400.0}],
     t0=0.0, t1=48.0,

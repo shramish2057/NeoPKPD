@@ -1,6 +1,6 @@
 # Power Analysis
 
-Comprehensive guide for sample size calculation and power analysis in OpenPKPD Python.
+Comprehensive guide for sample size calculation and power analysis in NeoPKPD Python.
 
 ---
 
@@ -9,7 +9,7 @@ Comprehensive guide for sample size calculation and power analysis in OpenPKPD P
 Power analysis determines the sample size needed to detect effects with adequate statistical power.
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # Calculate required sample size
 result = trial.estimate_sample_size(
@@ -29,7 +29,7 @@ print(f"Required n per arm: {result.n_per_arm}")
 ### Two-Sample t-Test
 
 ```python
-from openpkpd.trial import estimate_power_analytical
+from neopkpd.trial import estimate_power_analytical
 
 # Calculate power for given sample size
 power = estimate_power_analytical(
@@ -75,7 +75,7 @@ power = estimate_power_analytical(
 ### Basic Estimation
 
 ```python
-from openpkpd.trial import estimate_sample_size
+from neopkpd.trial import estimate_sample_size
 
 # Find n for target power
 result = estimate_sample_size(
@@ -129,7 +129,7 @@ print(f"Expected completers: {result.n_per_arm}")
 ### Standard BE (2×2 Crossover)
 
 ```python
-from openpkpd.trial import be_sample_size
+from neopkpd.trial import be_sample_size
 
 # Calculate sample size for BE study
 result = be_sample_size(
@@ -148,7 +148,7 @@ print(f"Power: {result.power:.1%}")
 ### BE Power Calculation
 
 ```python
-from openpkpd.trial import be_power
+from neopkpd.trial import be_power
 
 # Calculate power for given sample size
 power = be_power(
@@ -193,7 +193,7 @@ result = be_sample_size(
 ### RSABE Sample Size (FDA)
 
 ```python
-from openpkpd.trial import rsabe_sample_size
+from neopkpd.trial import rsabe_sample_size
 
 # Reference-scaled average bioequivalence
 result = rsabe_sample_size(
@@ -213,7 +213,7 @@ print(f"Effective limits: [{result.lower_limit:.2f}, {result.upper_limit:.2f}]")
 ### ABEL Sample Size (EMA)
 
 ```python
-from openpkpd.trial import abel_sample_size
+from neopkpd.trial import abel_sample_size
 
 # Average bioequivalence with expanding limits
 result = abel_sample_size(
@@ -236,7 +236,7 @@ print(f"Widened limits: [{result.lower_limit:.2%}, {result.upper_limit:.2%}]")
 ### Generate Power Curve
 
 ```python
-from openpkpd.trial import power_curve
+from neopkpd.trial import power_curve
 
 # Power vs sample size
 curve = power_curve(
@@ -288,7 +288,7 @@ print(f"Minimum detectable effect: d = {mde:.3f}")
 ### Monte Carlo Power Estimation
 
 ```python
-from openpkpd.trial import simulate_power
+from neopkpd.trial import simulate_power
 
 # Power via simulation
 result = simulate_power(
@@ -341,7 +341,7 @@ power = trial.simulate_trial_power(
 ### Dunnett's Test
 
 ```python
-from openpkpd.trial import multiarm_sample_size
+from neopkpd.trial import multiarm_sample_size
 
 # Multiple treatment arms vs placebo
 result = multiarm_sample_size(
@@ -391,7 +391,7 @@ result = multiarm_sample_size(
 ### Group Sequential Power
 
 ```python
-from openpkpd.trial import group_sequential_power
+from neopkpd.trial import group_sequential_power
 
 # O'Brien-Fleming boundaries
 result = group_sequential_power(
@@ -412,7 +412,7 @@ print(f"P(stop at look 2): {result.stop_probs[1]:.1%}")
 ### Sample Size Re-estimation
 
 ```python
-from openpkpd.trial import ssr_sample_size
+from neopkpd.trial import ssr_sample_size
 
 # Initial sample size with interim re-estimation
 result = ssr_sample_size(
@@ -468,7 +468,7 @@ print(f"Recommended design: {result.recommended_design}")
 ### O'Brien-Fleming
 
 ```python
-from openpkpd.trial import alpha_spending
+from neopkpd.trial import alpha_spending
 
 # O'Brien-Fleming spending
 alpha = alpha_spending(
@@ -507,7 +507,7 @@ alpha = alpha_spending(
 ## Complete Example
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # ==========================================
 # Comprehensive Power Analysis

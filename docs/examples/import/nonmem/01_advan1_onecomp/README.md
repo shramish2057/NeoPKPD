@@ -17,20 +17,20 @@ Import a one-compartment IV bolus model from NONMEM control file.
 | [run001.ctl](run001.ctl) | NONMEM control file |
 | [convert.py](convert.py) | Python conversion |
 | [convert.jl](convert.jl) | Julia conversion |
-| [expected.json](expected.json) | Expected OpenPKPD spec |
+| [expected.json](expected.json) | Expected NeoPKPD spec |
 
 ## Conversion
 
 ```python
-from openpkpd import import_nonmem
+from neopkpd import import_nonmem
 
 model = import_nonmem("run001.ctl")
-print(model.spec)  # OpenPKPD ModelSpec
+print(model.spec)  # NeoPKPD ModelSpec
 ```
 
 ## Parameter Mapping
 
-| NONMEM | OpenPKPD |
+| NONMEM | NeoPKPD |
 |--------|----------|
 | THETA(1) = CL | params.CL |
 | THETA(2) = V | params.V |

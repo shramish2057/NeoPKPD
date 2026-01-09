@@ -1,6 +1,6 @@
 # Architecture
 
-OpenPKPD is designed with transparency, reproducibility, and validation as core principles.
+NeoPKPD is designed with transparency, reproducibility, and validation as core principles.
 
 ## Design Philosophy
 
@@ -62,12 +62,12 @@ Every simulation can produce a JSON artifact that:
 │                        User Interfaces                          │
 ├─────────────────┬─────────────────┬─────────────────────────────┤
 │   Julia API     │   Python API    │         CLI                 │
-│   (direct)      │   (juliacall)   │    (OpenPKPDCLI)           │
+│   (direct)      │   (juliacall)   │    (NeoPKPDCLI)           │
 └────────┬────────┴────────┬────────┴────────────┬────────────────┘
          │                 │                     │
          ▼                 ▼                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     OpenPKPDCore                                │
+│                     NeoPKPDCore                                │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
 │  │   Models    │  │   Engine    │  │    Serialization        │ │
@@ -90,11 +90,11 @@ Every simulation can produce a JSON artifact that:
 
 ## Module Structure
 
-### Core (`core/OpenPKPDCore/`)
+### Core (`core/NeoPKPDCore/`)
 
 ```
 src/
-├── OpenPKPDCore.jl          # Module definition, exports
+├── NeoPKPDCore.jl          # Module definition, exports
 ├── specs/
 │   ├── specs.jl             # Core type definitions
 │   ├── sensitivity.jl       # Perturbation types
@@ -137,17 +137,17 @@ src/
     └── exposure.jl          # Cmax, AUC
 ```
 
-### CLI (`cli/OpenPKPDCLI/`)
+### CLI (`cli/NeoPKPDCLI/`)
 
 ```
 src/
-└── OpenPKPDCLI.jl           # CLI commands
+└── NeoPKPDCLI.jl           # CLI commands
 ```
 
-### Python (`python/openpkpd/`)
+### Python (`python/neopkpd/`)
 
 ```
-openpkpd/
+neopkpd/
 ├── __init__.py              # Package exports
 └── bridge.py                # Julia-Python bridge
 ```
@@ -299,7 +299,7 @@ PerturbationKind (abstract)
    - `pk_ode!(du, u, p, t, ::NewModel)`
    - `pk_conc(u, p, ::NewModel)`
    - `pk_dose_target_index(::NewModel)`
-5. Add exports to `OpenPKPDCore.jl`
+5. Add exports to `NeoPKPDCore.jl`
 6. Add serialization support
 7. Add tests and golden artifacts
 

@@ -1,8 +1,8 @@
-# OpenPKPD CLI
+# NeoPKPD CLI
 
-**Command-line interface for OpenPKPD pharmacometric simulations**
+**Command-line interface for NeoPKPD pharmacometric simulations**
 
-The OpenPKPD CLI provides command-line access to all core functionality including simulation, estimation, VPC, NCA, trial simulation, and model import.
+The NeoPKPD CLI provides command-line access to all core functionality including simulation, estimation, VPC, NCA, trial simulation, and model import.
 
 ## Installation
 
@@ -14,25 +14,25 @@ julia --version
 julia --project=packages/cli -e 'using Pkg; Pkg.instantiate()'
 
 # Make CLI executable
-chmod +x packages/cli/bin/openpkpd
+chmod +x packages/cli/bin/neopkpd
 
 # Verify installation
-./packages/cli/bin/openpkpd version
+./packages/cli/bin/neopkpd version
 ```
 
 ## Commands
 
 ### version
 
-Display version information for all OpenPKPD components.
+Display version information for all NeoPKPD components.
 
 ```bash
-./packages/cli/bin/openpkpd version
+./packages/cli/bin/neopkpd version
 ```
 
 Output:
 ```
-OpenPKPD 0.1.0
+NeoPKPD 0.1.0
 Event semantics: 1.0.0
 Solver semantics: 1.0.0
 Artifact schema: 1.0.0
@@ -43,7 +43,7 @@ Artifact schema: 1.0.0
 Run a PK/PD simulation from a JSON specification.
 
 ```bash
-./packages/cli/bin/openpkpd simulate --spec simulation.json --out result.json
+./packages/cli/bin/neopkpd simulate --spec simulation.json --out result.json
 ```
 
 **Options:**
@@ -87,7 +87,7 @@ Run a PK/PD simulation from a JSON specification.
 Run a population simulation with IIV/IOV.
 
 ```bash
-./packages/cli/bin/openpkpd population --spec pop_spec.json --out pop_result.json
+./packages/cli/bin/neopkpd population --spec pop_spec.json --out pop_result.json
 ```
 
 **Specification Format:**
@@ -114,7 +114,7 @@ Run a population simulation with IIV/IOV.
 Run NLME parameter estimation.
 
 ```bash
-./packages/cli/bin/openpkpd estimate --spec estimate_spec.json --out estimate_result.json
+./packages/cli/bin/neopkpd estimate --spec estimate_spec.json --out estimate_result.json
 ```
 
 **Specification Format:**
@@ -151,7 +151,7 @@ Run NLME parameter estimation.
 Run non-compartmental analysis.
 
 ```bash
-./packages/cli/bin/openpkpd nca --spec nca_spec.json --out nca_result.json
+./packages/cli/bin/neopkpd nca --spec nca_spec.json --out nca_result.json
 ```
 
 **Specification Format:**
@@ -175,7 +175,7 @@ Run non-compartmental analysis.
 Compute Visual Predictive Check.
 
 ```bash
-./packages/cli/bin/openpkpd vpc --spec vpc_spec.json --out vpc_result.json
+./packages/cli/bin/neopkpd vpc --spec vpc_spec.json --out vpc_result.json
 ```
 
 **Specification Format:**
@@ -204,7 +204,7 @@ Compute Visual Predictive Check.
 Run clinical trial simulation.
 
 ```bash
-./packages/cli/bin/openpkpd trial --spec trial_spec.json --out trial_result.json
+./packages/cli/bin/neopkpd trial --spec trial_spec.json --out trial_result.json
 ```
 
 **Specification Format:**
@@ -250,10 +250,10 @@ Import models from NONMEM or Monolix.
 
 ```bash
 # Import NONMEM control file
-./packages/cli/bin/openpkpd import --input run001.ctl --format nonmem --out model.json
+./packages/cli/bin/neopkpd import --input run001.ctl --format nonmem --out model.json
 
 # Import Monolix project
-./packages/cli/bin/openpkpd import --input project.mlxtran --format monolix --out model.json
+./packages/cli/bin/neopkpd import --input project.mlxtran --format monolix --out model.json
 ```
 
 **Options:**
@@ -268,7 +268,7 @@ Import models from NONMEM or Monolix.
 Replay an execution artifact to verify reproducibility.
 
 ```bash
-./packages/cli/bin/openpkpd replay --artifact simulation.json --out replayed.json
+./packages/cli/bin/neopkpd replay --artifact simulation.json --out replayed.json
 ```
 
 **Supported Artifact Types:**
@@ -282,7 +282,7 @@ Replay an execution artifact to verify reproducibility.
 Run the full golden artifact validation suite.
 
 ```bash
-./packages/cli/bin/openpkpd validate-golden
+./packages/cli/bin/neopkpd validate-golden
 ```
 
 Validates all artifacts in `validation/golden/` directory against stored results.
@@ -292,7 +292,7 @@ Validates all artifacts in `validation/golden/` directory against stored results
 Compute PK/PD metrics from simulation results.
 
 ```bash
-./packages/cli/bin/openpkpd metrics --artifact result.json --metrics cmax,tmax,auc
+./packages/cli/bin/neopkpd metrics --artifact result.json --metrics cmax,tmax,auc
 ```
 
 ### sensitivity
@@ -300,7 +300,7 @@ Compute PK/PD metrics from simulation results.
 Run parameter sensitivity analysis.
 
 ```bash
-./packages/cli/bin/openpkpd sensitivity --spec sensitivity_spec.json --out sensitivity_result.json
+./packages/cli/bin/neopkpd sensitivity --spec sensitivity_spec.json --out sensitivity_result.json
 ```
 
 **Specification Format:**
@@ -324,9 +324,9 @@ Run parameter sensitivity analysis.
 Display help for any command.
 
 ```bash
-./packages/cli/bin/openpkpd help
-./packages/cli/bin/openpkpd help simulate
-./packages/cli/bin/openpkpd help estimate
+./packages/cli/bin/neopkpd help
+./packages/cli/bin/neopkpd help simulate
+./packages/cli/bin/neopkpd help estimate
 ```
 
 ## Exit Codes
@@ -345,20 +345,20 @@ Display help for any command.
 
 ```bash
 # Step 1: Run population simulation
-./packages/cli/bin/openpkpd population --spec pop.json --out pop_result.json
+./packages/cli/bin/neopkpd population --spec pop.json --out pop_result.json
 
 # Step 2: Compute VPC using population results
-./packages/cli/bin/openpkpd vpc --spec vpc.json --out vpc_result.json
+./packages/cli/bin/neopkpd vpc --spec vpc.json --out vpc_result.json
 ```
 
 ### Import NONMEM Model and Estimate
 
 ```bash
 # Step 1: Import NONMEM control file
-./packages/cli/bin/openpkpd import --input run001.ctl --format nonmem --out model.json
+./packages/cli/bin/neopkpd import --input run001.ctl --format nonmem --out model.json
 
 # Step 2: Run estimation with imported model
-./packages/cli/bin/openpkpd estimate --spec estimate.json --out fit.json
+./packages/cli/bin/neopkpd estimate --spec estimate.json --out fit.json
 ```
 
 ### CI/CD Integration
@@ -375,7 +375,7 @@ jobs:
       - uses: julia-actions/setup-julia@v1
       - run: julia --project=packages/core -e 'using Pkg; Pkg.instantiate()'
       - run: julia --project=packages/cli -e 'using Pkg; Pkg.instantiate()'
-      - run: ./packages/cli/bin/openpkpd validate-golden
+      - run: ./packages/cli/bin/neopkpd validate-golden
 ```
 
 ## Troubleshooting
@@ -394,7 +394,7 @@ export PATH="$PATH:/path/to/julia/bin"
 ### Package Not Installed
 
 ```
-Error: ArgumentError: Package OpenPKPDCore not found
+Error: ArgumentError: Package NeoPKPDCore not found
 ```
 
 Install dependencies:

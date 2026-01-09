@@ -3,7 +3,7 @@
 # =============================================================================
 #
 # Industry-standard TMDD simulation interface.
-# Integrates with OpenPKPD's solver and callback infrastructure.
+# Integrates with NeoPKPD's solver and callback infrastructure.
 #
 # Supports all TMDD model types:
 # - OneCptTMDD, TwoCptTMDD (QSS, QE, Full, Rapid)

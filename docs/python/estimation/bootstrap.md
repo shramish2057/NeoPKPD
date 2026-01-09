@@ -7,7 +7,7 @@ Industry-standard bootstrap methods for parameter uncertainty estimation.
 ## Overview
 
 ```python
-from openpkpd.estimation import run_bootstrap, BootstrapConfig
+from neopkpd.estimation import run_bootstrap, BootstrapConfig
 
 bootstrap_config = BootstrapConfig(
     n_bootstrap=1000,
@@ -66,7 +66,7 @@ bootstrap_config = BootstrapConfig(
 ### BootstrapConfig Parameters
 
 ```python
-from openpkpd.estimation import BootstrapConfig
+from neopkpd.estimation import BootstrapConfig
 
 bootstrap_config = BootstrapConfig(
     # Number of replicates
@@ -217,7 +217,7 @@ plt.show()
 ## Example: Complete Bootstrap Analysis
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     estimate, run_bootstrap,
     EstimationConfig, BootstrapConfig,
     FOCEIMethod

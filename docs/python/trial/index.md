@@ -1,6 +1,6 @@
 # Clinical Trials
 
-The `openpkpd.trial` module provides comprehensive clinical trial simulation and analysis capabilities.
+The `neopkpd.trial` module provides comprehensive clinical trial simulation and analysis capabilities.
 
 ---
 
@@ -49,7 +49,7 @@ The `openpkpd.trial` module provides comprehensive clinical trial simulation and
 ### Power Analysis
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # Calculate power
 power = trial.estimate_power_analytical(

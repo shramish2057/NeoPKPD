@@ -1,15 +1,15 @@
 # Study Designs
 
-Comprehensive guide for clinical trial study designs in OpenPKPD Python.
+Comprehensive guide for clinical trial study designs in NeoPKPD Python.
 
 ---
 
 ## Overview
 
-OpenPKPD supports multiple trial design types for different clinical development phases.
+NeoPKPD supports multiple trial design types for different clinical development phases.
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # Parallel design
 design = trial.parallel_design(n_arms=3, randomization_ratio=[1, 1, 1])
@@ -28,7 +28,7 @@ design = trial.dose_escalation_3plus3(dose_levels=[10, 25, 50, 100])
 ### Basic Parallel Design
 
 ```python
-from openpkpd.trial import ParallelDesign, parallel_design
+from neopkpd.trial import ParallelDesign, parallel_design
 
 # Create 2-arm parallel design
 design = parallel_design(
@@ -105,7 +105,7 @@ assignments = trial.generate_randomization(
 ### 2x2 Crossover
 
 ```python
-from openpkpd.trial import crossover_2x2, CrossoverDesign
+from neopkpd.trial import crossover_2x2, CrossoverDesign
 
 # Standard AB/BA crossover
 design = crossover_2x2(
@@ -184,7 +184,7 @@ design = trial.partial_replicate_3x3(
 ### 3+3 Design
 
 ```python
-from openpkpd.trial import DoseEscalation3plus3
+from neopkpd.trial import DoseEscalation3plus3
 
 # Standard 3+3
 design = DoseEscalation3plus3(
@@ -252,7 +252,7 @@ def get_3plus3_decision(n_dlt: int, n_patients: int) -> str:
 ### mTPI Design
 
 ```python
-from openpkpd.trial import MTPI
+from neopkpd.trial import MTPI
 
 design = MTPI(
     dose_levels=[10.0, 25.0, 50.0, 100.0, 200.0],
@@ -269,7 +269,7 @@ design = MTPI(
 ### CRM Design
 
 ```python
-from openpkpd.trial import CRM
+from neopkpd.trial import CRM
 
 design = CRM(
     dose_levels=[10.0, 25.0, 50.0, 100.0, 200.0],
@@ -292,7 +292,7 @@ next_dose_idx = design.recommend_dose(
 ### BOIN Design
 
 ```python
-from openpkpd.trial import BOIN
+from neopkpd.trial import BOIN
 
 design = BOIN(
     dose_levels=[10.0, 25.0, 50.0, 100.0, 200.0],
@@ -315,7 +315,7 @@ print(f"De-escalation boundary: {design.lambda_d:.3f}")
 ### Standard BE Design
 
 ```python
-from openpkpd.trial import BioequivalenceDesign
+from neopkpd.trial import BioequivalenceDesign
 
 design = BioequivalenceDesign(
     n_periods=2,
@@ -366,7 +366,7 @@ design = trial.abel_design(
 ### Group Sequential Design
 
 ```python
-from openpkpd.trial import GroupSequentialDesign
+from neopkpd.trial import GroupSequentialDesign
 
 design = GroupSequentialDesign(
     n_looks=3,                   # Number of interim analyses
@@ -386,7 +386,7 @@ print(f"Final boundary: {boundaries[2]:.3f}")
 ### Sample Size Re-estimation
 
 ```python
-from openpkpd.trial import AdaptiveSampleSize
+from neopkpd.trial import AdaptiveSampleSize
 
 design = AdaptiveSampleSize(
     initial_n=50,
@@ -441,7 +441,7 @@ print(summary)
 ## Complete Example
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # =====================================
 # Phase III Parallel Design Setup

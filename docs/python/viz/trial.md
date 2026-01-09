@@ -9,7 +9,7 @@ Clinical trial visualization functions.
 Trial plots visualize study designs, power analyses, and endpoint distributions.
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 fig = viz.plot_power_curve(power_results, title="Power Analysis")
 ```
@@ -161,15 +161,15 @@ fig = viz.plot_endpoint_distribution(
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 import numpy as np
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Power analysis
-power_results = openpkpd.calculate_power(
+power_results = neopkpd.calculate_power(
     effect_size=0.5,
     variability=0.8,
     alpha=0.05,

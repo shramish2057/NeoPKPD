@@ -1,15 +1,15 @@
 # CDISC Data Import
 
-Comprehensive guide for importing CDISC/SDTM and ADaM formatted data into OpenPKPD.
+Comprehensive guide for importing CDISC/SDTM and ADaM formatted data into NeoPKPD.
 
 ---
 
 ## Overview
 
-OpenPKPD supports importing data from CDISC (Clinical Data Interchange Standards Consortium) formats, including SDTM (Study Data Tabulation Model) and ADaM (Analysis Data Model) datasets.
+NeoPKPD supports importing data from CDISC (Clinical Data Interchange Standards Consortium) formats, including SDTM (Study Data Tabulation Model) and ADaM (Analysis Data Model) datasets.
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Import CDISC data
 data = import_cdisc(
@@ -210,7 +210,7 @@ STUDY01,SUBJ001,LAMZHL,Terminal Half-life,8.5,h,PK PARAMETERS
 ### Basic Import
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Import from CSV files
 data = import_cdisc(
@@ -313,7 +313,7 @@ subj = get_subject(data, "SUBJ001")
 # PT2H30M = 2.5 hours post-dose
 # P1DT2H = 1 day + 2 hours = 26 hours
 
-# OpenPKPD converts to numeric hours from first dose
+# NeoPKPD converts to numeric hours from first dose
 ```
 
 ### Reference Time
@@ -536,7 +536,7 @@ STUDY01,SUBJ002,002,38,YEARS,F,ASIAN,NOT HISPANIC OR LATINO,200mg,TRT200,2024-01
 ### Julia Import Code
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Import CDISC data
 data = import_cdisc(

@@ -1,6 +1,6 @@
 # Tutorial: Getting Started with Python
 
-This tutorial provides a comprehensive introduction to using OpenPKPD with Python. By the end, you'll be able to run simulations, analyze data, and create professional visualizations.
+This tutorial provides a comprehensive introduction to using NeoPKPD with Python. By the end, you'll be able to run simulations, analyze data, and create professional visualizations.
 
 ---
 
@@ -10,7 +10,7 @@ Ensure you have:
 
 - Python 3.10 or later
 - Julia 1.10 or later installed
-- OpenPKPD Python package installed
+- NeoPKPD Python package installed
 
 ```bash
 cd packages/python
@@ -26,13 +26,13 @@ pip install -e ".[all]"
 ### Initialization
 
 ```python
-import openpkpd
+import neopkpd
 
 # Initialize Julia runtime (required once per session)
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Check version
-print(openpkpd.version())  # "0.1.0"
+print(neopkpd.version())  # "0.1.0"
 ```
 
 !!! note "First-time initialization"
@@ -42,7 +42,7 @@ print(openpkpd.version())  # "0.1.0"
 
 ```python
 # Simulate IV bolus: 100 mg at time 0
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0,              # Clearance (L/h)
     v=50.0,              # Volume of distribution (L)
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -120,7 +120,7 @@ doses = [
     {"time": 60.0, "amount": 100.0},
 ]
 
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=doses,
     t0=0.0, t1=72.0,
@@ -138,7 +138,7 @@ print(f"Steady-state trough: {conc[idx_trough]:.2f} mg/L")
 
 ```python
 # 100 mg infused over 1 hour
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0, "duration": 1.0}],
     t0=0.0, t1=24.0,
@@ -159,7 +159,7 @@ print(f"Cmax at end of infusion: {conc[idx_1h]:.2f} mg/L")
 ### Oral First-Order Absorption
 
 ```python
-result = openpkpd.simulate_pk_oral_first_order(
+result = neopkpd.simulate_pk_oral_first_order(
     ka=1.5,              # Absorption rate constant (1/h)
     cl=5.0,
     v=50.0,
@@ -180,7 +180,7 @@ print(f"Oral: Cmax = {cmax:.2f} mg/L at Tmax = {tmax:.2f} h")
 ### Two-Compartment IV
 
 ```python
-result = openpkpd.simulate_pk_twocomp_iv_bolus(
+result = neopkpd.simulate_pk_twocomp_iv_bolus(
     cl=10.0,             # Clearance (L/h)
     v1=20.0,             # Central volume (L)
     q=15.0,              # Inter-compartmental clearance (L/h)
@@ -199,7 +199,7 @@ print(f"C at 24h: {conc[240]:.2f} (terminal)")
 ### Transit Absorption
 
 ```python
-result = openpkpd.simulate_pk_transit_absorption(
+result = neopkpd.simulate_pk_transit_absorption(
     n_transit=5,         # 5 transit compartments
     ktr=0.5,             # Transit rate (1/h)
     ka=2.0,              # Final absorption rate (1/h)
@@ -224,7 +224,7 @@ print(f"Transit absorption Tmax: {tmax:.2f} h")
 ### Direct Emax
 
 ```python
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     # PK parameters
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -245,7 +245,7 @@ print("Effect:", result["observations"]["effect"][:5])
 ### Indirect Response
 
 ```python
-result = openpkpd.simulate_pkpd_indirect_response(
+result = neopkpd.simulate_pkpd_indirect_response(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     kin=10.0,            # Production rate
@@ -271,7 +271,7 @@ print(f"Return to baseline: {response[-1]:.1f}")
 ### Inter-Individual Variability
 
 ```python
-result = openpkpd.simulate_population_iv_bolus(
+result = neopkpd.simulate_population_iv_bolus(
     cl=5.0,              # Typical CL
     v=50.0,              # Typical V
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -336,7 +336,7 @@ print(df.groupby("time")["conc"].describe())
 ### Setup
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Set backend
 viz.set_backend("matplotlib")
@@ -348,7 +348,7 @@ print(viz.available_backends())  # ["matplotlib", "plotly"]
 ### Concentration-Time Plot
 
 ```python
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -362,7 +362,7 @@ fig.savefig("conc_time.png", dpi=300)
 ### Population Spaghetti Plot
 
 ```python
-pop_result = openpkpd.simulate_population_iv_bolus(
+pop_result = neopkpd.simulate_population_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -403,7 +403,7 @@ fig.show()  # Opens in browser
 ### Basic NCA
 
 ```python
-from openpkpd.nca import run_nca, NCAConfig
+from neopkpd.nca import run_nca, NCAConfig
 
 # Concentration-time data
 times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
@@ -442,7 +442,7 @@ print(f"λz R²: {result.lambda_z_r_squared:.4f}")
 ### Power Analysis
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # Calculate power for given sample size
 power = trial.estimate_power_analytical(
@@ -483,7 +483,7 @@ print(f"Weight: {summary['weight']['mean']:.1f} kg")
 
 In this tutorial, you learned:
 
-1. **Initialization**: `openpkpd.init_julia()`
+1. **Initialization**: `neopkpd.init_julia()`
 2. **Simulation Functions**: IV bolus, oral, two-compartment, transit
 3. **PK-PD Models**: Direct Emax, indirect response
 4. **Population**: IIV with omega, summary statistics

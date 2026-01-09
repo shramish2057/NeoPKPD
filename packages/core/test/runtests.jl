@@ -1,16 +1,16 @@
-# OpenPKPDCore Test Suite
+# NeoPKPDCore Test Suite
 #
 # This file serves as the entry point for all tests. Individual test files
 # are organized by functionality in separate files.
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 
 # Include test helper functions
 include("test_helpers.jl")
 
-@testset "OpenPKPDCore" begin
+@testset "NeoPKPDCore" begin
     # One-compartment PK models
     @testset "One-Compartment PK" begin
         include("test_onecomp.jl")

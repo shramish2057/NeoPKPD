@@ -1,15 +1,15 @@
-# Introduction to OpenPKPD
+# Introduction to NeoPKPD
 
 <div class="hero-section">
 <h2>Transparent, Validated PK/PD Modeling Infrastructure</h2>
-<p>OpenPKPD is an open-source platform for pharmacokinetic and pharmacodynamic modeling, built for reproducibility, scientific rigor, and regulatory compliance.</p>
+<p>NeoPKPD is an open-source platform for pharmacokinetic and pharmacodynamic modeling, built for reproducibility, scientific rigor, and regulatory compliance.</p>
 </div>
 
 ---
 
-## What is OpenPKPD?
+## What is NeoPKPD?
 
-OpenPKPD is a comprehensive pharmacometrics platform that provides:
+NeoPKPD is a comprehensive pharmacometrics platform that provides:
 
 - **Validated PK/PD Models** - Industry-standard compartmental models with full mathematical transparency
 - **Population Simulation** - Inter-individual and inter-occasion variability modeling
@@ -18,7 +18,7 @@ OpenPKPD is a comprehensive pharmacometrics platform that provides:
 - **Clinical Trial Simulation** - Virtual trial design and power analysis
 - **Professional Visualization** - Publication-ready plots with dual backend support
 
-## Why OpenPKPD?
+## Why NeoPKPD?
 
 ### Transparency
 Every model equation, algorithm, and numerical method is documented and open for inspection. No black boxes.
@@ -58,7 +58,7 @@ NCA calculations follow FDA/EMA guidelines. VPC and diagnostic plots meet regula
 
     ---
 
-    Install OpenPKPD and run your first simulation
+    Install NeoPKPD and run your first simulation
 
     [:octicons-arrow-right-24: Get Started](getting-started.md)
 
@@ -104,13 +104,13 @@ graph LR
 
 ## Platform Architecture
 
-OpenPKPD is organized as a monorepo with three main packages:
+NeoPKPD is organized as a monorepo with three main packages:
 
 ```
-openpkpd/
-├── core/           # Julia core library (OpenPKPDCore.jl)
+neopkpd/
+├── core/           # Julia core library (NeoPKPDCore.jl)
 ├── packages/
-│   ├── python/     # Python bindings (openpkpd)
+│   ├── python/     # Python bindings (neopkpd)
 │   └── cli/        # Command-line interface
 ├── validation/     # Golden artifacts for reproducibility
 └── docs/           # This documentation
@@ -124,7 +124,7 @@ openpkpd/
 
 | Component | Version |
 |-----------|---------|
-| OpenPKPD | 0.1.0 |
+| NeoPKPD | 0.1.0 |
 | Event Semantics | 1.0.0 |
 | Solver Semantics | 1.0.0 |
 | Artifact Schema | 1.0.0 |
@@ -135,7 +135,7 @@ openpkpd/
 
 <div class="grid cards" markdown>
 
--   **New to OpenPKPD?**
+-   **New to NeoPKPD?**
 
     Start with the [Getting Started Guide](getting-started.md)
 

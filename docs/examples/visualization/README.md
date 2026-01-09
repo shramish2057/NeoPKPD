@@ -14,7 +14,7 @@ Examples demonstrating plotting and visualization for pharmacometric analyses.
 ## Quick Start
 
 ```python
-from openpkpd.viz import plot_concentration_time, plot_vpc, plot_gof
+from neopkpd.viz import plot_concentration_time, plot_vpc, plot_gof
 import matplotlib.pyplot as plt
 
 # Concentration-time plot

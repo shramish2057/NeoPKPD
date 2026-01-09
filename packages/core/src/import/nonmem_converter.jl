@@ -1,11 +1,11 @@
-# NONMEM to OpenPKPD Converter
-# Converts parsed NONMEM control files to OpenPKPD model specifications
+# NONMEM to NeoPKPD Converter
+# Converts parsed NONMEM control files to NeoPKPD model specifications
 
-export convert_nonmem_to_openpkpd, NONMEMConversionResult
+export convert_nonmem_to_neopkpd, NONMEMConversionResult
 export validate_nonmem_conversion, ValidationResult
 
 """
-Result of converting a NONMEM control file to OpenPKPD format.
+Result of converting a NONMEM control file to NeoPKPD format.
 
 Fields:
 - model_spec: The converted ModelSpec (or nothing if conversion failed)
@@ -13,7 +13,7 @@ Fields:
 - error_spec: Residual error specification
 - warnings: Any warnings generated during conversion
 - errors: Any errors that prevented conversion
-- parameter_mapping: Mapping from NONMEM THETAs to OpenPKPD parameters
+- parameter_mapping: Mapping from NONMEM THETAs to NeoPKPD parameters
 - pk_block: Parsed \$PK block information
 - error_block: Parsed \$ERROR block information
 - covariate_effects: Extracted covariate effects (for informational purposes)
@@ -54,7 +54,7 @@ struct ValidationResult
 end
 
 """
-Convert a NONMEM control file to OpenPKPD format.
+Convert a NONMEM control file to NeoPKPD format.
 
 Arguments:
 - ctl: Parsed NONMEMControlFile
@@ -65,7 +65,7 @@ Arguments:
 Returns:
 - NONMEMConversionResult containing converted specs and diagnostics
 """
-function convert_nonmem_to_openpkpd(
+function convert_nonmem_to_neopkpd(
     ctl::NONMEMControlFile;
     doses::Vector{DoseEvent}=DoseEvent[],
     name::String="",
@@ -387,7 +387,7 @@ function _create_model_spec(
     warnings::Vector{String}
 )::Union{Nothing,ModelSpec}
 
-    # Map NONMEM parameter names to OpenPKPD
+    # Map NONMEM parameter names to NeoPKPD
     param_map = Dict{Symbol,Float64}()
     for (i, sym) in enumerate(param_symbols)
         if i <= length(values)

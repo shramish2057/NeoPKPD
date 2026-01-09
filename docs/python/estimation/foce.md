@@ -9,7 +9,7 @@ First-Order Conditional Estimation with Interaction (FOCE-I) is the industry-sta
 FOCE-I linearizes the model around individual eta estimates, providing accurate parameter estimates for most PK/PD models.
 
 ```python
-from openpkpd.estimation import estimate, EstimationConfig, FOCEIMethod
+from neopkpd.estimation import estimate, EstimationConfig, FOCEIMethod
 
 config = EstimationConfig(
     method=FOCEIMethod(),
@@ -28,7 +28,7 @@ result = estimate(data, "OneCompIVBolus", config)
 ### FOCEIMethod Parameters
 
 ```python
-from openpkpd.estimation import FOCEIMethod
+from neopkpd.estimation import FOCEIMethod
 
 method = FOCEIMethod(
     centered=False,        # False=FOCE-I, True=FOCE (no interaction)
@@ -42,7 +42,7 @@ method = FOCEIMethod(
 ### Full Configuration Example
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     EstimationConfig, FOCEIMethod, BLQConfig, BLQMethod,
     OmegaStructure, ResidualErrorModel
 )
@@ -184,7 +184,7 @@ config = EstimationConfig(
 ## BLQ Handling
 
 ```python
-from openpkpd.estimation import BLQConfig, BLQMethod
+from neopkpd.estimation import BLQConfig, BLQMethod
 
 # M1: Discard BLQ
 blq_config = BLQConfig(method=BLQMethod.M1, lloq=0.1)
@@ -206,7 +206,7 @@ config = EstimationConfig(
 ## Inter-Occasion Variability (IOV)
 
 ```python
-from openpkpd.estimation import IOVSpec
+from neopkpd.estimation import IOVSpec
 
 iov_specs = [
     IOVSpec(
@@ -227,7 +227,7 @@ config = EstimationConfig(
 ## Covariate Effects on IIV
 
 ```python
-from openpkpd.estimation import CovariateOnIIV
+from neopkpd.estimation import CovariateOnIIV
 
 covariate_effects = [
     CovariateOnIIV(
@@ -326,7 +326,7 @@ config = EstimationConfig(
 ## Example: Two-Compartment Model
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     estimate, EstimationConfig, FOCEIMethod,
     BLQConfig, BLQMethod, EstimationData
 )

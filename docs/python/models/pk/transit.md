@@ -7,7 +7,7 @@ Transit compartment model for delayed and complex oral absorption, using a chain
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_transit_absorption(
+neopkpd.simulate_pk_transit_absorption(
     n: int,
     ktr: float,
     ka: float,
@@ -82,9 +82,9 @@ The absorption input follows a gamma distribution profile.
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_transit_absorption(
+result = neopkpd.simulate_pk_transit_absorption(
     n=5,          # 5 transit compartments
     ktr=0.5,      # Transit rate (1/h)
     ka=2.0,       # Absorption rate (1/h)
@@ -114,7 +114,7 @@ print(f"MTT: {mtt} h")
 ## Effect of Number of Transit Compartments
 
 ```python
-import openpkpd
+import neopkpd
 
 # Keep MTT constant at 12 hours
 mtt = 12.0
@@ -126,7 +126,7 @@ print("-" * 45)
 for n in n_values:
     ktr = (n + 1) / mtt
 
-    result = openpkpd.simulate_pk_transit_absorption(
+    result = neopkpd.simulate_pk_transit_absorption(
         n=n, ktr=ktr, ka=2.0, cl=10.0, v=70.0,
         doses=[{"time": 0.0, "amount": 300.0}],
         t0=0.0, t1=48.0,
@@ -150,11 +150,11 @@ for n in n_values:
 ## Comparison: Transit vs Simple Oral
 
 ```python
-import openpkpd
+import neopkpd
 import numpy as np
 
 # Transit absorption (5 compartments, MTT = 12h)
-result_transit = openpkpd.simulate_pk_transit_absorption(
+result_transit = neopkpd.simulate_pk_transit_absorption(
     n=5, ktr=0.5, ka=2.0, cl=10.0, v=70.0,
     doses=[{"time": 0.0, "amount": 300.0}],
     t0=0.0, t1=48.0,
@@ -162,7 +162,7 @@ result_transit = openpkpd.simulate_pk_transit_absorption(
 )
 
 # Simple first-order oral (slower Ka to approximate)
-result_simple = openpkpd.simulate_pk_oral_first_order(
+result_simple = neopkpd.simulate_pk_oral_first_order(
     ka=0.3, cl=10.0, v=70.0,
     doses=[{"time": 0.0, "amount": 300.0}],
     t0=0.0, t1=48.0,
@@ -182,10 +182,10 @@ print("Simple model: immediate onset, sharper peak")
 ## Controlled-Release Formulation
 
 ```python
-import openpkpd
+import neopkpd
 
 # Extended-release tablet: Long MTT
-result_er = openpkpd.simulate_pk_transit_absorption(
+result_er = neopkpd.simulate_pk_transit_absorption(
     n=8,          # More transit compartments
     ktr=0.5,      # MTT = 9/0.5 = 18 hours
     ka=0.5,       # Slow final absorption
@@ -252,10 +252,10 @@ for n in n_values:
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pk_profile
+import neopkpd
+from neopkpd.viz import plot_pk_profile
 
-result = openpkpd.simulate_pk_transit_absorption(
+result = neopkpd.simulate_pk_transit_absorption(
     n=5, ktr=0.5, ka=2.0, cl=10.0, v=70.0,
     doses=[{"time": 0.0, "amount": 300.0}],
     t0=0.0, t1=48.0,

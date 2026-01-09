@@ -79,7 +79,7 @@ Each stratum contains a complete `VPCResult` with all percentile data.
 ### Basic Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Observed data with stratum information
 observed = ObservedData(
@@ -381,7 +381,7 @@ result = compute_stratified_vpc(
 ## Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 using Random
 
 # ================================================

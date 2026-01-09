@@ -1,6 +1,6 @@
 # Dosing Regimens
 
-Comprehensive guide for configuring dosing schedules in OpenPKPD Python.
+Comprehensive guide for configuring dosing schedules in NeoPKPD Python.
 
 ---
 
@@ -9,7 +9,7 @@ Comprehensive guide for configuring dosing schedules in OpenPKPD Python.
 The dosing module provides flexible specification of drug administration schedules.
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # Once daily dosing
 regimen = trial.dosing_qd(dose=100.0, duration_days=28)
@@ -29,7 +29,7 @@ regimen = trial.dosing_custom(
 ### Once Daily (QD)
 
 ```python
-from openpkpd.trial import dosing_qd
+from neopkpd.trial import dosing_qd
 
 # Basic QD dosing
 regimen = dosing_qd(
@@ -54,7 +54,7 @@ print(f"Dose times: {regimen.dose_times}")
 ### Twice Daily (BID)
 
 ```python
-from openpkpd.trial import dosing_bid
+from neopkpd.trial import dosing_bid
 
 # Standard BID
 regimen = dosing_bid(
@@ -75,7 +75,7 @@ regimen = dosing_bid(
 ### Three Times Daily (TID)
 
 ```python
-from openpkpd.trial import dosing_tid
+from neopkpd.trial import dosing_tid
 
 # Standard TID (every 8 hours)
 regimen = dosing_tid(
@@ -88,7 +88,7 @@ regimen = dosing_tid(
 ### Four Times Daily (QID)
 
 ```python
-from openpkpd.trial import dosing_qid
+from neopkpd.trial import dosing_qid
 
 # Standard QID (every 6 hours)
 regimen = dosing_qid(
@@ -134,7 +134,7 @@ class DosingRegimen:
 ### Creating Custom Regimens
 
 ```python
-from openpkpd.trial import DosingRegimen
+from neopkpd.trial import DosingRegimen
 
 # Manual specification
 regimen = DosingRegimen(
@@ -159,7 +159,7 @@ for event in schedule[:5]:
 ### Irregular Dosing
 
 ```python
-from openpkpd.trial import dosing_custom
+from neopkpd.trial import dosing_custom
 
 # Custom times
 regimen = dosing_custom(
@@ -213,7 +213,7 @@ regimen = trial.dosing_prn(
 ### Linear Titration
 
 ```python
-from openpkpd.trial import titration_regimen
+from neopkpd.trial import titration_regimen
 
 # Gradual dose increase
 regimen = titration_regimen(
@@ -277,7 +277,7 @@ regimen = trial.flexible_titration(
 ### IV Infusion
 
 ```python
-from openpkpd.trial import dosing_infusion
+from neopkpd.trial import dosing_infusion
 
 # Short infusion
 regimen = dosing_infusion(
@@ -327,7 +327,7 @@ regimen = trial.dosing_loading_infusion(
 ### Formulation Specification
 
 ```python
-from openpkpd.trial import FormulationSpec
+from neopkpd.trial import FormulationSpec
 
 # Define formulations
 tablet = FormulationSpec(
@@ -436,7 +436,7 @@ for subject_id, doses in actual_doses.items():
 ### Dose Reduction Rules
 
 ```python
-from openpkpd.trial import DoseModificationRule
+from neopkpd.trial import DoseModificationRule
 
 # Reduce for toxicity
 rule = DoseModificationRule(
@@ -500,7 +500,7 @@ print(f"Duration difference: {comparison.duration_diff}")
 ## Complete Example
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 # ================================
 # Complex Dosing Schedule Setup

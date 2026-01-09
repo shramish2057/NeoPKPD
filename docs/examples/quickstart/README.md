@@ -1,6 +1,6 @@
 # Quickstart Examples
 
-Get started with OpenPKPD in 5 minutes. These examples demonstrate a basic one-compartment IV bolus simulation.
+Get started with NeoPKPD in 5 minutes. These examples demonstrate a basic one-compartment IV bolus simulation.
 
 ## Files
 
@@ -47,7 +47,7 @@ Dose (100 mg IV)
 ### Julia
 
 ```bash
-julia --project=core/OpenPKPDCore docs/examples/quickstart/julia_first_simulation.jl
+julia --project=core/NeoPKPDCore docs/examples/quickstart/julia_first_simulation.jl
 ```
 
 ### Python
@@ -60,8 +60,8 @@ python docs/examples/quickstart/python_first_simulation.py
 ### CLI
 
 ```bash
-./bin/openpkpd simulate --spec docs/examples/quickstart/spec.json --out result.json
-./bin/openpkpd metrics --artifact result.json --metrics cmax,tmax,auc
+./bin/neopkpd simulate --spec docs/examples/quickstart/spec.json --out result.json
+./bin/neopkpd metrics --artifact result.json --metrics cmax,tmax,auc
 ```
 
 ## Next Steps

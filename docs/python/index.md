@@ -1,12 +1,12 @@
 # Python Documentation
 
-Welcome to the Python documentation for OpenPKPD. The `openpkpd` package provides Pythonic access to all core functionality with seamless NumPy/Pandas integration.
+Welcome to the Python documentation for NeoPKPD. The `neopkpd` package provides Pythonic access to all core functionality with seamless NumPy/Pandas integration.
 
 ---
 
 ## Why Python?
 
-While OpenPKPD's core is written in Julia for performance, Python bindings enable:
+While NeoPKPD's core is written in Julia for performance, Python bindings enable:
 
 - **Data Science Integration** - NumPy, Pandas, SciPy ecosystem
 - **Visualization** - Matplotlib and Plotly dual backends
@@ -18,13 +18,13 @@ While OpenPKPD's core is written in Julia for performance, Python bindings enabl
 ## Quick Start
 
 ```python
-import openpkpd
+import neopkpd
 
 # Initialize Julia (required once per session)
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # One-compartment IV bolus simulation
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0,              # Clearance (L/h)
     v=50.0,              # Volume (L)
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -135,44 +135,44 @@ pip install -e ".[all]"
 
 ## Module Overview
 
-### Core Module (`openpkpd`)
+### Core Module (`neopkpd`)
 
 ```python
-import openpkpd
+import neopkpd
 
-openpkpd.init_julia()              # Initialize Julia runtime
-openpkpd.version()                 # Get version string
+neopkpd.init_julia()              # Initialize Julia runtime
+neopkpd.version()                 # Get version string
 
 # Simulation functions
-openpkpd.simulate_pk_iv_bolus(...)
-openpkpd.simulate_pk_oral_first_order(...)
-openpkpd.simulate_population_iv_bolus(...)
+neopkpd.simulate_pk_iv_bolus(...)
+neopkpd.simulate_pk_oral_first_order(...)
+neopkpd.simulate_population_iv_bolus(...)
 ```
 
-### NCA Module (`openpkpd.nca`)
+### NCA Module (`neopkpd.nca`)
 
 ```python
-from openpkpd import nca
+from neopkpd import nca
 
 result = nca.run_nca(times, conc, dose)
 summary = nca.summarize_population_nca(pop_results)
 be_result = nca.bioequivalence_90ci(test, reference)
 ```
 
-### Trial Module (`openpkpd.trial`)
+### Trial Module (`neopkpd.trial`)
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 design = trial.parallel_design(n_arms=2)
 regimen = trial.dosing_qd(dose=100.0, duration_days=28)
 pop = trial.generate_virtual_population(n=100)
 ```
 
-### Visualization Module (`openpkpd.viz`)
+### Visualization Module (`neopkpd.viz`)
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 viz.set_backend("matplotlib")
 fig = viz.plot_conc_time(result)
@@ -234,11 +234,11 @@ pop_result = {
 
 ```python
 import numpy as np
-import openpkpd
+import neopkpd
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -254,11 +254,11 @@ print(f"AUC: {np.trapz(conc, result['t']):.2f}")
 
 ```python
 import pandas as pd
-import openpkpd
+import neopkpd
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
-result = openpkpd.simulate_population_iv_bolus(
+result = neopkpd.simulate_population_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -292,11 +292,11 @@ print(conc_df.groupby("time")["conc"].describe())
 
 ```python
 # Good: Initialize once
-import openpkpd
-openpkpd.init_julia()
+import neopkpd
+neopkpd.init_julia()
 
 for params in parameter_sets:
-    result = openpkpd.simulate_pk_iv_bolus(...)
+    result = neopkpd.simulate_pk_iv_bolus(...)
 ```
 
 ---

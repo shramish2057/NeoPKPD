@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to OpenPKPD are documented here.
+All notable changes to NeoPKPD are documented here.
 
 ## [0.1.0] Initial public infrastructure release
 

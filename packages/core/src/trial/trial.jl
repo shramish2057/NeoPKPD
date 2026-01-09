@@ -1,5 +1,5 @@
 # Trial Module
-# Clinical trial simulation for OpenPKPD
+# Clinical trial simulation for NeoPKPD
 
 # Include all trial submodules
 include("specs.jl")

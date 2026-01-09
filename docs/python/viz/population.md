@@ -9,7 +9,7 @@ Population modeling visualization functions.
 Population plots visualize inter-individual variability, parameter distributions, and model diagnostics.
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 fig = viz.plot_parameter_distributions(pop_result)
 ```
@@ -57,7 +57,7 @@ def plot_parameter_distributions(
 **Usage:**
 
 ```python
-pop_result = openpkpd.simulate_population_oral(
+pop_result = neopkpd.simulate_population_oral(
     ka=1.5, cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0, saveat=0.5,
@@ -213,14 +213,14 @@ def plot_sensitivity_tornado(
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Population simulation
-pop_result = openpkpd.simulate_population_oral(
+pop_result = neopkpd.simulate_population_oral(
     ka=1.5, cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0, saveat=0.5,

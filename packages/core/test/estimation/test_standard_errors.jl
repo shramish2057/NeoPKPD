@@ -2,7 +2,7 @@
 # Tests marginal likelihood-based SEs with proper integration over random effects
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using LinearAlgebra
 using StableRNGs
 
@@ -178,7 +178,7 @@ using StableRNGs
         x = [1.0, 2.0]
 
         # Use the internal function
-        hessian, success = OpenPKPDCore.compute_hessian_central(f, x)
+        hessian, success = NeoPKPDCore.compute_hessian_central(f, x)
 
         @test success == true
         # Expected Hessian for f(x) = x1² + x2² + x1*x2
@@ -191,7 +191,7 @@ using StableRNGs
         # Test with non-finite function
         g(x) = x[1] < 0 ? Inf : x[1]^2
         y = [-1.0, 0.0]
-        hessian_bad, success_bad = OpenPKPDCore.compute_hessian_central(g, y)
+        hessian_bad, success_bad = NeoPKPDCore.compute_hessian_central(g, y)
         @test success_bad == false
     end
 

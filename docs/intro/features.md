@@ -1,6 +1,6 @@
 # Key Features
 
-OpenPKPD provides a comprehensive suite of pharmacometrics capabilities designed for research, clinical development, and regulatory submissions.
+NeoPKPD provides a comprehensive suite of pharmacometrics capabilities designed for research, clinical development, and regulatory submissions.
 
 ---
 
@@ -8,7 +8,7 @@ OpenPKPD provides a comprehensive suite of pharmacometrics capabilities designed
 
 ### Compartmental Models
 
-OpenPKPD supports all standard compartmental PK models with rigorous mathematical formulations:
+NeoPKPD supports all standard compartmental PK models with rigorous mathematical formulations:
 
 === "One-Compartment"
 
@@ -59,7 +59,7 @@ OpenPKPD supports all standard compartmental PK models with rigorous mathematica
 
 ```python
 # Direct Emax
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     e0=0.0, emax=100.0, ec50=2.0,
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -67,7 +67,7 @@ result = openpkpd.simulate_pkpd_direct_emax(
 )
 
 # Sigmoid Emax (Hill Equation)
-result = openpkpd.simulate_pkpd_sigmoid_emax(
+result = neopkpd.simulate_pkpd_sigmoid_emax(
     cl=5.0, v=50.0,
     e0=0.0, emax=100.0, ec50=2.0, gamma=2.5,
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -204,7 +204,7 @@ For sparse data or complex likelihoods.
 ### Bioequivalence Analysis
 
 ```python
-from openpkpd.nca import bioequivalence_90ci, tost_analysis
+from neopkpd.nca import bioequivalence_90ci, tost_analysis
 
 # 90% CI for geometric mean ratio
 lower, upper = bioequivalence_90ci(test_auc, reference_auc)
@@ -225,7 +225,7 @@ result = tost_analysis(
 Comparison of observed vs simulated percentiles:
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 fig = viz.plot_vpc_detailed(
     simulated_data,
@@ -264,7 +264,7 @@ Proper visualization of below-limit-of-quantification observations.
 ### Power Analysis
 
 ```python
-from openpkpd import trial
+from neopkpd import trial
 
 power = trial.estimate_power_analytical(
     n_per_arm=50,
@@ -294,7 +294,7 @@ Generate realistic virtual subjects with specified demographics.
 === "Matplotlib"
 
     ```python
-    from openpkpd import viz
+    from neopkpd import viz
     viz.set_backend("matplotlib")
 
     fig = viz.plot_conc_time(result)
@@ -304,7 +304,7 @@ Generate realistic virtual subjects with specified demographics.
 === "Plotly"
 
     ```python
-    from openpkpd import viz
+    from neopkpd import viz
     viz.set_backend("plotly")
 
     fig = viz.plot_conc_time(result)
@@ -333,7 +333,7 @@ Generate realistic virtual subjects with specified demographics.
 Parse NONMEM control stream files:
 
 ```bash
-./bin/openpkpd import --input run001.ctl --format nonmem --out model.json
+./bin/neopkpd import --input run001.ctl --format nonmem --out model.json
 ```
 
 Supported ADVAN subroutines: ADVAN1, ADVAN2, ADVAN3, ADVAN4, ADVAN11, ADVAN12
@@ -363,7 +363,7 @@ Every simulation produces a JSON artifact containing:
 ### Golden Artifact Validation
 
 ```bash
-./bin/openpkpd validate-golden
+./bin/neopkpd validate-golden
 ```
 
 Ensures bit-exact reproducibility across code changes.
@@ -371,7 +371,7 @@ Ensures bit-exact reproducibility across code changes.
 ### Replay Capability
 
 ```bash
-./bin/openpkpd replay --artifact simulation.json
+./bin/neopkpd replay --artifact simulation.json
 ```
 
 Reproduce any previous simulation exactly.

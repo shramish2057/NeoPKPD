@@ -1,6 +1,6 @@
 # Parameter Estimation
 
-OpenPKPD provides nonlinear mixed-effects (NLME) estimation methods for fitting population PK/PD models to observed data.
+NeoPKPD provides nonlinear mixed-effects (NLME) estimation methods for fitting population PK/PD models to observed data.
 
 ---
 
@@ -74,7 +74,7 @@ graph LR
 ### FOCE-I Estimation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Prepare observed data
 data = EstimationData(

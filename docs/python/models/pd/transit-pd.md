@@ -7,7 +7,7 @@ PD model with a chain of transit compartments to model delayed drug effects and 
 ## Function Signature
 
 ```python
-openpkpd.simulate_pkpd_transit_compartment(
+neopkpd.simulate_pkpd_transit_compartment(
     cl: float,
     v: float,
     doses: list[dict],
@@ -92,9 +92,9 @@ $$Effect = A_N$$
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pkpd_transit_compartment(
+result = neopkpd.simulate_pkpd_transit_compartment(
     cl=5.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -124,7 +124,7 @@ print(f"Time to max effect: {t[effect.index(min(effect))]} h")
 ## Effect of Number of Transit Compartments
 
 ```python
-import openpkpd
+import neopkpd
 
 n_transit_values = [1, 3, 5, 10, 20]
 ktr = 0.5  # Fixed ktr
@@ -133,7 +133,7 @@ print("N transit | MTT (h) | T_nadir (h) | Nadir effect")
 print("-" * 55)
 
 for n in n_transit_values:
-    result = openpkpd.simulate_pkpd_transit_compartment(
+    result = neopkpd.simulate_pkpd_transit_compartment(
         cl=5.0, v=50.0,
         doses=[{"time": 0.0, "amount": 500.0}],
         n_transit=n, ktr=ktr, e0=100.0, emax=-60.0, ec50=5.0, gamma=1.0,
@@ -158,7 +158,7 @@ for n in n_transit_values:
 ## Clinical Example: Myelosuppression
 
 ```python
-import openpkpd
+import neopkpd
 
 # Chemotherapy-induced neutropenia
 # Typical: 5-7 transit compartments, MTT ~5 days for neutrophils
@@ -167,7 +167,7 @@ mtt_days = 5.0
 n_transit = 5
 ktr = (n_transit + 1) / (mtt_days * 24)  # Convert to 1/h
 
-result = openpkpd.simulate_pkpd_transit_compartment(
+result = neopkpd.simulate_pkpd_transit_compartment(
     cl=3.0, v=30.0,
     doses=[{"time": 0.0, "amount": 100.0}],  # Single chemo dose
     n_transit=n_transit,
@@ -210,7 +210,7 @@ elif nadir < 1.5:
 ## Multiple Chemotherapy Cycles
 
 ```python
-import openpkpd
+import neopkpd
 
 # Every 3 weeks (21 days)
 cycle_length = 21 * 24  # hours
@@ -222,7 +222,7 @@ mtt_days = 5.0
 n_transit = 5
 ktr = (n_transit + 1) / (mtt_days * 24)
 
-result = openpkpd.simulate_pkpd_transit_compartment(
+result = neopkpd.simulate_pkpd_transit_compartment(
     cl=3.0, v=30.0,
     doses=doses,
     n_transit=n_transit, ktr=ktr,
@@ -253,14 +253,14 @@ for cycle in range(n_cycles):
 ## Thrombocytopenia Model
 
 ```python
-import openpkpd
+import neopkpd
 
 # Platelet dynamics: longer MTT than neutrophils (~8-10 days)
 mtt_days = 8.0
 n_transit = 5
 ktr = (n_transit + 1) / (mtt_days * 24)
 
-result = openpkpd.simulate_pkpd_transit_compartment(
+result = neopkpd.simulate_pkpd_transit_compartment(
     cl=3.0, v=30.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     n_transit=n_transit, ktr=ktr,
@@ -294,7 +294,7 @@ for i, e in enumerate(effect):
 ## Varying MTT with Fixed N
 
 ```python
-import openpkpd
+import neopkpd
 
 mtt_values = [12, 24, 48, 72, 120]  # hours
 n_transit = 5
@@ -305,7 +305,7 @@ print("-" * 40)
 for mtt in mtt_values:
     ktr = (n_transit + 1) / mtt
 
-    result = openpkpd.simulate_pkpd_transit_compartment(
+    result = neopkpd.simulate_pkpd_transit_compartment(
         cl=5.0, v=50.0,
         doses=[{"time": 0.0, "amount": 500.0}],
         n_transit=n_transit, ktr=ktr,
@@ -326,12 +326,12 @@ for mtt in mtt_values:
 ## Stimulation Model (G-CSF Effect)
 
 ```python
-import openpkpd
+import neopkpd
 
 # G-CSF stimulates neutrophil production
 # Positive Emax = stimulation
 
-result = openpkpd.simulate_pkpd_transit_compartment(
+result = neopkpd.simulate_pkpd_transit_compartment(
     cl=0.5, v=5.0,     # Typical G-CSF PK
     doses=[{"time": i * 24, "amount": 5.0} for i in range(7)],  # Daily dosing
     n_transit=5,

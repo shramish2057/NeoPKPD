@@ -1,5 +1,5 @@
 from pathlib import Path
-from openpkpd import init_julia, replay_artifact
+from neopkpd import init_julia, replay_artifact
 
 
 def test_replay_single_golden():

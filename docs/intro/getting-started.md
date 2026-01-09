@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide will help you install OpenPKPD and run your first simulation in under 10 minutes.
+This guide will help you install NeoPKPD and run your first simulation in under 10 minutes.
 
 ---
 
@@ -89,15 +89,15 @@ julia --version
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/openpkpd/openpkpd.git
-cd openpkpd
+git clone https://github.com/neopkpd/neopkpd.git
+cd neopkpd
 ```
 
 ### Install Julia Core
 
 ```bash
 # Activate and instantiate the Julia project
-julia --project=core/OpenPKPDCore -e 'using Pkg; Pkg.instantiate()'
+julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
 ```
 
 This installs all Julia dependencies including:
@@ -119,7 +119,7 @@ pip install -e ".[all]"
 ```
 
 This installs:
-- `openpkpd` - Core Python bindings
+- `neopkpd` - Core Python bindings
 - `matplotlib`, `plotly` - Visualization backends
 - `numpy`, `pandas` - Data manipulation
 - `juliacall` - Julia-Python bridge
@@ -129,9 +129,9 @@ This installs:
 === "Julia"
 
     ```julia
-    julia --project=core/OpenPKPDCore
+    julia --project=core/NeoPKPDCore
 
-    julia> using OpenPKPDCore
+    julia> using NeoPKPDCore
     julia> println(version())
     # 0.1.0
     ```
@@ -139,17 +139,17 @@ This installs:
 === "Python"
 
     ```python
-    import openpkpd
-    openpkpd.init_julia()
-    print(openpkpd.version())
+    import neopkpd
+    neopkpd.init_julia()
+    print(neopkpd.version())
     # 0.1.0
     ```
 
 === "CLI"
 
     ```bash
-    ./packages/cli/bin/openpkpd version
-    # OpenPKPD version 0.1.0
+    ./packages/cli/bin/neopkpd version
+    # NeoPKPD version 0.1.0
     ```
 
 ---
@@ -159,7 +159,7 @@ This installs:
 ### Julia: One-Compartment IV Bolus
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define model parameters
 # CL = 5 L/h, V = 50 L
@@ -194,13 +194,13 @@ Concentrations: [2.0, 1.81, 1.64, ..., 0.18]
 ### Python: One-Compartment IV Bolus
 
 ```python
-import openpkpd
+import neopkpd
 
 # Initialize Julia (required once per session)
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Run IV bolus simulation
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0,              # Clearance (L/h)
     v=50.0,              # Volume (L)
     doses=[{"time": 0.0, "amount": 100.0}],  # 100 mg at t=0
@@ -241,7 +241,7 @@ Create a spec file `simulation.json`:
 Run simulation:
 
 ```bash
-./packages/cli/bin/openpkpd simulate --spec simulation.json --out result.json
+./packages/cli/bin/neopkpd simulate --spec simulation.json --out result.json
 ```
 
 ---
@@ -251,12 +251,12 @@ Run simulation:
 ### Python: Population with IIV
 
 ```python
-import openpkpd
+import neopkpd
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Simulate 100 subjects with inter-individual variability
-result = openpkpd.simulate_population_iv_bolus(
+result = neopkpd.simulate_population_iv_bolus(
     cl=5.0,              # Typical CL
     v=50.0,              # Typical V
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -289,13 +289,13 @@ print(f"90% prediction interval: {max(summary['quantiles']['0.05']):.2f} - {max(
 ### Python: Concentration-Time Plot
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Run simulation
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -313,13 +313,13 @@ fig.savefig("concentration_time.png", dpi=300)
 ### Python: Population Spaghetti Plot
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 
 # Run population simulation
-pop_result = openpkpd.simulate_population_iv_bolus(
+pop_result = neopkpd.simulate_population_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -342,7 +342,7 @@ fig.savefig("population_ribbon.png", dpi=300)
 
 ## Next Steps
 
-Now that you have OpenPKPD running, explore these topics:
+Now that you have NeoPKPD running, explore these topics:
 
 ### Learn the Basics
 
@@ -433,7 +433,7 @@ export PATH="$PATH:/path/to/julia/bin"
 ### Python Package Import Error
 
 ```
-ModuleNotFoundError: No module named 'openpkpd'
+ModuleNotFoundError: No module named 'neopkpd'
 ```
 
 **Solution:** Ensure virtual environment is activated and package is installed:
@@ -461,5 +461,5 @@ For populations >1000 subjects, consider:
 
 - **Documentation**: You're reading it!
 - **Examples**: See `docs/examples/` for runnable code
-- **Issues**: [GitHub Issues](https://github.com/openpkpd/openpkpd/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/openpkpd/openpkpd/discussions)
+- **Issues**: [GitHub Issues](https://github.com/neopkpd/neopkpd/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/neopkpd/neopkpd/discussions)

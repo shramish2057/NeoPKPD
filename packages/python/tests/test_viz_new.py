@@ -370,7 +370,7 @@ class TestVPCVisualization:
 
     def test_plot_vpc_detailed(self):
         """Test detailed VPC plot."""
-        from openpkpd.viz.vpc import plot_vpc
+        from neopkpd.viz.vpc import plot_vpc
 
         vpc_result = create_mock_vpc_result()
         fig = plot_vpc(vpc_result, log_scale=False)
@@ -378,7 +378,7 @@ class TestVPCVisualization:
 
     def test_plot_vpc_log_scale(self):
         """Test VPC with log scale."""
-        from openpkpd.viz.vpc import plot_vpc
+        from neopkpd.viz.vpc import plot_vpc
 
         vpc_result = create_mock_vpc_result()
         fig = plot_vpc(vpc_result, log_scale=True)
@@ -386,7 +386,7 @@ class TestVPCVisualization:
 
     def test_plot_pcvpc(self):
         """Test prediction-corrected VPC plot."""
-        from openpkpd.viz.vpc import plot_pcvpc
+        from neopkpd.viz.vpc import plot_pcvpc
 
         vpc_result = create_mock_vpc_result()
         vpc_result.prediction_corrected = True
@@ -395,7 +395,7 @@ class TestVPCVisualization:
 
     def test_plot_vpc_ci(self):
         """Test VPC CI plot."""
-        from openpkpd.viz.vpc import plot_vpc_ci
+        from neopkpd.viz.vpc import plot_vpc_ci
 
         vpc_result = create_mock_vpc_result()
         fig = plot_vpc_ci(vpc_result)
@@ -403,7 +403,7 @@ class TestVPCVisualization:
 
     def test_plot_stratified_vpc(self):
         """Test stratified VPC plot."""
-        from openpkpd.viz.vpc import plot_stratified_vpc
+        from neopkpd.viz.vpc import plot_stratified_vpc
 
         stratified_result = create_mock_stratified_vpc()
         fig = plot_stratified_vpc(stratified_result)
@@ -411,7 +411,7 @@ class TestVPCVisualization:
 
     def test_plot_vpc_with_blq(self):
         """Test VPC with BLQ panel."""
-        from openpkpd.viz.vpc import plot_vpc_with_blq
+        from neopkpd.viz.vpc import plot_vpc_with_blq
 
         vpc_result = create_mock_vpc_with_blq()
         fig = plot_vpc_with_blq(vpc_result)
@@ -427,7 +427,7 @@ class TestEstimationVisualization:
 
     def test_plot_parameter_estimates(self):
         """Test parameter estimates forest plot."""
-        from openpkpd.viz.estimation import plot_parameter_estimates
+        from neopkpd.viz.estimation import plot_parameter_estimates
 
         result = create_mock_estimation_result()
         fig = plot_parameter_estimates(result)
@@ -435,7 +435,7 @@ class TestEstimationVisualization:
 
     def test_plot_parameter_estimates_with_omega(self):
         """Test parameter estimates with omega."""
-        from openpkpd.viz.estimation import plot_parameter_estimates
+        from neopkpd.viz.estimation import plot_parameter_estimates
 
         result = create_mock_estimation_result()
         fig = plot_parameter_estimates(result, include_omega=True)
@@ -443,7 +443,7 @@ class TestEstimationVisualization:
 
     def test_plot_omega_matrix(self):
         """Test omega matrix heatmap."""
-        from openpkpd.viz.estimation import plot_omega_matrix
+        from neopkpd.viz.estimation import plot_omega_matrix
 
         result = create_mock_estimation_result()
         fig = plot_omega_matrix(result, show_correlation=True)
@@ -451,7 +451,7 @@ class TestEstimationVisualization:
 
     def test_plot_omega_covariance(self):
         """Test omega covariance heatmap."""
-        from openpkpd.viz.estimation import plot_omega_matrix
+        from neopkpd.viz.estimation import plot_omega_matrix
 
         result = create_mock_estimation_result()
         fig = plot_omega_matrix(result, show_correlation=False)
@@ -459,7 +459,7 @@ class TestEstimationVisualization:
 
     def test_plot_convergence(self):
         """Test convergence plot."""
-        from openpkpd.viz.estimation import plot_convergence
+        from neopkpd.viz.estimation import plot_convergence
 
         result = create_mock_estimation_result()
         fig = plot_convergence(result)
@@ -467,7 +467,7 @@ class TestEstimationVisualization:
 
     def test_plot_shrinkage(self):
         """Test shrinkage bar chart."""
-        from openpkpd.viz.estimation import plot_shrinkage
+        from neopkpd.viz.estimation import plot_shrinkage
 
         result = create_mock_estimation_result()
         fig = plot_shrinkage(result)
@@ -475,7 +475,7 @@ class TestEstimationVisualization:
 
     def test_plot_shrinkage_threshold(self):
         """Test shrinkage with custom threshold."""
-        from openpkpd.viz.estimation import plot_shrinkage
+        from neopkpd.viz.estimation import plot_shrinkage
 
         result = create_mock_estimation_result()
         fig = plot_shrinkage(result, warning_threshold=25.0)
@@ -483,7 +483,7 @@ class TestEstimationVisualization:
 
     def test_plot_eta_distributions(self):
         """Test eta distribution histograms."""
-        from openpkpd.viz.estimation import plot_eta_distributions
+        from neopkpd.viz.estimation import plot_eta_distributions
 
         result = create_mock_estimation_result()
         fig = plot_eta_distributions(result)
@@ -491,7 +491,7 @@ class TestEstimationVisualization:
 
     def test_plot_individual_parameters(self):
         """Test individual parameter plot."""
-        from openpkpd.viz.estimation import plot_individual_parameters
+        from neopkpd.viz.estimation import plot_individual_parameters
 
         result = create_mock_estimation_result()
         fig = plot_individual_parameters(result)
@@ -499,7 +499,7 @@ class TestEstimationVisualization:
 
     def test_plot_ofv_comparison(self):
         """Test OFV comparison plot."""
-        from openpkpd.viz.estimation import plot_ofv_comparison
+        from neopkpd.viz.estimation import plot_ofv_comparison
 
         comparison = create_mock_model_comparison()
         fig = plot_ofv_comparison(comparison)
@@ -507,7 +507,7 @@ class TestEstimationVisualization:
 
     def test_plot_sigma_residuals(self):
         """Test sigma residuals plot."""
-        from openpkpd.viz.estimation import plot_sigma_residuals
+        from neopkpd.viz.estimation import plot_sigma_residuals
 
         result = create_mock_estimation_result()
         fig = plot_sigma_residuals(result)
@@ -523,7 +523,7 @@ class TestBootstrapVisualization:
 
     def test_plot_bootstrap_distributions(self):
         """Test bootstrap distribution histograms."""
-        from openpkpd.viz.bootstrap import plot_bootstrap_distributions
+        from neopkpd.viz.bootstrap import plot_bootstrap_distributions
 
         result = create_mock_bootstrap_result()
         fig = plot_bootstrap_distributions(result)
@@ -531,7 +531,7 @@ class TestBootstrapVisualization:
 
     def test_plot_bootstrap_distributions_with_ci(self):
         """Test bootstrap distributions with CI."""
-        from openpkpd.viz.bootstrap import plot_bootstrap_distributions
+        from neopkpd.viz.bootstrap import plot_bootstrap_distributions
 
         result = create_mock_bootstrap_result()
         fig = plot_bootstrap_distributions(result, show_ci=True, show_original=True)
@@ -539,7 +539,7 @@ class TestBootstrapVisualization:
 
     def test_plot_bootstrap_ci(self):
         """Test bootstrap CI comparison plot."""
-        from openpkpd.viz.bootstrap import plot_bootstrap_ci
+        from neopkpd.viz.bootstrap import plot_bootstrap_ci
 
         result = create_mock_bootstrap_result()
         fig = plot_bootstrap_ci(result)
@@ -547,7 +547,7 @@ class TestBootstrapVisualization:
 
     def test_plot_bootstrap_stability(self):
         """Test bootstrap stability plot."""
-        from openpkpd.viz.bootstrap import plot_bootstrap_stability
+        from neopkpd.viz.bootstrap import plot_bootstrap_stability
 
         result = create_mock_bootstrap_result()
         fig = plot_bootstrap_stability(result)
@@ -555,7 +555,7 @@ class TestBootstrapVisualization:
 
     def test_plot_bootstrap_correlation(self):
         """Test bootstrap correlation heatmap."""
-        from openpkpd.viz.bootstrap import plot_bootstrap_correlation
+        from neopkpd.viz.bootstrap import plot_bootstrap_correlation
 
         result = create_mock_bootstrap_result()
         fig = plot_bootstrap_correlation(result)
@@ -571,7 +571,7 @@ class TestSensitivityVisualization:
 
     def test_plot_tornado(self):
         """Test tornado diagram."""
-        from openpkpd.viz.sensitivity import plot_tornado
+        from neopkpd.viz.sensitivity import plot_tornado
 
         sensitivities = {
             "CL": (85.0, 115.0),
@@ -584,7 +584,7 @@ class TestSensitivityVisualization:
 
     def test_plot_tornado_sorted(self):
         """Test tornado with sorting."""
-        from openpkpd.viz.sensitivity import plot_tornado
+        from neopkpd.viz.sensitivity import plot_tornado
 
         sensitivities = {
             "CL": (85.0, 115.0),
@@ -596,7 +596,7 @@ class TestSensitivityVisualization:
 
     def test_plot_spider(self):
         """Test spider plot."""
-        from openpkpd.viz.sensitivity import plot_spider
+        from neopkpd.viz.sensitivity import plot_spider
 
         curves = {
             "CL": ([0.8, 0.9, 1.0, 1.1, 1.2], [125, 111, 100, 91, 83]),
@@ -608,7 +608,7 @@ class TestSensitivityVisualization:
 
     def test_plot_sensitivity_heatmap(self):
         """Test sensitivity heatmap."""
-        from openpkpd.viz.sensitivity import plot_sensitivity_heatmap
+        from neopkpd.viz.sensitivity import plot_sensitivity_heatmap
 
         matrix = np.array([
             [0.95, 0.85, 0.10],
@@ -624,7 +624,7 @@ class TestSensitivityVisualization:
 
     def test_plot_waterfall(self):
         """Test waterfall chart."""
-        from openpkpd.viz.sensitivity import plot_waterfall
+        from neopkpd.viz.sensitivity import plot_waterfall
 
         contributions = {"CL": -15.0, "V": 2.0, "Ka": -5.0, "F": 3.0}
         fig = plot_waterfall(contributions, baseline_value=100.0)
@@ -640,7 +640,7 @@ class TestModuleImports:
 
     def test_vpc_module_imports(self):
         """Test VPC module imports."""
-        from openpkpd.viz.vpc import (
+        from neopkpd.viz.vpc import (
             plot_vpc,
             plot_pcvpc,
             plot_stratified_vpc,
@@ -655,7 +655,7 @@ class TestModuleImports:
 
     def test_estimation_module_imports(self):
         """Test estimation module imports."""
-        from openpkpd.viz.estimation import (
+        from neopkpd.viz.estimation import (
             plot_parameter_estimates,
             plot_omega_matrix,
             plot_convergence,
@@ -672,7 +672,7 @@ class TestModuleImports:
 
     def test_bootstrap_module_imports(self):
         """Test bootstrap module imports."""
-        from openpkpd.viz.bootstrap import (
+        from neopkpd.viz.bootstrap import (
             plot_bootstrap_distributions,
             plot_bootstrap_ci,
             plot_bootstrap_stability,
@@ -683,7 +683,7 @@ class TestModuleImports:
 
     def test_sensitivity_module_imports(self):
         """Test sensitivity module imports."""
-        from openpkpd.viz.sensitivity import (
+        from neopkpd.viz.sensitivity import (
             plot_tornado,
             plot_spider,
             plot_sensitivity_heatmap,
@@ -694,7 +694,7 @@ class TestModuleImports:
 
     def test_main_viz_module_exports(self):
         """Test main viz module exports new functions."""
-        from openpkpd import viz
+        from neopkpd import viz
 
         # VPC functions
         assert hasattr(viz, 'plot_vpc_detailed')

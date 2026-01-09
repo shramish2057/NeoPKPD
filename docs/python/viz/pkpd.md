@@ -9,7 +9,7 @@ Pharmacokinetic-pharmacodynamic relationship visualization.
 PKPD plots visualize the relationship between drug concentration and effect.
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 fig = viz.plot_effect_conc(result, title="Concentration-Effect")
 ```
@@ -40,7 +40,7 @@ def plot_effect_conc(
 **Usage:**
 
 ```python
-result = openpkpd.simulate_pkpd_emax(
+result = neopkpd.simulate_pkpd_emax(
     cl=5.0, v=50.0,
     emax=100.0, ec50=5.0,
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -71,7 +71,7 @@ def plot_hysteresis(
 
 ```python
 # Effect compartment model with hysteresis
-result = openpkpd.simulate_pkpd_effect_compartment(
+result = neopkpd.simulate_pkpd_effect_compartment(
     cl=5.0, v=50.0, ke0=0.5,
     emax=100.0, ec50=5.0,
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -107,7 +107,7 @@ def plot_dose_response(
 doses = [10, 25, 50, 100, 200, 400]
 results = []
 for dose in doses:
-    r = openpkpd.simulate_pkpd_emax(
+    r = neopkpd.simulate_pkpd_emax(
         cl=5.0, v=50.0, emax=100.0, ec50=5.0,
         doses=[{"time": 0.0, "amount": float(dose)}],
         t0=0.0, t1=24.0, saveat=0.5
@@ -122,14 +122,14 @@ fig = viz.plot_dose_response(results, doses, title="Dose-Response")
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Emax model simulation
-result = openpkpd.simulate_pkpd_emax(
+result = neopkpd.simulate_pkpd_emax(
     cl=5.0, v=50.0,
     emax=100.0, ec50=5.0,
     e0=10.0,
@@ -146,7 +146,7 @@ fig = viz.plot_effect_conc(
 fig.savefig("effect_conc.png", dpi=300)
 
 # Effect compartment with hysteresis
-result_ec = openpkpd.simulate_pkpd_effect_compartment(
+result_ec = neopkpd.simulate_pkpd_effect_compartment(
     cl=5.0, v=50.0, ke0=0.3,
     emax=100.0, ec50=5.0, e0=10.0,
     doses=[{"time": 0.0, "amount": 100.0}],

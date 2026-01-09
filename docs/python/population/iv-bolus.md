@@ -9,7 +9,7 @@ Comprehensive guide for simulating IV bolus administration with inter-individual
 Population IV bolus simulation models the variability in clearance and volume across subjects following intravenous bolus administration.
 
 ```python
-from openpkpd import simulate_population_iv_bolus
+from neopkpd import simulate_population_iv_bolus
 
 result = simulate_population_iv_bolus(
     cl=5.0, v=50.0,
@@ -81,7 +81,7 @@ def simulate_population_iv_bolus(
 ### Single Dose
 
 ```python
-from openpkpd import simulate_population_iv_bolus
+from neopkpd import simulate_population_iv_bolus
 
 # Simulate 100 subjects
 result = simulate_population_iv_bolus(
@@ -232,7 +232,7 @@ plt.show()
 ## Two-Compartment IV Bolus
 
 ```python
-from openpkpd import simulate_population_twocomp_iv
+from neopkpd import simulate_population_twocomp_iv
 
 # Two-compartment model with IIV
 result = simulate_population_twocomp_iv(
@@ -307,7 +307,7 @@ print(f"AUC: {np.mean(auc_vals):.1f} ± {np.std(auc_vals):.1f} mg·hr/L")
 ## Complete Example
 
 ```python
-from openpkpd import simulate_population_iv_bolus
+from neopkpd import simulate_population_iv_bolus
 import numpy as np
 import matplotlib.pyplot as plt
 

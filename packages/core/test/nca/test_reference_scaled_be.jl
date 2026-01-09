@@ -2,7 +2,7 @@
 # Validates FDA RSABE and EMA ABEL implementations
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 
 @testset "Reference-Scaled Bioequivalence" begin

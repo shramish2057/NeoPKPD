@@ -1,7 +1,7 @@
 # Test suite for Visual Predictive Check (VPC)
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using StableRNGs
 
 @testset "VPC" begin
@@ -407,7 +407,7 @@ using StableRNGs
 
     @testset "VPC Stratification" begin
         # Test stratified VPC result type
-        @test isdefined(OpenPKPDCore, :StratifiedVPCResult)
+        @test isdefined(NeoPKPDCore, :StratifiedVPCResult)
 
         # Create basic VPC config
         config = VPCConfig(
@@ -424,10 +424,10 @@ using StableRNGs
 
     @testset "BLQ Methods" begin
         # Test BLQ method enum exists
-        @test isdefined(OpenPKPDCore, :BLQMethod)
-        @test isdefined(OpenPKPDCore, :M1)
-        @test isdefined(OpenPKPDCore, :M4)
-        @test isdefined(OpenPKPDCore, :M7)
+        @test isdefined(NeoPKPDCore, :BLQMethod)
+        @test isdefined(NeoPKPDCore, :M1)
+        @test isdefined(NeoPKPDCore, :M4)
+        @test isdefined(NeoPKPDCore, :M7)
 
         # Test handle_blq function with different methods
         values = [0.5, 1.0, 2.0, 0.3, 5.0, 0.2]
@@ -456,7 +456,7 @@ using StableRNGs
     end
 
     @testset "BLQ Bin Stats" begin
-        @test isdefined(OpenPKPDCore, :BLQBinStats)
+        @test isdefined(NeoPKPDCore, :BLQBinStats)
 
         # Test computing BLQ stats
         # Values below LLOQ: 0.1, 0.3 (2 out of 4)

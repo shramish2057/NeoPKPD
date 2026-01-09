@@ -7,7 +7,7 @@ Three-compartment mammillary model with central, shallow peripheral, and deep pe
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_threecomp_iv_bolus(
+neopkpd.simulate_pk_threecomp_iv_bolus(
     cl: float,
     v1: float,
     q2: float,
@@ -78,9 +78,9 @@ The concentration-time profile shows tri-exponential decay:
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_threecomp_iv_bolus(
+result = neopkpd.simulate_pk_threecomp_iv_bolus(
     cl=5.0,       # Clearance (L/h)
     v1=10.0,      # Central volume (L)
     q2=20.0,      # Rapid distribution clearance (L/h)
@@ -108,10 +108,10 @@ print(f"C at 168h: {conc[-1]:.4f} mg/L (gamma phase)")
 ## Clinical Example: Propofol
 
 ```python
-import openpkpd
+import neopkpd
 
 # Propofol typical parameters (per-minute converted to per-hour)
-result = openpkpd.simulate_pk_threecomp_iv_bolus(
+result = neopkpd.simulate_pk_threecomp_iv_bolus(
     cl=1.6 * 60,      # 96 L/h
     v1=4.3,           # L (central - blood)
     q2=2.3 * 60,      # 138 L/h (rapid - muscle)
@@ -139,9 +139,9 @@ print(f"Time to 50% of C0: {t[idx_50]:.2f} h ({t[idx_50]*60:.1f} min)")
 ## Drug Distribution Over Time
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_threecomp_iv_bolus(
+result = neopkpd.simulate_pk_threecomp_iv_bolus(
     cl=5.0, v1=10.0, q2=20.0, v2=30.0, q3=5.0, v3=100.0,
     doses=[{"time": 0.0, "amount": 1000.0}],
     t0=0.0, t1=168.0,
@@ -202,7 +202,7 @@ print(f"MRT: {mrt:.1f} h")
 
 ```python
 # Continuous infusion to steady state
-result = openpkpd.simulate_pk_threecomp_iv_bolus(
+result = neopkpd.simulate_pk_threecomp_iv_bolus(
     cl=5.0, v1=10.0, q2=20.0, v2=30.0, q3=5.0, v3=100.0,
     doses=[{"time": 0.0, "amount": 480.0, "duration": 24.0}],  # 20 mg/h
     t0=0.0, t1=72.0,
@@ -223,7 +223,7 @@ print(f"Simulated C at 24h: {result['observations']['conc'][48]:.2f} mg/L")
 # 1000 mg every 24 hours for 7 days
 doses = [{"time": i * 24.0, "amount": 1000.0} for i in range(7)]
 
-result = openpkpd.simulate_pk_threecomp_iv_bolus(
+result = neopkpd.simulate_pk_threecomp_iv_bolus(
     cl=5.0, v1=10.0, q2=20.0, v2=30.0, q3=5.0, v3=100.0,
     doses=doses,
     t0=0.0, t1=168.0,
@@ -248,10 +248,10 @@ print(f"Accumulation ratio: {last_trough/first_trough:.2f}")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pk_profile
+import neopkpd
+from neopkpd.viz import plot_pk_profile
 
-result = openpkpd.simulate_pk_threecomp_iv_bolus(
+result = neopkpd.simulate_pk_threecomp_iv_bolus(
     cl=5.0, v1=10.0, q2=20.0, v2=30.0, q3=5.0, v3=100.0,
     doses=[{"time": 0.0, "amount": 1000.0}],
     t0=0.0, t1=168.0,

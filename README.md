@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">OpenPKPD</h1>
+  <h1 align="center">NeoPKPD</h1>
   <p align="center">
     <strong>Transparent, validated pharmacokinetics and pharmacodynamics modeling infrastructure</strong>
   </p>
@@ -21,7 +21,7 @@
 
 ## Overview
 
-**OpenPKPD** is a reference-grade PK/PD simulation platform designed for research, method development, and reproducible scientific computation. It emphasizes deterministic execution, transparent numerical semantics, and complete artifact serialization.
+**NeoPKPD** is a reference-grade PK/PD simulation platform designed for research, method development, and reproducible scientific computation. It emphasizes deterministic execution, transparent numerical semantics, and complete artifact serialization.
 
 ## Features
 
@@ -48,14 +48,14 @@
 ### Julia (Core)
 
 ```bash
-git clone https://github.com/openpkpd/openpkpd.git
-cd openpkpd
+git clone https://github.com/neopkpd/neopkpd.git
+cd neopkpd
 
 # Install dependencies
 julia --project=packages/core -e 'using Pkg; Pkg.instantiate()'
 
 # Verify installation
-julia --project=packages/core -e 'using OpenPKPDCore; println("v", OPENPKPD_VERSION)'
+julia --project=packages/core -e 'using NeoPKPDCore; println("v", NEOPKPD_VERSION)'
 ```
 
 ### Python (Optional)
@@ -70,7 +70,7 @@ pip install -e .
 ### CLI
 
 ```bash
-./packages/cli/bin/openpkpd version
+./packages/cli/bin/neopkpd version
 ```
 
 ## Quick Start
@@ -78,7 +78,7 @@ pip install -e .
 ### Julia
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define model
 spec = ModelSpec(
@@ -100,10 +100,10 @@ println(result.observations[:conc])
 ### Python
 
 ```python
-import openpkpd
+import neopkpd
 
-openpkpd.init_julia()
-result = openpkpd.simulate_pk_iv_bolus(
+neopkpd.init_julia()
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -116,36 +116,36 @@ print(result["observations"]["conc"])
 
 ```bash
 # Check version
-./packages/cli/bin/openpkpd version
+./packages/cli/bin/neopkpd version
 
 # Run simulation from JSON spec
-./packages/cli/bin/openpkpd simulate --spec simulation.json --out result.json
+./packages/cli/bin/neopkpd simulate --spec simulation.json --out result.json
 
 # Run NCA analysis
-./packages/cli/bin/openpkpd nca --spec nca_spec.json --out nca_result.json
+./packages/cli/bin/neopkpd nca --spec nca_spec.json --out nca_result.json
 
 # Run clinical trial simulation
-./packages/cli/bin/openpkpd trial --spec trial_spec.json --out trial_result.json
+./packages/cli/bin/neopkpd trial --spec trial_spec.json --out trial_result.json
 
 # Compute VPC
-./packages/cli/bin/openpkpd vpc --spec vpc_spec.json --out vpc_result.json
+./packages/cli/bin/neopkpd vpc --spec vpc_spec.json --out vpc_result.json
 
 # Import NONMEM model
-./packages/cli/bin/openpkpd import --input model.ctl --format nonmem --out model.json
+./packages/cli/bin/neopkpd import --input model.ctl --format nonmem --out model.json
 
 # Replay an artifact
-./packages/cli/bin/openpkpd replay --artifact validation/golden/pk_iv_bolus.json
+./packages/cli/bin/neopkpd replay --artifact validation/golden/pk_iv_bolus.json
 
 # Validate all golden artifacts
-./packages/cli/bin/openpkpd validate-golden
+./packages/cli/bin/neopkpd validate-golden
 ```
 
 ## Repository Structure
 
 ```
-openpkpd/
+neopkpd/
 ├── packages/
-│   ├── core/                 # Julia simulation engine (OpenPKPDCore)
+│   ├── core/                 # Julia simulation engine (NeoPKPDCore)
 │   │   ├── src/
 │   │   │   ├── models/       # PK/PD model definitions
 │   │   │   ├── engine/       # ODE solving, population, infusion
@@ -156,8 +156,8 @@ openpkpd/
 │   │   │   ├── analysis/     # VPC, NCA, sensitivity
 │   │   │   └── serialization/# JSON artifact I/O
 │   │   └── test/             # Comprehensive test suite
-│   ├── python/               # Python bindings (openpkpd)
-│   │   └── openpkpd/
+│   ├── python/               # Python bindings (neopkpd)
+│   │   └── neopkpd/
 │   │       ├── simulations/  # PK/PD simulation wrappers
 │   │       ├── nca/          # Non-compartmental analysis
 │   │       ├── trial/        # Clinical trial simulation
@@ -165,7 +165,7 @@ openpkpd/
 │   │       ├── import_/      # Model import utilities
 │   │       ├── data/         # CDISC data utilities
 │   │       └── viz/          # Visualization (matplotlib/plotly)
-│   └── cli/                  # Command-line interface (OpenPKPDCLI)
+│   └── cli/                  # Command-line interface (NeoPKPDCLI)
 │       ├── src/              # CLI commands
 │       └── bin/              # Entry point script
 ├── validation/               # Golden artifacts & validation
@@ -184,7 +184,7 @@ openpkpd/
 julia --project=packages/core -e 'using Pkg; Pkg.test()'
 
 # Golden artifact validation
-./packages/cli/bin/openpkpd validate-golden
+./packages/cli/bin/neopkpd validate-golden
 
 # Python tests
 cd packages/python && source .venv/bin/activate && pytest tests/
@@ -195,7 +195,7 @@ mkdocs build --strict
 
 ## Semantic Versioning
 
-OpenPKPD uses independent version numbers for numerical behavior:
+NeoPKPD uses independent version numbers for numerical behavior:
 
 | Version | Current | Scope |
 |---------|---------|-------|
@@ -207,7 +207,7 @@ Any change to numerical output requires a version bump.
 
 ## Documentation
 
-Full documentation: [shramish2057.github.io/OpenPKPD](https://shramish2057.github.io/OpenPKPD/)
+Full documentation: [shramish2057.github.io/NeoPKPD](https://shramish2057.github.io/NeoPKPD/)
 
 | Guide | Description |
 |-------|-------------|
@@ -240,9 +240,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Citation
 
 ```bibtex
-@software{openpkpd,
-  title = {OpenPKPD: Transparent PK/PD Modeling Infrastructure},
-  url = {https://github.com/openpkpd/openpkpd},
+@software{neopkpd,
+  title = {NeoPKPD: Transparent PK/PD Modeling Infrastructure},
+  url = {https://github.com/neopkpd/neopkpd},
   version = {0.1.0}
 }
 ```

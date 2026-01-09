@@ -112,7 +112,7 @@ end
 ### Basic Simulation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # PK Model: One-compartment IV bolus
 pk_params = OneCompIVBolusParams(5.0, 20.0)  # CL, V
@@ -148,7 +148,7 @@ println("Delay due to effect compartment: $(round(t[idx], digits=2)) h")
 ## Effect of ke0 on Response
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Same PK for all
 pk_params = OneCompIVBolusParams(5.0, 20.0)
@@ -187,7 +187,7 @@ end
 ## Clinical Example: Propofol Anesthesia
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Propofol three-compartment PK (simplified to 2-comp)
 # Parameters in per-minute
@@ -233,7 +233,7 @@ end
 ## Comparing Direct vs Effect Compartment
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # PK: One-compartment oral
 pk_params = OneCompOralFirstOrderParams(2.0, 5.0, 30.0)

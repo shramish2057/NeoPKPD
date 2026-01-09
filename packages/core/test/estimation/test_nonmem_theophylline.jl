@@ -1,7 +1,7 @@
 # NONMEM Theophylline Validation Test
 #
 # The Theophylline dataset is the standard NONMEM benchmark for validating
-# FOCE-I implementations. This test compares OpenPKPD's FOCE-I against
+# FOCE-I implementations. This test compares NeoPKPD's FOCE-I against
 # published NONMEM results.
 #
 # Reference: NONMEM 7.4 User Guide, Example 1
@@ -19,7 +19,7 @@
 #   Sigma (prop) ≈ 0.01-0.02 (≈10-14% CV)
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 using LinearAlgebra
 using Statistics
 using StableRNGs

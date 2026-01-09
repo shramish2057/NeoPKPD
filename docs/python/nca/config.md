@@ -7,7 +7,7 @@ Complete documentation for `NCAConfig` options controlling NCA calculations.
 ## Overview
 
 ```python
-from openpkpd.nca import NCAConfig, run_nca
+from neopkpd.nca import NCAConfig, run_nca
 
 config = NCAConfig(
     method="lin_log_mixed",
@@ -25,7 +25,7 @@ result = run_nca(times, conc, dose, config=config)
 ### Complete Parameter List
 
 ```python
-from openpkpd.nca import NCAConfig
+from neopkpd.nca import NCAConfig
 
 config = NCAConfig(
     # AUC Calculation Method
@@ -232,7 +232,7 @@ config = strict_config()
 ## Example: Custom Configuration
 
 ```python
-from openpkpd.nca import run_nca, NCAConfig
+from neopkpd.nca import run_nca, NCAConfig
 
 # Bioanalytical assay has LLOQ of 0.1 mg/L
 # Study has sparse terminal sampling
@@ -320,7 +320,7 @@ config = NCAConfig(
 ## Validating Configuration
 
 ```python
-from openpkpd.nca import NCAConfig
+from neopkpd.nca import NCAConfig
 
 config = NCAConfig(
     lambda_z_min_points=3,

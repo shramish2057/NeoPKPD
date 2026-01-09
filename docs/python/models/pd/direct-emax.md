@@ -7,7 +7,7 @@ Simple hyperbolic concentration-effect relationship where effect is directly pro
 ## Function Signature
 
 ```python
-openpkpd.simulate_pkpd_direct_emax(
+neopkpd.simulate_pkpd_direct_emax(
     cl: float,
     v: float,
     doses: list[dict],
@@ -75,9 +75,9 @@ $$E(C) = E_0 + \frac{E_{max} \cdot C}{EC_{50} + C}$$
 ### IV Bolus with Direct Effect
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -101,7 +101,7 @@ print(f"Effect at 24h: {effect[-1]:.1f}")         # Near baseline
 ### Oral Administration
 
 ```python
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -129,12 +129,12 @@ print(f"Time of max effect: {t[max_effect_idx]:.2f} h")
 ## Multiple Dosing
 
 ```python
-import openpkpd
+import neopkpd
 
 # 500 mg every 8 hours
 doses = [{"time": i * 8.0, "amount": 500.0} for i in range(6)]
 
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=doses,
     e0=100.0,      # Baseline blood pressure
@@ -159,7 +159,7 @@ print(f"Min effect: {max(effect):.1f}")   # Trough effect
 
 ```python
 # Drug reduces blood pressure
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     e0=140.0,      # Baseline BP
@@ -176,7 +176,7 @@ result = openpkpd.simulate_pkpd_direct_emax(
 
 ```python
 # Drug increases enzyme activity
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     e0=100.0,      # Baseline activity
@@ -194,10 +194,10 @@ result = openpkpd.simulate_pkpd_direct_emax(
 ## Potency vs Efficacy
 
 ```python
-import openpkpd
+import neopkpd
 
 # Drug A: High potency, moderate efficacy
-result_a = openpkpd.simulate_pkpd_direct_emax(
+result_a = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     e0=0.0, emax=80.0, ec50=0.5,
@@ -206,7 +206,7 @@ result_a = openpkpd.simulate_pkpd_direct_emax(
 )
 
 # Drug B: Low potency, high efficacy
-result_b = openpkpd.simulate_pkpd_direct_emax(
+result_b = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     e0=0.0, emax=100.0, ec50=5.0,
@@ -226,10 +226,10 @@ print(f"Drug B max effect: {max(result_b['observations']['effect']):.1f}")
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pkpd_profile
+import neopkpd
+from neopkpd.viz import plot_pkpd_profile
 
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     e0=80.0, emax=-30.0, ec50=2.0,
@@ -252,10 +252,10 @@ fig = plot_pkpd_profile(
 ## Concentration-Effect Relationship
 
 ```python
-import openpkpd
+import neopkpd
 import numpy as np
 
-result = openpkpd.simulate_pkpd_direct_emax(
+result = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     e0=0.0, emax=100.0, ec50=5.0,

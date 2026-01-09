@@ -6,15 +6,15 @@ This example demonstrates how to run a simple one-compartment
 IV bolus PK simulation and compute exposure metrics.
 """
 
-import openpkpd
+import neopkpd
 
 # Initialize Julia (required once per session)
-openpkpd.init_julia()
+neopkpd.init_julia()
 
-print("OpenPKPD version:", openpkpd.version())
+print("NeoPKPD version:", neopkpd.version())
 
 # Run a simple IV bolus simulation
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=1.0,
     v=10.0,
     doses=[{"time": 0.0, "amount": 100.0}],
@@ -30,9 +30,9 @@ print(f"Observations: {list(result['observations'].keys())}")
 
 # Compute metrics
 print("\nPK Metrics:")
-print(f"  Cmax: {openpkpd.cmax(result):.4f}")
-print(f"  AUC: {openpkpd.auc_trapezoid(result):.4f}")
-print(f"  Half-life: {openpkpd.half_life(1.0, 10.0):.4f} hours")
+print(f"  Cmax: {neopkpd.cmax(result):.4f}")
+print(f"  AUC: {neopkpd.auc_trapezoid(result):.4f}")
+print(f"  Half-life: {neopkpd.half_life(1.0, 10.0):.4f} hours")
 
 # Show concentration profile
 print("\nConcentration profile:")

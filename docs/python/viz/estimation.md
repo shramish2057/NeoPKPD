@@ -9,7 +9,7 @@ Parameter estimation diagnostic visualization.
 Estimation diagnostics help assess model fit quality and parameter uncertainty.
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 fig = viz.plot_convergence(est_result, title="FOCE Convergence")
 ```
@@ -178,14 +178,14 @@ def plot_sigma_residuals(
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Run estimation (example)
-est_result = openpkpd.estimate_foce(
+est_result = neopkpd.estimate_foce(
     observed_data=data,
     model_spec=model,
     initial_params=init_params

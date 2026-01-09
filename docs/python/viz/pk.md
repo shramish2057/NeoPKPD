@@ -9,7 +9,7 @@ Concentration-time profile visualization functions.
 PK plots display drug concentration over time, the fundamental visualization in pharmacokinetics.
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Basic concentration-time plot
 fig = viz.plot_conc_time(result, title="PK Profile")
@@ -42,7 +42,7 @@ def plot_conc_time(
 **Usage:**
 
 ```python
-result = openpkpd.simulate_pk_oral(
+result = neopkpd.simulate_pk_oral(
     ka=1.5, cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0, saveat=0.5
@@ -81,7 +81,7 @@ def plot_multi_conc_time(
 results = []
 labels = []
 for dose in [50, 100, 200]:
-    r = openpkpd.simulate_pk_oral(
+    r = neopkpd.simulate_pk_oral(
         ka=1.5, cl=5.0, v=50.0,
         doses=[{"time": 0.0, "amount": float(dose)}],
         t0=0.0, t1=24.0, saveat=0.5
@@ -113,7 +113,7 @@ def plot_spaghetti(
 **Usage:**
 
 ```python
-pop_result = openpkpd.simulate_population_oral(
+pop_result = neopkpd.simulate_population_oral(
     ka=1.5, cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0, saveat=0.5,
@@ -193,14 +193,14 @@ fig = viz.plot_individual_fits(pop_result, observed=observed_data)
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Single simulation
-result = openpkpd.simulate_pk_oral(
+result = neopkpd.simulate_pk_oral(
     ka=1.5, cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0, saveat=0.5
@@ -211,7 +211,7 @@ fig = viz.plot_conc_time(result, title="One-Compartment Oral PK")
 fig.savefig("pk_single.png", dpi=300)
 
 # Population simulation
-pop_result = openpkpd.simulate_population_oral(
+pop_result = neopkpd.simulate_population_oral(
     ka=1.5, cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0, saveat=0.5,

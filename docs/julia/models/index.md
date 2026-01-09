@@ -1,6 +1,6 @@
 # Models Reference
 
-OpenPKPD provides a comprehensive library of validated pharmacokinetic (PK) and pharmacodynamic (PD) models for drug concentration and effect simulation.
+NeoPKPD provides a comprehensive library of validated pharmacokinetic (PK) and pharmacodynamic (PD) models for drug concentration and effect simulation.
 
 ---
 
@@ -170,7 +170,7 @@ end
 
 ### Creating Custom Models
 
-See the source code in `core/OpenPKPDCore/src/models/` for examples of extending OpenPKPD with custom models.
+See the source code in `core/NeoPKPDCore/src/models/` for examples of extending NeoPKPD with custom models.
 
 ---
 

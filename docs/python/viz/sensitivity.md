@@ -9,7 +9,7 @@ Sensitivity analysis visualization functions.
 Sensitivity plots visualize how model outputs change with parameter variations.
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 fig = viz.plot_tornado(sensitivity_results, title="Parameter Sensitivity")
 ```
@@ -182,15 +182,15 @@ fig = viz.plot_one_at_a_time(ofat_results, baseline_value=100)
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 import numpy as np
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Run sensitivity analysis
-sensitivity = openpkpd.run_sensitivity(
+sensitivity = neopkpd.run_sensitivity(
     model_spec=model,
     parameters=["CL", "V", "Ka"],
     ranges={"CL": (0.5, 1.5), "V": (0.5, 1.5), "Ka": (0.5, 1.5)},

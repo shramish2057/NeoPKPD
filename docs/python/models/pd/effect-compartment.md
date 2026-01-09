@@ -7,7 +7,7 @@ Hypothetical effect site compartment to model temporal delays between plasma con
 ## Function Signature
 
 ```python
-openpkpd.simulate_pkpd_biophase_equilibration(
+neopkpd.simulate_pkpd_biophase_equilibration(
     cl: float,
     v: float,
     doses: list[dict],
@@ -62,9 +62,9 @@ $$E(C_e) = E_0 + \frac{E_{max} \cdot C_e}{EC_{50} + C_e}$$
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pkpd_biophase_equilibration(
+result = neopkpd.simulate_pkpd_biophase_equilibration(
     cl=5.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -95,7 +95,7 @@ print(f"Effect delay: {t[effect_max_idx] - t[conc_max_idx]:.1f} h")
 ## Effect of ke0 on Response
 
 ```python
-import openpkpd
+import neopkpd
 
 ke0_values = [0.2, 0.5, 1.0, 2.0, 5.0]
 
@@ -103,7 +103,7 @@ print("ke0 (1/h) | t1/2,ke0 (h) | Tmax effect (h)")
 print("-" * 50)
 
 for ke0 in ke0_values:
-    result = openpkpd.simulate_pkpd_biophase_equilibration(
+    result = neopkpd.simulate_pkpd_biophase_equilibration(
         cl=5.0, v=50.0,
         doses=[{"time": 0.0, "amount": 500.0}],
         ke0=ke0, e0=0.0, emax=100.0, ec50=5.0,
@@ -128,10 +128,10 @@ for ke0 in ke0_values:
 ## Counter-Clockwise Hysteresis
 
 ```python
-import openpkpd
+import neopkpd
 import numpy as np
 
-result = openpkpd.simulate_pkpd_biophase_equilibration(
+result = neopkpd.simulate_pkpd_biophase_equilibration(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     ke0=0.3, e0=0.0, emax=100.0, ec50=5.0,
@@ -154,10 +154,10 @@ print("Counter-clockwise loop indicates effect site delay")
 ## Clinical Example: Propofol Anesthesia
 
 ```python
-import openpkpd
+import neopkpd
 
 # Propofol effect compartment
-result = openpkpd.simulate_pkpd_biophase_equilibration(
+result = neopkpd.simulate_pkpd_biophase_equilibration(
     cl=100.0,      # Fast clearance (L/h)
     v=20.0,        # Small central volume (L)
     doses=[{"time": 0.0, "amount": 200.0}],
@@ -184,9 +184,9 @@ if loc_idx:
 ## Oral Administration with Effect Delay
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pkpd_biophase_equilibration(
+result = neopkpd.simulate_pkpd_biophase_equilibration(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     ke0=0.5, e0=0.0, emax=100.0, ec50=5.0,
@@ -213,10 +213,10 @@ print(f"Tmax (effect): {emax_t:.2f} h")
 ## Comparing Direct vs Effect Compartment
 
 ```python
-import openpkpd
+import neopkpd
 
 # Direct Emax (no delay)
-result_direct = openpkpd.simulate_pkpd_direct_emax(
+result_direct = neopkpd.simulate_pkpd_direct_emax(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     e0=0.0, emax=100.0, ec50=5.0,
@@ -225,7 +225,7 @@ result_direct = openpkpd.simulate_pkpd_direct_emax(
 )
 
 # Effect compartment (with delay)
-result_biophase = openpkpd.simulate_pkpd_biophase_equilibration(
+result_biophase = neopkpd.simulate_pkpd_biophase_equilibration(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     ke0=0.3, e0=0.0, emax=100.0, ec50=5.0,
@@ -278,10 +278,10 @@ recommend_model(ke0=0.2, cl=5.0, v=50.0)   # Slow ke0
 ## Visualization
 
 ```python
-import openpkpd
-from openpkpd.viz import plot_pkpd_profile
+import neopkpd
+from neopkpd.viz import plot_pkpd_profile
 
-result = openpkpd.simulate_pkpd_biophase_equilibration(
+result = neopkpd.simulate_pkpd_biophase_equilibration(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     ke0=0.5, e0=0.0, emax=100.0, ec50=5.0,

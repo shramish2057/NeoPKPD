@@ -100,7 +100,7 @@ F1 = THETA(6)
 ALAG2 = THETA(7)
 F2 = 1.0
 
-; Equivalent in OpenPKPD:
+; Equivalent in NeoPKPD:
 CompartmentDoseModifiers(Dict(
     1 => DoseModifiers(alag=theta5, bioavailability=theta6),
     2 => DoseModifiers(alag=theta7, bioavailability=1.0)

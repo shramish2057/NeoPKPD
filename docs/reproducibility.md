@@ -1,6 +1,6 @@
 # Reproducibility
 
-OpenPKPD is designed for **complete reproducibility** of simulation results across time, platforms, and versions.
+NeoPKPD is designed for **complete reproducibility** of simulation results across time, platforms, and versions.
 
 ## Core Principles
 
@@ -31,7 +31,7 @@ Every simulation can be serialized to a JSON artifact containing everything need
 **Julia**:
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 spec = ModelSpec(...)
 grid = SimGrid(...)
@@ -50,9 +50,9 @@ write_execution_json(
 **Python**:
 
 ```python
-import openpkpd
+import neopkpd
 
-openpkpd.write_single_artifact(
+neopkpd.write_single_artifact(
     "my_simulation.json",
     model={...},
     grid={...},
@@ -97,23 +97,23 @@ result = replay_population_sensitivity_execution(artifact)
 ### Python Replay
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.replay_artifact("simulation.json")
+result = neopkpd.replay_artifact("simulation.json")
 ```
 
 ### CLI Replay
 
 ```bash
-./bin/openpkpd replay --artifact simulation.json
-./bin/openpkpd replay --artifact simulation.json --out replayed.json
+./bin/neopkpd replay --artifact simulation.json
+./bin/neopkpd replay --artifact simulation.json --out replayed.json
 ```
 
 ---
 
 ## Golden Artifacts
 
-Golden artifacts are the **regression contract** for OpenPKPD.
+Golden artifacts are the **regression contract** for NeoPKPD.
 
 ### Location
 
@@ -148,7 +148,7 @@ julia validation/scripts/generate_golden_artifacts.jl
 
 ```bash
 # CLI validation
-./bin/openpkpd validate-golden
+./bin/neopkpd validate-golden
 
 # Script validation
 julia validation/scripts/run_golden_validation.jl
@@ -246,15 +246,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          julia --project=core/OpenPKPDCore -e 'using Pkg; Pkg.instantiate()'
+          julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
 
       - name: Run tests
         run: |
-          julia --project=core/OpenPKPDCore -e 'using Pkg; Pkg.test()'
+          julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.test()'
 
       - name: Validate golden artifacts
         run: |
-          ./bin/openpkpd validate-golden
+          ./bin/neopkpd validate-golden
 ```
 
 ### Pre-Commit Hook
@@ -264,7 +264,7 @@ jobs:
 # .git/hooks/pre-commit
 
 # Validate golden artifacts before commit
-./bin/openpkpd validate-golden
+./bin/neopkpd validate-golden
 if [ $? -ne 0 ]; then
     echo "Golden validation failed. Commit aborted."
     exit 1
@@ -313,7 +313,7 @@ fi
 
 **Solutions**:
 
-- Use same OpenPKPD version
+- Use same NeoPKPD version
 - Match solver settings exactly
 - Report platform-specific issues
 
@@ -385,7 +385,7 @@ When numerical behavior changes:
 ## Example: Complete Reproducibility Workflow
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # 1. Define simulation (all parameters explicit)
 spec = ModelSpec(

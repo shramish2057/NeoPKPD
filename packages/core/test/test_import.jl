@@ -1,7 +1,7 @@
 # Test suite for NONMEM and Monolix Import
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 
 @testset "NONMEM Import" begin
 
@@ -109,7 +109,7 @@ $SIGMA 0.01
         ctl = parse_nonmem_control(ctl_text)
         doses = [DoseEvent(0.0, 100.0)]
 
-        result = convert_nonmem_to_openpkpd(ctl; doses=doses)
+        result = convert_nonmem_to_neopkpd(ctl; doses=doses)
 
         @test isempty(result.errors)
         @test result.model_spec !== nothing
@@ -135,7 +135,7 @@ $SIGMA 0.01
         ctl = parse_nonmem_control(ctl_text)
         doses = [DoseEvent(0.0, 100.0)]
 
-        result = convert_nonmem_to_openpkpd(ctl; doses=doses)
+        result = convert_nonmem_to_neopkpd(ctl; doses=doses)
 
         @test isempty(result.errors)
         @test result.model_spec !== nothing
@@ -161,7 +161,7 @@ $SIGMA 0.01 0.02
         ctl = parse_nonmem_control(ctl_text)
         doses = [DoseEvent(0.0, 100.0)]
 
-        result = convert_nonmem_to_openpkpd(ctl; doses=doses)
+        result = convert_nonmem_to_neopkpd(ctl; doses=doses)
 
         @test isempty(result.errors)
         @test result.model_spec !== nothing
@@ -180,7 +180,7 @@ $THETA (10)
 """
 
         ctl = parse_nonmem_control(ctl_text)
-        result = convert_nonmem_to_openpkpd(ctl)
+        result = convert_nonmem_to_neopkpd(ctl)
 
         @test !isempty(result.errors)
         @test result.model_spec === nothing
@@ -193,7 +193,7 @@ $THETA (10)
 """
 
         ctl = parse_nonmem_control(ctl_text)
-        result = convert_nonmem_to_openpkpd(ctl)
+        result = convert_nonmem_to_neopkpd(ctl)
 
         @test !isempty(result.errors)
         @test any(contains(e, "SUBROUTINES") for e in result.errors)
@@ -303,7 +303,7 @@ y1 = {type=continuous, error=proportional}
         mlx = parse_monolix_project(mlx_text)
         doses = [DoseEvent(0.0, 100.0)]
 
-        result = convert_monolix_to_openpkpd(mlx; doses=doses)
+        result = convert_monolix_to_neopkpd(mlx; doses=doses)
 
         @test isempty(result.errors)
         @test result.model_spec !== nothing
@@ -327,7 +327,7 @@ V2 = 60.0
         mlx = parse_monolix_project(mlx_text)
         doses = [DoseEvent(0.0, 100.0)]
 
-        result = convert_monolix_to_openpkpd(mlx; doses=doses)
+        result = convert_monolix_to_neopkpd(mlx; doses=doses)
 
         @test isempty(result.errors)
         @test result.model_spec !== nothing
@@ -427,7 +427,7 @@ conditionalModes(linearization = true)
 
             # Test conversion
             doses = [DoseEvent(0.0, 100.0)]
-            result = convert_monolix_to_openpkpd(mlx; doses=doses)
+            result = convert_monolix_to_neopkpd(mlx; doses=doses)
 
             @test isempty(result.errors)
             @test result.model_spec !== nothing
@@ -508,7 +508,7 @@ populationParameters()
 
             # Test conversion
             doses = [DoseEvent(0.0, 100.0)]
-            result = convert_monolix_to_openpkpd(mlx; doses=doses)
+            result = convert_monolix_to_neopkpd(mlx; doses=doses)
 
             @test isempty(result.errors)
             @test result.model_spec !== nothing
@@ -538,7 +538,7 @@ a = {value=0.5, method=MLE}
             @test mlx.observations[cc_obs].error_params[1] ≈ 0.5
 
             doses = [DoseEvent(0.0, 100.0)]
-            result = convert_monolix_to_openpkpd(mlx; doses=doses)
+            result = convert_monolix_to_neopkpd(mlx; doses=doses)
 
             @test result.error_spec !== nothing
             @test result.error_spec.kind isa AdditiveError
@@ -560,7 +560,7 @@ Emax_pop = {value=100, method=MLE}
 EC50_pop = {value=10, method=MLE}
 """
             mlx = parse_monolix_project(mlx_text)
-            unsupported = OpenPKPDCore.check_unsupported_monolix_constructs(mlx)
+            unsupported = NeoPKPDCore.check_unsupported_monolix_constructs(mlx)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("PD", u.construct) || occursin("emax", lowercase(u.line)), unsupported)
@@ -577,7 +577,7 @@ kin_pop = {value=1, method=MLE}
 kout_pop = {value=0.1, method=MLE}
 """
             mlx = parse_monolix_project(mlx_text)
-            unsupported = OpenPKPDCore.check_unsupported_monolix_constructs(mlx)
+            unsupported = NeoPKPDCore.check_unsupported_monolix_constructs(mlx)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("Turnover", u.construct), unsupported)
@@ -593,7 +593,7 @@ file = 'lib:oral1_1cpt_transitAbs_kaVCl.txt'
 ka_pop = {value=1, method=MLE}
 """
             mlx = parse_monolix_project(mlx_text)
-            unsupported = OpenPKPDCore.check_unsupported_monolix_constructs(mlx)
+            unsupported = NeoPKPDCore.check_unsupported_monolix_constructs(mlx)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("Transit", u.construct), unsupported)
@@ -609,7 +609,7 @@ file = 'lib:mixture_2subpop_oral1cpt.txt'
 ka_pop = {value=1, method=MLE}
 """
             mlx = parse_monolix_project(mlx_text)
-            unsupported = OpenPKPDCore.check_unsupported_monolix_constructs(mlx)
+            unsupported = NeoPKPDCore.check_unsupported_monolix_constructs(mlx)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("Mixture", u.construct), unsupported)
@@ -629,11 +629,11 @@ Emax_pop = {value=100, method=MLE}
             doses = [DoseEvent(0.0, 100.0)]
 
             # With strict=true, should add errors
-            result = convert_monolix_to_openpkpd(mlx; doses=doses, strict=true)
+            result = convert_monolix_to_neopkpd(mlx; doses=doses, strict=true)
             @test !isempty(result.errors)
 
             # With strict=false, should have warnings but not fail
-            result_lenient = convert_monolix_to_openpkpd(mlx; doses=doses, strict=false)
+            result_lenient = convert_monolix_to_neopkpd(mlx; doses=doses, strict=false)
             @test !isempty(result_lenient.unsupported)
         end
     end
@@ -705,8 +705,8 @@ b = {value=0.1, method=MLE}
 
         # Both should convert successfully
         doses = [DoseEvent(0.0, 100.0)]
-        result_legacy = convert_monolix_to_openpkpd(mlx_legacy; doses=doses)
-        result_modern = convert_monolix_to_openpkpd(mlx_modern; doses=doses)
+        result_legacy = convert_monolix_to_neopkpd(mlx_legacy; doses=doses)
+        result_modern = convert_monolix_to_neopkpd(mlx_modern; doses=doses)
 
         @test isempty(result_legacy.errors)
         @test isempty(result_modern.errors)
@@ -732,7 +732,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = OpenPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
 
         # Should detect TV definitions
         @test haskey(pk_block.tv_definitions, :TVCL)
@@ -766,7 +766,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = OpenPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
 
         cl_idx = findfirst(a -> a.target == :CL, pk_block.assignments)
         @test cl_idx !== nothing
@@ -786,7 +786,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = OpenPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
 
         cl_idx = findfirst(a -> a.target == :CL, pk_block.assignments)
         @test cl_idx !== nothing
@@ -815,7 +815,7 @@ $OMEGA 0.04 0.09
 $SIGMA 1 FIX
 """
         ctl = parse_nonmem_control(ctl_text)
-        error_block = OpenPKPDCore.parse_error_block(ctl.error_code)
+        error_block = NeoPKPDCore.parse_error_block(ctl.error_code)
 
         @test error_block.error_type == :proportional
         @test 3 in error_block.theta_indices
@@ -837,7 +837,7 @@ $OMEGA 0.04 0.09
 $SIGMA 1 FIX
 """
         ctl = parse_nonmem_control(ctl_text)
-        error_block = OpenPKPDCore.parse_error_block(ctl.error_code)
+        error_block = NeoPKPDCore.parse_error_block(ctl.error_code)
 
         @test error_block.error_type == :additive
     end
@@ -858,7 +858,7 @@ $OMEGA 0.04 0.09
 $SIGMA 1 FIX
 """
         ctl = parse_nonmem_control(ctl_text)
-        error_block = OpenPKPDCore.parse_error_block(ctl.error_code)
+        error_block = NeoPKPDCore.parse_error_block(ctl.error_code)
 
         @test error_block.error_type == :combined
         @test 3 in error_block.theta_indices || 4 in error_block.theta_indices
@@ -879,7 +879,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.04
 """
         ctl = parse_nonmem_control(ctl_text)
-        error_block = OpenPKPDCore.parse_error_block(ctl.error_code)
+        error_block = NeoPKPDCore.parse_error_block(ctl.error_code)
 
         @test error_block.error_type == :exponential
     end
@@ -903,7 +903,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        unsupported = OpenPKPDCore.check_unsupported_constructs(ctl)
+        unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
 
         @test !isempty(unsupported)
         @test any(u -> u.construct == "IF statement", unsupported)
@@ -923,7 +923,7 @@ $OMEGA 0.04 0.09 0.16
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        unsupported = OpenPKPDCore.check_unsupported_constructs(ctl)
+        unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
 
         @test !isempty(unsupported)
         @test any(u -> occursin("ALAG", u.construct), unsupported)
@@ -943,7 +943,7 @@ $OMEGA 0.04 0.09 0.16
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        unsupported = OpenPKPDCore.check_unsupported_constructs(ctl)
+        unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
 
         @test !isempty(unsupported)
         @test any(u -> occursin("Bioavailability", u.construct), unsupported)
@@ -962,7 +962,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        unsupported = OpenPKPDCore.check_unsupported_constructs(ctl)
+        unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
 
         @test !isempty(unsupported)
         @test any(u -> occursin("MTIME", u.construct), unsupported)
@@ -976,7 +976,7 @@ $SIGMA 0.01
 \$THETA (10)
 """
             ctl = parse_nonmem_control(ctl_text)
-            unsupported = OpenPKPDCore.check_unsupported_constructs(ctl)
+            unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("ADVAN", u.construct), unsupported)
@@ -998,12 +998,12 @@ $SIGMA 0.01
         ctl = parse_nonmem_control(ctl_text)
 
         # With strict=true, should add errors
-        result = convert_nonmem_to_openpkpd(ctl; strict=true)
+        result = convert_nonmem_to_neopkpd(ctl; strict=true)
         @test !isempty(result.errors)
         @test any(e -> occursin("IF", e), result.errors)
 
         # With strict=false, should add warnings
-        result_lenient = convert_nonmem_to_openpkpd(ctl; strict=false)
+        result_lenient = convert_nonmem_to_neopkpd(ctl; strict=false)
         @test !isempty(result_lenient.warnings)
     end
 end
@@ -1023,7 +1023,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = OpenPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
 
         # Find the TVCL definition line and check for covariate effects
         # The covariate should be detected
@@ -1057,7 +1057,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = OpenPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
 
         # Check raw code captures it
         @test any(line -> occursin("AGE", line), pk_block.raw_code)
@@ -1077,7 +1077,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = OpenPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
 
         # Check raw code captures it
         @test any(line -> occursin("CRCL", line), pk_block.raw_code)
@@ -1097,7 +1097,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        result = convert_nonmem_to_openpkpd(ctl)
+        result = convert_nonmem_to_neopkpd(ctl)
 
         # Should detect that THETA(5) exceeds defined THETAs
         @test !isempty(result.warnings) || !isempty(result.errors)
@@ -1115,7 +1115,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        result = convert_nonmem_to_openpkpd(ctl)
+        result = convert_nonmem_to_neopkpd(ctl)
 
         # Should detect that ETA(5) exceeds OMEGA dimensions
         @test !isempty(result.warnings) || !isempty(result.errors)
@@ -1134,7 +1134,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        result = convert_nonmem_to_openpkpd(ctl)
+        result = convert_nonmem_to_neopkpd(ctl)
 
         # S5 references compartment 5 which doesn't exist for ADVAN1
         @test !isempty(result.warnings) || !isempty(result.errors)
@@ -1159,7 +1159,7 @@ $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
         doses = [DoseEvent(0.0, 100.0)]
-        result = convert_nonmem_to_openpkpd(ctl; doses=doses)
+        result = convert_nonmem_to_neopkpd(ctl; doses=doses)
 
         @test result.model_spec !== nothing
         @test result.model_spec.params.CL == 10.0
@@ -1196,7 +1196,7 @@ $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
         doses = [DoseEvent(0.0, 100.0)]
-        result = convert_nonmem_to_openpkpd(ctl; doses=doses)
+        result = convert_nonmem_to_neopkpd(ctl; doses=doses)
 
         @test result.model_spec !== nothing
 
@@ -1236,7 +1236,7 @@ $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
         doses = [DoseEvent(0.0, 100.0)]
-        result = convert_nonmem_to_openpkpd(ctl; doses=doses)
+        result = convert_nonmem_to_neopkpd(ctl; doses=doses)
 
         @test result.model_spec !== nothing
 
@@ -1276,7 +1276,7 @@ $SIGMA 0.01
 
         ctl = parse_nonmem_control(ctl_text)
         doses = [DoseEvent(0.0, 100.0)]
-        result = convert_nonmem_to_openpkpd(ctl; doses=doses)
+        result = convert_nonmem_to_neopkpd(ctl; doses=doses)
 
         @test result.model_spec !== nothing
 
@@ -1304,7 +1304,7 @@ Cl = 10.0
 
         mlx = parse_monolix_project(mlx_text)
         doses = [DoseEvent(0.0, 100.0)]
-        result = convert_monolix_to_openpkpd(mlx; doses=doses)
+        result = convert_monolix_to_neopkpd(mlx; doses=doses)
 
         @test result.model_spec !== nothing
 

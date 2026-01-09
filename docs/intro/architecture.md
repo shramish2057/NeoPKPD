@@ -1,6 +1,6 @@
 # Architecture Overview
 
-OpenPKPD is designed as a modular, multi-language platform with a high-performance Julia core and accessible Python bindings.
+NeoPKPD is designed as a modular, multi-language platform with a high-performance Julia core and accessible Python bindings.
 
 ---
 
@@ -9,9 +9,9 @@ OpenPKPD is designed as a modular, multi-language platform with a high-performan
 ```mermaid
 graph TB
     subgraph "User Interfaces"
-        CLI[CLI<br/>openpkpd]
-        PY[Python<br/>openpkpd package]
-        JL[Julia<br/>OpenPKPDCore.jl]
+        CLI[CLI<br/>neopkpd]
+        PY[Python<br/>neopkpd package]
+        JL[Julia<br/>NeoPKPDCore.jl]
     end
 
     subgraph "Core Engine"
@@ -45,11 +45,11 @@ graph TB
 ## Package Structure
 
 ```
-openpkpd/
+neopkpd/
 ├── core/                          # Julia core library
-│   └── OpenPKPDCore/
+│   └── NeoPKPDCore/
 │       ├── src/
-│       │   ├── OpenPKPDCore.jl    # Main module
+│       │   ├── NeoPKPDCore.jl    # Main module
 │       │   ├── engine/            # Simulation engines
 │       │   │   ├── simulation.jl
 │       │   │   ├── population.jl
@@ -71,7 +71,7 @@ openpkpd/
 │
 ├── packages/
 │   ├── python/                    # Python bindings
-│   │   └── openpkpd/
+│   │   └── neopkpd/
 │   │       ├── __init__.py        # Core simulation functions
 │   │       ├── nca/               # NCA module
 │   │       ├── trial/             # Trial simulation module
@@ -79,7 +79,7 @@ openpkpd/
 │   │       └── data/              # Data import utilities
 │   │
 │   └── cli/                       # Command-line interface
-│       └── bin/openpkpd           # CLI executable
+│       └── bin/neopkpd           # CLI executable
 │
 ├── validation/                    # Reproducibility validation
 │   ├── golden/                    # Golden reference artifacts
@@ -345,7 +345,7 @@ All simulation results can be serialized to JSON artifacts:
 Artifacts can be replayed to reproduce exact results:
 
 ```bash
-./bin/openpkpd replay --artifact simulation.json
+./bin/neopkpd replay --artifact simulation.json
 ```
 
 ---

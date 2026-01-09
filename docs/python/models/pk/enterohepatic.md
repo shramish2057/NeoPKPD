@@ -7,7 +7,7 @@ PK model for drugs that undergo biliary excretion and intestinal reabsorption, l
 ## Function Signature
 
 ```python
-openpkpd.simulate_pk_enterohepatic_recirculation(
+neopkpd.simulate_pk_enterohepatic_recirculation(
     ka: float,
     cl: float,
     v: float,
@@ -77,9 +77,9 @@ $$C = \frac{A_c}{V}$$
 ## Basic Example
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_enterohepatic_recirculation(
+result = neopkpd.simulate_pk_enterohepatic_recirculation(
     ka=1.0,       # Absorption rate (1/h)
     cl=10.0,      # Clearance (L/h)
     v=50.0,       # Volume (L)
@@ -105,9 +105,9 @@ print(f"  Initial peak: {max(conc[:20]):.2f} mg/L")
 ## Secondary Peak Detection
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pk_enterohepatic_recirculation(
+result = neopkpd.simulate_pk_enterohepatic_recirculation(
     ka=1.5, cl=8.0, v=50.0,
     kbile=0.4, kreab=0.2, f_reab=0.8,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -135,7 +135,7 @@ for i, (time, c) in enumerate(peaks):
 ## Effect of Reabsorption Fraction
 
 ```python
-import openpkpd
+import neopkpd
 
 f_reab_values = [0.0, 0.3, 0.6, 0.9]
 
@@ -143,7 +143,7 @@ print("F_reab | AUC (mg*h/L) | Secondary peaks?")
 print("-" * 50)
 
 for f_reab in f_reab_values:
-    result = openpkpd.simulate_pk_enterohepatic_recirculation(
+    result = neopkpd.simulate_pk_enterohepatic_recirculation(
         ka=1.5, cl=10.0, v=50.0,
         kbile=0.5, kreab=0.3, f_reab=f_reab,
         doses=[{"time": 0.0, "amount": 500.0}],
@@ -175,10 +175,10 @@ for f_reab in f_reab_values:
 ## Clinical Example: Digoxin
 
 ```python
-import openpkpd
+import neopkpd
 
 # Digoxin-like EHR parameters
-result = openpkpd.simulate_pk_enterohepatic_recirculation(
+result = neopkpd.simulate_pk_enterohepatic_recirculation(
     ka=0.8,       # Absorption rate
     cl=7.0,       # Clearance (L/h)
     v=500.0,      # Large Vd (tissue binding)
@@ -208,14 +208,14 @@ print("  Therapeutic range: 0.8-2.0 ng/mL")
 ## Meal-Triggered Gallbladder Emptying
 
 ```python
-import openpkpd
+import neopkpd
 
 # Model gallbladder emptying at mealtimes
 # Note: This is a simplified approach - true meal effect would need
 # time-varying parameters
 
 # Morning dose, evening meal triggers bile release
-result = openpkpd.simulate_pk_enterohepatic_recirculation(
+result = neopkpd.simulate_pk_enterohepatic_recirculation(
     ka=1.2, cl=10.0, v=50.0,
     kbile=0.3,    # Moderate biliary excretion
     kreab=0.5,    # Fast reabsorption when released
@@ -239,10 +239,10 @@ print(f"  This bile would be released with next meal")
 ## Comparison: With vs Without EHR
 
 ```python
-import openpkpd
+import neopkpd
 
 # With EHR
-result_ehr = openpkpd.simulate_pk_enterohepatic_recirculation(
+result_ehr = neopkpd.simulate_pk_enterohepatic_recirculation(
     ka=1.5, cl=10.0, v=50.0,
     kbile=0.4, kreab=0.3, f_reab=0.7,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -251,7 +251,7 @@ result_ehr = openpkpd.simulate_pk_enterohepatic_recirculation(
 )
 
 # Without EHR (standard oral model)
-result_no_ehr = openpkpd.simulate_pk_oral_first_order(
+result_no_ehr = neopkpd.simulate_pk_oral_first_order(
     ka=1.5, cl=10.0, v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
     t0=0.0, t1=48.0,
@@ -286,12 +286,12 @@ print(f"  Cmax with EHR: {cmax_ehr:.2f} mg/L")
 ## Multiple Dosing with EHR
 
 ```python
-import openpkpd
+import neopkpd
 
 # Once daily dosing
 doses = [{"time": i * 24.0, "amount": 200.0} for i in range(5)]
 
-result = openpkpd.simulate_pk_enterohepatic_recirculation(
+result = neopkpd.simulate_pk_enterohepatic_recirculation(
     ka=1.0, cl=8.0, v=50.0,
     kbile=0.3, kreab=0.2, f_reab=0.65,
     doses=doses,

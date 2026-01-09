@@ -9,7 +9,7 @@ PD models for tolerance development through counter-regulation or receptor regul
 ### Function Signature
 
 ```python
-openpkpd.simulate_pkpd_tolerance_counter_regulation(
+neopkpd.simulate_pkpd_tolerance_counter_regulation(
     cl: float,
     v: float,
     doses: list[dict],
@@ -59,12 +59,12 @@ $$E_{net} = E_0 + E_{drug} - \alpha \cdot M$$
 ## Basic Counter-Regulation Example
 
 ```python
-import openpkpd
+import neopkpd
 
 # Chronic dosing with tolerance development
 doses = [{"time": i * 8.0, "amount": 50.0} for i in range(21)]  # TID for 7 days
 
-result = openpkpd.simulate_pkpd_tolerance_counter_regulation(
+result = neopkpd.simulate_pkpd_tolerance_counter_regulation(
     cl=5.0,
     v=50.0,
     doses=doses,
@@ -98,14 +98,14 @@ print(f"  Tolerance: {(1 - last_dose_peak/first_dose_peak) * 100:.1f}% reduction
 ## Clinical Example: Opioid Tolerance
 
 ```python
-import openpkpd
+import neopkpd
 
 # Morphine-like tolerance
 # Daily dosing for 2 weeks
 
 doses = [{"time": i * 6.0, "amount": 10.0} for i in range(56)]  # Q6H for 2 weeks
 
-result = openpkpd.simulate_pkpd_tolerance_counter_regulation(
+result = neopkpd.simulate_pkpd_tolerance_counter_regulation(
     cl=60.0, v=200.0,    # Morphine-like PK
     doses=doses,
     e0=0.0,              # Baseline pain score
@@ -136,7 +136,7 @@ for day in [1, 3, 7, 14]:
 ## Effect of Feedback Strength
 
 ```python
-import openpkpd
+import neopkpd
 
 alpha_values = [0.0, 0.25, 0.5, 1.0, 1.5]
 
@@ -146,7 +146,7 @@ print("Alpha | Day 1 Peak | Day 7 Peak | Tolerance %")
 print("-" * 50)
 
 for alpha in alpha_values:
-    result = openpkpd.simulate_pkpd_tolerance_counter_regulation(
+    result = neopkpd.simulate_pkpd_tolerance_counter_regulation(
         cl=5.0, v=50.0, doses=doses,
         e0=0.0, emax=100.0, ec50=5.0, gamma=1.0,
         kin_mod=0.1, kout_mod=0.05, alpha_feedback=alpha,
@@ -169,7 +169,7 @@ for alpha in alpha_values:
 ### Function Signature
 
 ```python
-openpkpd.simulate_pkpd_receptor_regulation(
+neopkpd.simulate_pkpd_receptor_regulation(
     cl: float,
     v: float,
     doses: list[dict],
@@ -218,12 +218,12 @@ $$E_{net} = E_0 + R \cdot E_{drug}$$
 ## Receptor Down-Regulation Example
 
 ```python
-import openpkpd
+import neopkpd
 
 # Beta-receptor down-regulation with chronic agonist
 doses = [{"time": i * 8.0, "amount": 50.0} for i in range(21)]
 
-result = openpkpd.simulate_pkpd_receptor_regulation(
+result = neopkpd.simulate_pkpd_receptor_regulation(
     cl=5.0, v=50.0, doses=doses,
     e0=0.0, emax=100.0, ec50=5.0, gamma=1.0,
     r_baseline=1.0,    # Normalized baseline
@@ -251,12 +251,12 @@ print(f"  Day 7 dose peak: {max(effect[-16:]):.1f}")
 ## Receptor Up-Regulation Example
 
 ```python
-import openpkpd
+import neopkpd
 
 # Receptor up-regulation (e.g., chronic antagonist exposure)
 doses = [{"time": i * 12.0, "amount": 30.0} for i in range(14)]
 
-result = openpkpd.simulate_pkpd_receptor_regulation(
+result = neopkpd.simulate_pkpd_receptor_regulation(
     cl=5.0, v=50.0, doses=doses,
     e0=0.0, emax=100.0, ec50=5.0, gamma=1.0,
     r_baseline=1.0,
@@ -283,12 +283,12 @@ print(f"  Receptor increase: {(receptor[-1]/receptor[0] - 1) * 100:.1f}%")
 ## Recovery After Drug Discontinuation
 
 ```python
-import openpkpd
+import neopkpd
 
 # 1 week dosing, then 2 weeks recovery
 doses = [{"time": i * 8.0, "amount": 50.0} for i in range(21)]  # 7 days only
 
-result = openpkpd.simulate_pkpd_tolerance_counter_regulation(
+result = neopkpd.simulate_pkpd_tolerance_counter_regulation(
     cl=5.0, v=50.0, doses=doses,
     e0=0.0, emax=100.0, ec50=5.0, gamma=1.0,
     kin_mod=0.1, kout_mod=0.02, alpha_feedback=1.0,
@@ -313,12 +313,12 @@ print(f"  Day 21: Near baseline")
 ## Comparing Tolerance Mechanisms
 
 ```python
-import openpkpd
+import neopkpd
 
 doses = [{"time": i * 8.0, "amount": 50.0} for i in range(21)]
 
 # Counter-regulation
-result_counter = openpkpd.simulate_pkpd_tolerance_counter_regulation(
+result_counter = neopkpd.simulate_pkpd_tolerance_counter_regulation(
     cl=5.0, v=50.0, doses=doses,
     e0=0.0, emax=100.0, ec50=5.0, gamma=1.0,
     kin_mod=0.1, kout_mod=0.05, alpha_feedback=1.0,
@@ -327,7 +327,7 @@ result_counter = openpkpd.simulate_pkpd_tolerance_counter_regulation(
 )
 
 # Receptor down-regulation
-result_receptor = openpkpd.simulate_pkpd_receptor_regulation(
+result_receptor = neopkpd.simulate_pkpd_receptor_regulation(
     cl=5.0, v=50.0, doses=doses,
     e0=0.0, emax=100.0, ec50=5.0, gamma=1.0,
     r_baseline=1.0, kreg=0.05, rmax=2.0, kchange=0.02,
@@ -351,7 +351,7 @@ print(f"Day 7 peak effect | {max(counter_effect[-48:]):11.1f} | {max(receptor_ef
 ## Dose Escalation to Overcome Tolerance
 
 ```python
-import openpkpd
+import neopkpd
 
 # Escalating dose to maintain effect
 base_dose = 50.0
@@ -363,7 +363,7 @@ for day in range(7):
     for dose_num in range(3):  # TID
         doses.append({"time": day * 24 + dose_num * 8.0, "amount": daily_dose})
 
-result = openpkpd.simulate_pkpd_tolerance_counter_regulation(
+result = neopkpd.simulate_pkpd_tolerance_counter_regulation(
     cl=5.0, v=50.0, doses=doses,
     e0=0.0, emax=100.0, ec50=5.0, gamma=1.0,
     kin_mod=0.1, kout_mod=0.05, alpha_feedback=1.0,

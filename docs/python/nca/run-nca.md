@@ -7,7 +7,7 @@ The primary function for performing non-compartmental analysis in Python.
 ## Overview
 
 ```python
-from openpkpd.nca import run_nca
+from neopkpd.nca import run_nca
 
 result = run_nca(times, conc, dose)
 ```
@@ -64,7 +64,7 @@ def run_nca(
 ### Single Dose Oral
 
 ```python
-from openpkpd.nca import run_nca
+from neopkpd.nca import run_nca
 
 times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
 conc = [0.0, 1.8, 2.5, 2.0, 1.2, 0.6, 0.3, 0.075]
@@ -176,7 +176,7 @@ print(f"Accumulation Index: {result.accumulation_index:.2f}")
 ### With NCAConfig
 
 ```python
-from openpkpd.nca import run_nca, NCAConfig
+from neopkpd.nca import run_nca, NCAConfig
 
 config = NCAConfig(
     method="lin_log_mixed",        # AUC calculation method
@@ -267,7 +267,7 @@ result.warnings        # Warning messages
 ## Example: Complete Analysis
 
 ```python
-from openpkpd.nca import run_nca, NCAConfig
+from neopkpd.nca import run_nca, NCAConfig
 
 # PK data from oral administration
 times = [0.0, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 24.0]
@@ -336,7 +336,7 @@ if result.warnings:
 
 ```python
 import numpy as np
-from openpkpd.nca import run_nca
+from neopkpd.nca import run_nca
 
 # NumPy arrays work directly
 times = np.array([0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0])
@@ -351,7 +351,7 @@ result = run_nca(times, conc, 100.0)
 
 ```python
 import pandas as pd
-from openpkpd.nca import run_nca
+from neopkpd.nca import run_nca
 
 # From DataFrame
 df = pd.DataFrame({
@@ -371,7 +371,7 @@ result = run_nca(
 ## Error Handling
 
 ```python
-from openpkpd.nca import run_nca, NCAConfig
+from neopkpd.nca import run_nca, NCAConfig
 import math
 
 # Handle potential issues

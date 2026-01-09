@@ -1,4 +1,4 @@
-from openpkpd import init_julia, simulate_pk_iv_bolus
+from neopkpd import init_julia, simulate_pk_iv_bolus
 
 
 def test_simulate_iv_bolus_basic():

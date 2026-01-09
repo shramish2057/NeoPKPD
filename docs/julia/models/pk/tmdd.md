@@ -7,7 +7,7 @@ Advanced PK model for drugs that bind to their pharmacological target, forming d
 ## Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Create TMDD model specification
 model = target_mediated_drug_disposition()
@@ -70,7 +70,7 @@ Where:
 ## Basic Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 model = target_mediated_drug_disposition()
 params = CustomODEParams(
@@ -101,7 +101,7 @@ println("Free drug at 24h: $(conc[49]) mg/L")
 ## Non-Linear PK Behavior
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 model = target_mediated_drug_disposition()
 

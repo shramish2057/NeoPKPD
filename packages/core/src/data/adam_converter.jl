@@ -1,5 +1,5 @@
-# ADaM to OpenPKPD Format Converter
-# Convert ADaM datasets to OpenPKPD analysis-ready format
+# ADaM to NeoPKPD Format Converter
+# Convert ADaM datasets to NeoPKPD analysis-ready format
 
 export adam_to_observed_data, adam_to_subject_data
 export AdamConversionOptions, AdamBLQMethod
@@ -23,7 +23,7 @@ end
 """
     AdamConversionOptions
 
-Options for converting ADaM datasets to OpenPKPD format.
+Options for converting ADaM datasets to NeoPKPD format.
 
 Fields:
 - time_variable: Which time variable to use (:afrlt, :arrlt, :areltm, :nfrlt, :nrrlt, :nreltm)
@@ -364,7 +364,7 @@ function adam_to_observed_data(
 end
 
 # ============================================================================
-# Bidirectional Conversion: OpenPKPD to ADaM
+# Bidirectional Conversion: NeoPKPD to ADaM
 # ============================================================================
 
 """
@@ -427,7 +427,7 @@ export observed_data_to_adpc
 Convert NCA results to ADPP records for export.
 
 Arguments:
-- nca_results: NCAResult object from OpenPKPD NCA module
+- nca_results: NCAResult object from NeoPKPD NCA module
 - study_id: Study identifier
 - usubjid: Subject identifier
 - dose: Dose amount (optional)

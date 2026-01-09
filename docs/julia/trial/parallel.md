@@ -9,7 +9,7 @@ Comprehensive guide for parallel group clinical trial simulation with multiple t
 Parallel designs assign subjects to independent treatment groups, enabling comparison of interventions without within-subject correlation.
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 design = ParallelDesign(
     n_arms = 3,
@@ -204,7 +204,7 @@ println("Race distribution: $(summary.race_distribution)")
 ### Complete Trial Setup
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Design
 design = ParallelDesign(
@@ -457,7 +457,7 @@ end
 ## Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # ======================
 # Phase 2 Dose Finding Study

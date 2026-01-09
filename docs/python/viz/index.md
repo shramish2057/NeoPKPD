@@ -1,12 +1,12 @@
 # Visualization
 
-OpenPKPD provides 55+ professional visualization functions with dual matplotlib and plotly backend support.
+NeoPKPD provides 55+ professional visualization functions with dual matplotlib and plotly backend support.
 
 ---
 
 ## Overview
 
-The visualization module (`openpkpd.viz`) offers:
+The visualization module (`neopkpd.viz`) offers:
 
 - **Dual Backends**: Static (matplotlib) and interactive (plotly)
 - **Consistent API**: Same function signatures across backends
@@ -108,7 +108,7 @@ The visualization module (`openpkpd.viz`) offers:
 ### Backend Selection
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Set matplotlib backend (default)
 viz.set_backend("matplotlib")
@@ -126,14 +126,14 @@ print(viz.available_backends())  # ["matplotlib", "plotly"]
 ### Basic Plotting
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Run simulation
-result = openpkpd.simulate_pk_iv_bolus(
+result = neopkpd.simulate_pk_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,
@@ -254,7 +254,7 @@ All visualization functions share these parameters:
 | `xlabel` | `str` | Auto | X-axis label |
 | `ylabel` | `str` | Auto | Y-axis label |
 | `figsize` | `tuple` | (10, 6) | Figure size (inches) |
-| `theme` | `str` | "openpkpd" | Color theme |
+| `theme` | `str` | "neopkpd" | Color theme |
 | `save_path` | `str` | None | Path to save figure |
 
 ---
@@ -262,10 +262,10 @@ All visualization functions share these parameters:
 ## Themes
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 # Set theme
-viz.set_theme("openpkpd")      # Default professional theme
+viz.set_theme("neopkpd")      # Default professional theme
 viz.set_theme("publication")    # Minimal for publications
 viz.set_theme("presentation")   # Bold for slides
 
@@ -273,7 +273,7 @@ viz.set_theme("presentation")   # Bold for slides
 print(viz.available_themes())
 
 # Access color palette
-colors = viz.OPENPKPD_COLORS
+colors = viz.NEOPKPD_COLORS
 print(colors)
 # {"primary": "#3498DB", "secondary": "#2ECC71", ...}
 ```
@@ -285,7 +285,7 @@ print(colors)
 ### Population Spaghetti with Mean
 
 ```python
-pop_result = openpkpd.simulate_population_iv_bolus(
+pop_result = neopkpd.simulate_population_iv_bolus(
     cl=5.0, v=50.0,
     doses=[{"time": 0.0, "amount": 100.0}],
     t0=0.0, t1=24.0,

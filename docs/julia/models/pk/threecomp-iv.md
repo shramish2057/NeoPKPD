@@ -129,7 +129,7 @@ end
 ### Basic Simulation
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define parameters
 # CL = 5 L/h, V1 = 10 L

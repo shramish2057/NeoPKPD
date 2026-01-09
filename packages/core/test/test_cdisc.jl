@@ -1,7 +1,7 @@
 # Test suite for CDISC/SDTM Data Support
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 
 @testset "CDISC Data Support" begin
 
@@ -193,7 +193,7 @@ using OpenPKPDCore
         @test config2.blq_handling == :exclude
     end
 
-    @testset "CDISC to OpenPKPD Conversion" begin
+    @testset "CDISC to NeoPKPD Conversion" begin
         # Create test CDISC dataset
         pc_records = [
             PCRecord(usubjid="SUBJ001", pctestcd="DRUG1", pcstresn=100.0, pctptnum=0.0, pcstresu="ng/mL"),
@@ -220,7 +220,7 @@ using OpenPKPDCore
             study_id="TEST001"
         )
 
-        # Convert to OpenPKPD format
+        # Convert to NeoPKPD format
         result = cdisc_to_observed(dataset)
 
         @test isempty(result.errors)

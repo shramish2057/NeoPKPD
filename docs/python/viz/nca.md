@@ -9,7 +9,7 @@ Non-compartmental analysis visualization functions.
 NCA plots visualize pharmacokinetic parameters derived from concentration-time data without assuming a specific model.
 
 ```python
-from openpkpd import viz
+from neopkpd import viz
 
 fig = viz.plot_lambda_z_fit(nca_result, title="Terminal Phase")
 ```
@@ -41,7 +41,7 @@ def plot_lambda_z_fit(
 **Usage:**
 
 ```python
-nca_result = openpkpd.run_nca(
+nca_result = neopkpd.run_nca(
     times=[0, 0.5, 1, 2, 4, 8, 12, 24],
     concentrations=[0, 5.2, 8.1, 6.3, 3.8, 1.9, 0.9, 0.2],
     dose=100.0,
@@ -119,11 +119,11 @@ fig = viz.plot_dose_proportionality(
 ## Complete Example
 
 ```python
-import openpkpd
-from openpkpd import viz
+import neopkpd
+from neopkpd import viz
 import numpy as np
 
-openpkpd.init_julia()
+neopkpd.init_julia()
 viz.set_backend("matplotlib")
 
 # Sample PK data
@@ -131,7 +131,7 @@ times = [0, 0.25, 0.5, 1, 2, 4, 6, 8, 12, 24]
 conc = [0, 3.2, 6.8, 9.1, 7.5, 4.2, 2.8, 1.9, 0.8, 0.15]
 
 # Run NCA
-nca_result = openpkpd.run_nca(
+nca_result = neopkpd.run_nca(
     times=times,
     concentrations=conc,
     dose=100.0,

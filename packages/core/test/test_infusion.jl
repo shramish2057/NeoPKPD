@@ -2,7 +2,7 @@
 # Tests zero-order infusion (constant rate) administration
 
 using Test
-using OpenPKPDCore
+using NeoPKPDCore
 
 @testset "IV Infusion Tests" begin
     grid = SimGrid(0.0, 24.0, collect(0.0:0.5:24.0))
@@ -132,7 +132,7 @@ using OpenPKPDCore
         artifact = Dict(
             "artifact_schema_version" => "1.0.0",
             "model_spec" => Dict(
-                "kind" => "OpenPKPDCore.OneCompIVBolus",
+                "kind" => "NeoPKPDCore.OneCompIVBolus",
                 "name" => "old_format",
                 "params" => Dict("CL" => 10.0, "V" => 50.0),
                 "doses" => [Dict("time" => 0.0, "amount" => 100.0)]  # No duration field

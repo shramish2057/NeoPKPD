@@ -1,6 +1,6 @@
 # Model Examples
 
-Complete examples for all OpenPKPD PK and PK/PD models.
+Complete examples for all NeoPKPD PK and PK/PD models.
 
 ## PK Models
 
@@ -41,20 +41,20 @@ Each model directory contains:
 ### All Models (Julia)
 
 ```bash
-julia --project=core/OpenPKPDCore docs/examples/models/run_all.jl
+julia --project=core/NeoPKPDCore docs/examples/models/run_all.jl
 ```
 
 ### Single Model
 
 ```bash
 # Julia
-julia --project=core/OpenPKPDCore docs/examples/models/pk/01_onecomp_iv_bolus/julia.jl
+julia --project=core/NeoPKPDCore docs/examples/models/pk/01_onecomp_iv_bolus/julia.jl
 
 # Python
 python docs/examples/models/pk/01_onecomp_iv_bolus/python.py
 
 # CLI
-./bin/openpkpd simulate --spec docs/examples/models/pk/01_onecomp_iv_bolus/cli.json
+./bin/neopkpd simulate --spec docs/examples/models/pk/01_onecomp_iv_bolus/cli.json
 ```
 
 ## Model Selection Guide

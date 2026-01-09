@@ -9,7 +9,7 @@ Comprehensive guide to VPC binning methods for optimal time stratification.
 Binning groups observations by time for percentile calculation. The choice of binning strategy significantly affects VPC interpretability.
 
 ```python
-from openpkpd.vpc import (
+from neopkpd.vpc import (
     QuantileBinning,
     EqualWidthBinning,
     KMeansBinning,
@@ -29,7 +29,7 @@ binning = QuantileBinning(10)  # 10 bins with equal obs count
 Creates bins with approximately equal numbers of observations:
 
 ```python
-from openpkpd.vpc import QuantileBinning
+from neopkpd.vpc import QuantileBinning
 
 # 10 bins with equal observation count
 binning = QuantileBinning(n_bins=10)
@@ -58,7 +58,7 @@ binning = QuantileBinning(n_bins=5)
 Creates bins with equal time ranges:
 
 ```python
-from openpkpd.vpc import EqualWidthBinning
+from neopkpd.vpc import EqualWidthBinning
 
 # 10 bins with equal time width
 binning = EqualWidthBinning(n_bins=10)
@@ -89,7 +89,7 @@ binning = EqualWidthBinning(n_bins=10)
 Uses k-means clustering to find natural time groupings:
 
 ```python
-from openpkpd.vpc import KMeansBinning
+from neopkpd.vpc import KMeansBinning
 
 # K-means with 8 clusters
 binning = KMeansBinning(n_bins=8)
@@ -135,7 +135,7 @@ class BinDefinition:
 ### Accessing Bin Definitions
 
 ```python
-from openpkpd.vpc import compute_bins
+from neopkpd.vpc import compute_bins
 
 # Compute bins from times
 times = [0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
@@ -177,7 +177,7 @@ for bin_def in bins:
 ## Comparison Example
 
 ```python
-from openpkpd.vpc import QuantileBinning, EqualWidthBinning, KMeansBinning
+from neopkpd.vpc import QuantileBinning, EqualWidthBinning, KMeansBinning
 import numpy as np
 
 # Sparse PK sampling times (typical clinical design)
@@ -192,7 +192,7 @@ print("=== Binning Strategy Comparison ===\n")
 
 # QuantileBinning
 print("QuantileBinning(7):")
-from openpkpd.vpc import compute_bins
+from neopkpd.vpc import compute_bins
 bins_q = compute_bins(times, QuantileBinning(7))
 for b in bins_q:
     n_in_bin = sum(1 for t in times if b.time_min <= t < b.time_max)
@@ -225,7 +225,7 @@ Expected output patterns:
 For special requirements, you can create custom bin definitions:
 
 ```python
-from openpkpd.vpc import BinDefinition
+from neopkpd.vpc import BinDefinition
 
 # Manual bin boundaries matching sampling design
 manual_bins = [
@@ -282,8 +282,8 @@ Visual: Clear percentile trends, reasonable CI width
 ## Visualization
 
 ```python
-from openpkpd import viz
-from openpkpd.vpc import VPCConfig, QuantileBinning, EqualWidthBinning
+from neopkpd import viz
+from neopkpd.vpc import VPCConfig, QuantileBinning, EqualWidthBinning
 import matplotlib.pyplot as plt
 
 # Compare VPCs with different binning
@@ -296,7 +296,7 @@ configs = [
 fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
 for ax, (name, config) in zip(axes, configs):
-    vpc_result = openpkpd.compute_vpc(
+    vpc_result = neopkpd.compute_vpc(
         observed_data=observed_data,
         population_spec=pop_spec,
         grid=grid,
@@ -321,7 +321,7 @@ plt.savefig("binning_comparison.png", dpi=300)
 
 ```python
 # Recommended workflow
-from openpkpd.vpc import VPCConfig, QuantileBinning
+from neopkpd.vpc import VPCConfig, QuantileBinning
 
 # 1. Estimate optimal bins
 n_obs = len(observed_data["times"])
@@ -334,7 +334,7 @@ config = VPCConfig(
 )
 
 # 3. Compute and visualize
-vpc_result = openpkpd.compute_vpc(...)
+vpc_result = neopkpd.compute_vpc(...)
 fig = viz.plot_vpc_ci(vpc_result, show_bin_boundaries=True)
 ```
 

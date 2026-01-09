@@ -13,7 +13,7 @@ Population NCA applies non-compartmental analysis to multiple subjects simultane
 ## Quick Start
 
 ```julia
-using OpenPKPDCore, DataFrames
+using NeoPKPDCore, DataFrames
 
 # Multi-subject PK data
 data = DataFrame(
@@ -361,7 +361,7 @@ println("Vz/F vs Weight correlation: $(round(r_vz_wt, digits=3))")
 ## Example: Complete Population NCA
 
 ```julia
-using OpenPKPDCore, DataFrames
+using NeoPKPDCore, DataFrames
 
 # Load multi-subject PK data
 data = DataFrame(

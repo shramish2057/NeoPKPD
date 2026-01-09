@@ -304,7 +304,7 @@ end
 Complete NONMEM control file representation.
 
 This structure captures the essential elements needed to convert
-a NONMEM model to OpenPKPD format.
+a NONMEM model to NeoPKPD format.
 
 Fields:
 - problem: Problem description from \$PROBLEM
@@ -364,7 +364,7 @@ const ADVAN_TRANS_MAP = Dict{Tuple{Int,Int},Tuple{Symbol,Vector{Symbol}}}(
 )
 
 """
-Get the OpenPKPD model kind and expected parameters for an ADVAN/TRANS combination.
+Get the NeoPKPD model kind and expected parameters for an ADVAN/TRANS combination.
 
 Returns (model_kind_symbol, parameter_symbols) or nothing if not supported.
 """

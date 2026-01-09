@@ -3,7 +3,7 @@ Comprehensive tests for all Python PK and PD models.
 """
 
 import pytest
-from openpkpd import init_julia
+from neopkpd import init_julia
 
 # Initialize Julia once for all tests
 @pytest.fixture(scope="module", autouse=True)
@@ -19,7 +19,7 @@ class TestPKOneComp:
     """Tests for one-compartment PK models."""
 
     def test_iv_bolus_basic(self):
-        from openpkpd import simulate_pk_iv_bolus
+        from neopkpd import simulate_pk_iv_bolus
         res = simulate_pk_iv_bolus(
             cl=5.0, v=50.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -33,7 +33,7 @@ class TestPKOneComp:
         assert abs(res["observations"]["conc"][0] - 2.0) < 0.01
 
     def test_iv_infusion(self):
-        from openpkpd import simulate_pk_iv_bolus
+        from neopkpd import simulate_pk_iv_bolus
         res = simulate_pk_iv_bolus(
             cl=5.0, v=50.0,
             doses=[{"time": 0.0, "amount": 100.0, "duration": 1.0}],  # 1-hour infusion
@@ -45,7 +45,7 @@ class TestPKOneComp:
         assert res["observations"]["conc"][0] < 0.1
 
     def test_oral_first_order(self):
-        from openpkpd import simulate_pk_oral_first_order
+        from neopkpd import simulate_pk_oral_first_order
         res = simulate_pk_oral_first_order(
             ka=1.0, cl=5.0, v=50.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -59,7 +59,7 @@ class TestPKOneComp:
         assert max(res["observations"]["conc"]) > 0
 
     def test_oral_with_alag_bioavailability(self):
-        from openpkpd import simulate_pk_oral_first_order
+        from neopkpd import simulate_pk_oral_first_order
         res = simulate_pk_oral_first_order(
             ka=1.0, cl=5.0, v=50.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -77,7 +77,7 @@ class TestPKTwoComp:
     """Tests for two-compartment PK models."""
 
     def test_twocomp_iv_bolus(self):
-        from openpkpd import simulate_pk_twocomp_iv_bolus
+        from neopkpd import simulate_pk_twocomp_iv_bolus
         res = simulate_pk_twocomp_iv_bolus(
             cl=10.0, v1=50.0, q=5.0, v2=100.0,
             doses=[{"time": 0.0, "amount": 500.0}],
@@ -91,7 +91,7 @@ class TestPKTwoComp:
         assert abs(res["observations"]["conc"][0] - 10.0) < 0.1
 
     def test_twocomp_oral(self):
-        from openpkpd import simulate_pk_twocomp_oral
+        from neopkpd import simulate_pk_twocomp_oral
         res = simulate_pk_twocomp_oral(
             ka=1.0, cl=10.0, v1=50.0, q=5.0, v2=100.0,
             doses=[{"time": 0.0, "amount": 500.0}],
@@ -106,7 +106,7 @@ class TestPKThreeComp:
     """Tests for three-compartment PK models."""
 
     def test_threecomp_iv_bolus(self):
-        from openpkpd import simulate_pk_threecomp_iv_bolus
+        from neopkpd import simulate_pk_threecomp_iv_bolus
         res = simulate_pk_threecomp_iv_bolus(
             cl=10.0, v1=50.0, q2=10.0, v2=80.0, q3=2.0, v3=200.0,
             doses=[{"time": 0.0, "amount": 1000.0}],
@@ -123,7 +123,7 @@ class TestPKAdvanced:
     """Tests for advanced PK models."""
 
     def test_transit_absorption(self):
-        from openpkpd import simulate_pk_transit_absorption
+        from neopkpd import simulate_pk_transit_absorption
         res = simulate_pk_transit_absorption(
             n=5, ktr=2.0, ka=1.0, cl=10.0, v=50.0,
             doses=[{"time": 0.0, "amount": 500.0}],
@@ -135,7 +135,7 @@ class TestPKAdvanced:
         assert len(res["states"]) >= 5
 
     def test_michaelis_menten(self):
-        from openpkpd import simulate_pk_michaelis_menten
+        from neopkpd import simulate_pk_michaelis_menten
         res = simulate_pk_michaelis_menten(
             vmax=100.0, km=5.0, v=50.0,
             doses=[{"time": 0.0, "amount": 500.0}],
@@ -151,7 +151,7 @@ class TestPKCustom:
     """Tests for custom PK models."""
 
     def test_tmdd(self):
-        from openpkpd import simulate_pk_tmdd_custom
+        from neopkpd import simulate_pk_tmdd_custom
         res = simulate_pk_tmdd_custom(
             kel=0.1, kon=0.01, koff=0.001, ksyn=1.0, kdeg=0.1, kint=0.05, v=50.0,
             doses=[{"time": 0.0, "amount": 500.0}],
@@ -161,7 +161,7 @@ class TestPKCustom:
         assert "conc" in res["observations"]
 
     def test_parallel_absorption(self):
-        from openpkpd import simulate_pk_parallel_absorption
+        from neopkpd import simulate_pk_parallel_absorption
         res = simulate_pk_parallel_absorption(
             ka1=2.0, ka2=0.5, f1=0.6, cl=10.0, v=50.0,
             doses=[{"time": 0.0, "amount": 500.0}],
@@ -171,7 +171,7 @@ class TestPKCustom:
         assert "conc" in res["observations"]
 
     def test_enterohepatic_recirculation(self):
-        from openpkpd import simulate_pk_enterohepatic_recirculation
+        from neopkpd import simulate_pk_enterohepatic_recirculation
         res = simulate_pk_enterohepatic_recirculation(
             ka=1.0, cl=10.0, v=50.0, kbile=0.5, kreab=0.3, f_reab=0.7,
             doses=[{"time": 0.0, "amount": 500.0}],
@@ -181,7 +181,7 @@ class TestPKCustom:
         assert "conc" in res["observations"]
 
     def test_autoinduction(self):
-        from openpkpd import simulate_pk_autoinduction
+        from neopkpd import simulate_pk_autoinduction
         res = simulate_pk_autoinduction(
             cl0=10.0, v=50.0, emax=2.0, ec50=5.0, kenz=0.1,
             doses=[{"time": i * 24.0, "amount": 200.0} for i in range(7)],  # QD for 7 days
@@ -199,7 +199,7 @@ class TestPDBasic:
     """Tests for basic PD effect models."""
 
     def test_direct_emax(self):
-        from openpkpd import simulate_pkpd_direct_emax
+        from neopkpd import simulate_pkpd_direct_emax
         res = simulate_pkpd_direct_emax(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -214,7 +214,7 @@ class TestPDBasic:
         assert max(res["observations"]["effect"]) <= 101
 
     def test_sigmoid_emax(self):
-        from openpkpd import simulate_pkpd_sigmoid_emax
+        from neopkpd import simulate_pkpd_sigmoid_emax
         res = simulate_pkpd_sigmoid_emax(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -225,7 +225,7 @@ class TestPDBasic:
         assert "effect" in res["observations"]
 
     def test_biophase_equilibration(self):
-        from openpkpd import simulate_pkpd_biophase_equilibration
+        from neopkpd import simulate_pkpd_biophase_equilibration
         res = simulate_pkpd_biophase_equilibration(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -241,7 +241,7 @@ class TestPDIndirectResponse:
 
     def test_irm3_inhibition_kout(self):
         """IRM-III: Inhibition of Kout (original indirect_response)"""
-        from openpkpd import simulate_pkpd_indirect_response
+        from neopkpd import simulate_pkpd_indirect_response
         res = simulate_pkpd_indirect_response(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -255,7 +255,7 @@ class TestPDIndirectResponse:
 
     def test_irm1_inhibition_kin(self):
         """IRM-I: Inhibition of Kin (production)"""
-        from openpkpd import simulate_pkpd_irm1
+        from neopkpd import simulate_pkpd_irm1
         res = simulate_pkpd_irm1(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -269,7 +269,7 @@ class TestPDIndirectResponse:
 
     def test_irm2_stimulation_kin(self):
         """IRM-II: Stimulation of Kin (production)"""
-        from openpkpd import simulate_pkpd_irm2
+        from neopkpd import simulate_pkpd_irm2
         res = simulate_pkpd_irm2(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -283,7 +283,7 @@ class TestPDIndirectResponse:
 
     def test_irm4_stimulation_kout(self):
         """IRM-IV: Stimulation of Kout (elimination)"""
-        from openpkpd import simulate_pkpd_irm4
+        from neopkpd import simulate_pkpd_irm4
         res = simulate_pkpd_irm4(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -297,7 +297,7 @@ class TestPDIndirectResponse:
 
     def test_irm_with_oral_pk(self):
         """Test IRM with oral PK model"""
-        from openpkpd import simulate_pkpd_irm1
+        from neopkpd import simulate_pkpd_irm1
         res = simulate_pkpd_irm1(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -315,7 +315,7 @@ class TestPDAdvanced:
 
     def test_transit_compartment_pd(self):
         """Transit compartment PD with signal transduction delay"""
-        from openpkpd import simulate_pkpd_transit_compartment
+        from neopkpd import simulate_pkpd_transit_compartment
         res = simulate_pkpd_transit_compartment(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -335,7 +335,7 @@ class TestPDAdvanced:
 
     def test_disease_progression_gompertz(self):
         """Disease progression with Gompertz growth"""
-        from openpkpd import simulate_pkpd_disease_progression
+        from neopkpd import simulate_pkpd_disease_progression
         res = simulate_pkpd_disease_progression(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -348,7 +348,7 @@ class TestPDAdvanced:
 
     def test_disease_progression_logistic(self):
         """Disease progression with Logistic growth"""
-        from openpkpd import simulate_pkpd_disease_progression
+        from neopkpd import simulate_pkpd_disease_progression
         res = simulate_pkpd_disease_progression(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -361,7 +361,7 @@ class TestPDAdvanced:
 
     def test_disease_progression_exponential(self):
         """Disease progression with Exponential growth"""
-        from openpkpd import simulate_pkpd_disease_progression
+        from neopkpd import simulate_pkpd_disease_progression
         res = simulate_pkpd_disease_progression(
             cl=1.0, v=10.0,
             doses=[{"time": 0.0, "amount": 100.0}],
@@ -378,7 +378,7 @@ class TestPDTolerance:
 
     def test_tolerance_counter_regulation(self):
         """Tolerance with counter-regulatory feedback"""
-        from openpkpd import simulate_pkpd_tolerance_counter_regulation
+        from neopkpd import simulate_pkpd_tolerance_counter_regulation
         res = simulate_pkpd_tolerance_counter_regulation(
             cl=1.0, v=10.0,
             doses=[{"time": i * 8.0, "amount": 50.0} for i in range(21)],  # TID for 7 days
@@ -393,7 +393,7 @@ class TestPDTolerance:
 
     def test_receptor_down_regulation(self):
         """Receptor down-regulation tolerance"""
-        from openpkpd import simulate_pkpd_receptor_regulation
+        from neopkpd import simulate_pkpd_receptor_regulation
         res = simulate_pkpd_receptor_regulation(
             cl=1.0, v=10.0,
             doses=[{"time": i * 8.0, "amount": 50.0} for i in range(21)],
@@ -407,7 +407,7 @@ class TestPDTolerance:
 
     def test_receptor_up_regulation(self):
         """Receptor up-regulation sensitization"""
-        from openpkpd import simulate_pkpd_receptor_regulation
+        from neopkpd import simulate_pkpd_receptor_regulation
         res = simulate_pkpd_receptor_regulation(
             cl=1.0, v=10.0,
             doses=[{"time": i * 8.0, "amount": 50.0} for i in range(21)],
@@ -428,7 +428,7 @@ class TestErrorHandling:
     """Tests for error handling."""
 
     def test_invalid_pk_kind(self):
-        from openpkpd import simulate_pkpd_irm1
+        from neopkpd import simulate_pkpd_irm1
         with pytest.raises(ValueError, match="Unsupported pk_kind"):
             simulate_pkpd_irm1(
                 cl=1.0, v=10.0,
@@ -440,7 +440,7 @@ class TestErrorHandling:
             )
 
     def test_missing_ka_for_oral(self):
-        from openpkpd import simulate_pkpd_direct_emax
+        from neopkpd import simulate_pkpd_direct_emax
         with pytest.raises(ValueError, match="ka required"):
             simulate_pkpd_direct_emax(
                 cl=1.0, v=10.0,
@@ -453,7 +453,7 @@ class TestErrorHandling:
             )
 
     def test_invalid_growth_model(self):
-        from openpkpd import simulate_pkpd_disease_progression
+        from neopkpd import simulate_pkpd_disease_progression
         with pytest.raises(ValueError, match="Unsupported growth_model"):
             simulate_pkpd_disease_progression(
                 cl=1.0, v=10.0,
@@ -465,7 +465,7 @@ class TestErrorHandling:
             )
 
     def test_invalid_receptor_direction(self):
-        from openpkpd import simulate_pkpd_receptor_regulation
+        from neopkpd import simulate_pkpd_receptor_regulation
         with pytest.raises(ValueError, match="direction must be"):
             simulate_pkpd_receptor_regulation(
                 cl=1.0, v=10.0,

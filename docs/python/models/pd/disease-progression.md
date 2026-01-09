@@ -7,7 +7,7 @@ PD model for tumor growth dynamics with drug-induced cell kill, supporting multi
 ## Function Signature
 
 ```python
-openpkpd.simulate_pkpd_disease_progression(
+neopkpd.simulate_pkpd_disease_progression(
     cl: float,
     v: float,
     doses: list[dict],
@@ -81,9 +81,9 @@ openpkpd.simulate_pkpd_disease_progression(
 ## Basic Example: Exponential Growth
 
 ```python
-import openpkpd
+import neopkpd
 
-result = openpkpd.simulate_pkpd_disease_progression(
+result = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0,
     v=50.0,
     doses=[{"time": 0.0, "amount": 500.0}],
@@ -112,7 +112,7 @@ print(f"  Size at 14 days: {tumor[-1]:.1f}")
 ## Comparing Growth Models
 
 ```python
-import openpkpd
+import neopkpd
 
 models = ["exponential", "logistic", "gompertz", "asymptotic"]
 s0 = 100.0
@@ -121,7 +121,7 @@ print("Growth Model | Day 7 Size | Day 14 Size | Max Size")
 print("-" * 55)
 
 for model in models:
-    result = openpkpd.simulate_pkpd_disease_progression(
+    result = neopkpd.simulate_pkpd_disease_progression(
         cl=5.0, v=50.0,
         doses=[],  # No treatment
         growth_model=model,
@@ -141,13 +141,13 @@ for model in models:
 ## Treatment Effect
 
 ```python
-import openpkpd
+import neopkpd
 
 # Weekly dosing
 doses = [{"time": i * 168, "amount": 200.0} for i in range(4)]
 
 # No treatment baseline
-result_no_tx = openpkpd.simulate_pkpd_disease_progression(
+result_no_tx = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0, v=50.0, doses=[],
     growth_model="gompertz",
     s0=100.0, kgrow=0.02, smax=1000.0, alpha=0.0, kdrug=0.0,
@@ -156,7 +156,7 @@ result_no_tx = openpkpd.simulate_pkpd_disease_progression(
 )
 
 # With treatment
-result_tx = openpkpd.simulate_pkpd_disease_progression(
+result_tx = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0, v=50.0, doses=doses,
     growth_model="gompertz",
     s0=100.0, kgrow=0.02, smax=1000.0, alpha=0.0, kdrug=0.01,
@@ -180,7 +180,7 @@ print(f"  Tumor growth inhibition: {(1 - tx[-1]/no_tx[-1]) * 100:.1f}%")
 ## Dose-Response Relationship
 
 ```python
-import openpkpd
+import neopkpd
 
 doses_list = [50, 100, 200, 400, 800]
 
@@ -188,7 +188,7 @@ print("Dose (mg) | Final Size | TGI (%)")
 print("-" * 40)
 
 # No treatment reference
-result_ref = openpkpd.simulate_pkpd_disease_progression(
+result_ref = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0, v=50.0, doses=[],
     growth_model="logistic",
     s0=100.0, kgrow=0.02, smax=1000.0, alpha=0.0, kdrug=0.0,
@@ -200,7 +200,7 @@ ref_final = result_ref['observations']['tumor_size'][-1]
 for dose in doses_list:
     weekly_doses = [{"time": i * 168, "amount": float(dose)} for i in range(2)]
 
-    result = openpkpd.simulate_pkpd_disease_progression(
+    result = neopkpd.simulate_pkpd_disease_progression(
         cl=5.0, v=50.0, doses=weekly_doses,
         growth_model="logistic",
         s0=100.0, kgrow=0.02, smax=1000.0, alpha=0.0, kdrug=0.01,
@@ -219,12 +219,12 @@ for dose in doses_list:
 ## Complete Response Detection
 
 ```python
-import openpkpd
+import neopkpd
 
 # Intensive treatment
 doses = [{"time": i * 24, "amount": 300.0} for i in range(14)]
 
-result = openpkpd.simulate_pkpd_disease_progression(
+result = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0, v=50.0, doses=doses,
     growth_model="exponential",
     s0=100.0, kgrow=0.02, smax=1000.0, alpha=0.0, kdrug=0.02,
@@ -259,12 +259,12 @@ else:
 ## Regrowth After Treatment
 
 ```python
-import openpkpd
+import neopkpd
 
 # Treatment for 2 weeks, then observe
 doses = [{"time": i * 24, "amount": 200.0} for i in range(14)]
 
-result = openpkpd.simulate_pkpd_disease_progression(
+result = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0, v=50.0, doses=doses,
     growth_model="gompertz",
     s0=100.0, kgrow=0.03, smax=1000.0, alpha=0.0, kdrug=0.015,
@@ -293,10 +293,10 @@ for i, s in enumerate(tumor):
 ## Combination Treatment
 
 ```python
-import openpkpd
+import neopkpd
 
 # Single agent
-result_single = openpkpd.simulate_pkpd_disease_progression(
+result_single = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0, v=50.0,
     doses=[{"time": i * 168, "amount": 200.0} for i in range(4)],
     growth_model="logistic",
@@ -306,7 +306,7 @@ result_single = openpkpd.simulate_pkpd_disease_progression(
 )
 
 # Combination (simulate as higher effective kdrug)
-result_combo = openpkpd.simulate_pkpd_disease_progression(
+result_combo = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0, v=50.0,
     doses=[{"time": i * 168, "amount": 200.0} for i in range(4)],
     growth_model="logistic",
@@ -329,12 +329,12 @@ print(f"  Additional benefit: {(single[-1] - combo[-1])/single[-1] * 100:.1f}%")
 ## Survival Surrogate
 
 ```python
-import openpkpd
+import neopkpd
 
 # Tumor doubling time as survival surrogate
 doses = [{"time": i * 168, "amount": 200.0} for i in range(4)]
 
-result = openpkpd.simulate_pkpd_disease_progression(
+result = neopkpd.simulate_pkpd_disease_progression(
     cl=5.0, v=50.0, doses=doses,
     growth_model="exponential",
     s0=100.0, kgrow=0.025, smax=1000.0, alpha=0.0, kdrug=0.01,

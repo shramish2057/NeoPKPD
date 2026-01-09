@@ -1,5 +1,5 @@
 """
-Comprehensive tests for OpenPKPD parameter estimation module.
+Comprehensive tests for NeoPKPD parameter estimation module.
 
 Tests cover:
 - FOCE-I, SAEM, and Laplacian estimation methods
@@ -23,8 +23,8 @@ from typing import Dict, List, Any
 @pytest.fixture(scope="module")
 def julia_initialized():
     """Initialize Julia once for all tests."""
-    import openpkpd
-    openpkpd.init_julia()
+    import neopkpd
+    neopkpd.init_julia()
     return True
 
 
@@ -138,7 +138,7 @@ class TestEstimationConfig:
 
     def test_default_config(self):
         """Test default configuration values."""
-        from openpkpd.estimation import EstimationConfig
+        from neopkpd.estimation import EstimationConfig
 
         config = EstimationConfig()
         assert config.method == "foce"
@@ -150,7 +150,7 @@ class TestEstimationConfig:
 
     def test_custom_config(self):
         """Test custom configuration."""
-        from openpkpd.estimation import EstimationConfig, OmegaStructure
+        from neopkpd.estimation import EstimationConfig, OmegaStructure
 
         config = EstimationConfig(
             method="saem",
@@ -171,7 +171,7 @@ class TestEstimationConfig:
 
     def test_blq_config(self):
         """Test BLQ configuration."""
-        from openpkpd.estimation import EstimationConfig, BLQConfig, BLQMethod
+        from neopkpd.estimation import EstimationConfig, BLQConfig, BLQMethod
 
         blq = BLQConfig(
             method=BLQMethod.M3_LIKELIHOOD,
@@ -194,7 +194,7 @@ class TestFOCEEstimation:
 
     def test_foce_onecomp_iv(self, julia_initialized, onecomp_observed_data, basic_grid, basic_solver):
         """Test FOCE estimation for one-compartment IV bolus."""
-        from openpkpd.estimation import estimate, EstimationConfig
+        from neopkpd.estimation import estimate, EstimationConfig
 
         config = EstimationConfig(
             method="foce",
@@ -238,7 +238,7 @@ class TestFOCEEstimation:
 
     def test_foce_robust_se(self, julia_initialized, onecomp_observed_data, basic_grid, basic_solver):
         """Test FOCE with robust standard error computation."""
-        from openpkpd.estimation import estimate, EstimationConfig
+        from neopkpd.estimation import estimate, EstimationConfig
 
         config = EstimationConfig(
             method="foce",
@@ -269,7 +269,7 @@ class TestLaplacianEstimation:
 
     def test_laplacian_onecomp_iv(self, julia_initialized, onecomp_observed_data, basic_grid, basic_solver):
         """Test Laplacian estimation for one-compartment IV bolus."""
-        from openpkpd.estimation import estimate, EstimationConfig
+        from neopkpd.estimation import estimate, EstimationConfig
 
         config = EstimationConfig(
             method="laplacian",
@@ -301,7 +301,7 @@ class TestSAEMEstimation:
     @pytest.mark.skip(reason="SAEM causes Bus error in Python-Julia bridge - requires JuliaCall investigation")
     def test_saem_onecomp_iv(self, julia_initialized, onecomp_observed_data, basic_grid, basic_solver):
         """Test SAEM estimation for one-compartment IV bolus."""
-        from openpkpd.estimation import estimate, EstimationConfig
+        from neopkpd.estimation import estimate, EstimationConfig
 
         config = EstimationConfig(
             method="saem",
@@ -329,7 +329,7 @@ class TestModelComparison:
 
     def test_likelihood_ratio_test(self):
         """Test likelihood ratio test calculation."""
-        from openpkpd.estimation import likelihood_ratio_test
+        from neopkpd.estimation import likelihood_ratio_test
 
         # Full model OFV = 100, Reduced = 110, df = 2
         result = likelihood_ratio_test(100.0, 110.0, df=2)
@@ -344,7 +344,7 @@ class TestModelComparison:
 
     def test_compare_models_basic(self):
         """Test model comparison with mock results."""
-        from openpkpd.estimation import compare_models, EstimationResult, IndividualEstimate
+        from neopkpd.estimation import compare_models, EstimationResult, IndividualEstimate
 
         # Create mock results
         result1 = EstimationResult(
@@ -423,7 +423,7 @@ class TestDiagnostics:
 
     def test_compute_diagnostics(self):
         """Test diagnostics computation from mock result."""
-        from openpkpd.estimation import compute_diagnostics, EstimationResult, IndividualEstimate
+        from neopkpd.estimation import compute_diagnostics, EstimationResult, IndividualEstimate
 
         # Create mock individuals
         individuals = []
@@ -483,7 +483,7 @@ class TestBootstrap:
 
     def test_bootstrap_config(self):
         """Test BootstrapConfig creation."""
-        from openpkpd.estimation import BootstrapConfig, BootstrapCIMethod
+        from neopkpd.estimation import BootstrapConfig, BootstrapCIMethod
 
         config = BootstrapConfig(
             n_bootstrap=500,
@@ -499,7 +499,7 @@ class TestBootstrap:
     @pytest.mark.skip(reason="Bootstrap has Python-Julia interop issues - all replicates fail when calling estimation_fn")
     def test_bootstrap_run(self, julia_initialized, onecomp_observed_data, basic_grid, basic_solver):
         """Test running bootstrap analysis."""
-        from openpkpd.estimation import run_bootstrap, EstimationConfig, BootstrapConfig
+        from neopkpd.estimation import run_bootstrap, EstimationConfig, BootstrapConfig
 
         est_config = EstimationConfig(
             method="foce",
@@ -534,7 +534,7 @@ class TestErrorHandling:
 
     def test_invalid_method(self, julia_initialized):
         """Test that invalid method raises error."""
-        from openpkpd.estimation import EstimationConfig
+        from neopkpd.estimation import EstimationConfig
 
         # This should create config but will fail at estimation
         config = EstimationConfig(
@@ -546,7 +546,7 @@ class TestErrorHandling:
 
     def test_invalid_model_kind(self, julia_initialized, onecomp_observed_data, basic_grid, basic_solver):
         """Test that invalid model kind raises error."""
-        from openpkpd.estimation import estimate, EstimationConfig
+        from neopkpd.estimation import estimate, EstimationConfig
 
         config = EstimationConfig(
             method="foce",
@@ -564,7 +564,7 @@ class TestErrorHandling:
 
     def test_mismatched_theta_omega_dims(self, julia_initialized):
         """Test config with mismatched dimensions."""
-        from openpkpd.estimation import EstimationConfig
+        from neopkpd.estimation import EstimationConfig
 
         # This should create config but may cause issues during estimation
         config = EstimationConfig(
@@ -581,7 +581,7 @@ class TestEnums:
 
     def test_blq_methods(self):
         """Test BLQ method enum."""
-        from openpkpd.estimation import BLQMethod
+        from neopkpd.estimation import BLQMethod
 
         assert BLQMethod.M1_DISCARD.value == "m1_discard"
         assert BLQMethod.M2_IMPUTE_HALF.value == "m2_half"
@@ -589,7 +589,7 @@ class TestEnums:
 
     def test_omega_structures(self):
         """Test omega structure enum."""
-        from openpkpd.estimation import OmegaStructure
+        from neopkpd.estimation import OmegaStructure
 
         assert OmegaStructure.DIAGONAL.value == "diagonal"
         assert OmegaStructure.BLOCK.value == "block"
@@ -597,7 +597,7 @@ class TestEnums:
 
     def test_bootstrap_ci_methods(self):
         """Test bootstrap CI method enum."""
-        from openpkpd.estimation import BootstrapCIMethod
+        from neopkpd.estimation import BootstrapCIMethod
 
         assert BootstrapCIMethod.PERCENTILE.value == "percentile"
         assert BootstrapCIMethod.BCA.value == "bca"
@@ -608,8 +608,8 @@ class TestImports:
     """Test that all estimation exports are available."""
 
     def test_main_imports(self):
-        """Test imports from main openpkpd module."""
-        from openpkpd import (
+        """Test imports from main neopkpd module."""
+        from neopkpd import (
             estimate,
             run_bootstrap,
             compare_models,
@@ -639,7 +639,7 @@ class TestImports:
 
     def test_submodule_imports(self):
         """Test imports from estimation submodule."""
-        from openpkpd.estimation import (
+        from neopkpd.estimation import (
             estimate,
             run_bootstrap,
             compare_models,

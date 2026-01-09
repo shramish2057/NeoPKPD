@@ -7,7 +7,7 @@ Bioequivalence (BE) assessment following FDA, EMA, and Health Canada guidance.
 ## Overview
 
 ```python
-from openpkpd.nca import bioequivalence_90ci, tost_analysis, be_conclusion
+from neopkpd.nca import bioequivalence_90ci, tost_analysis, be_conclusion
 
 # Calculate 90% CI for GMR
 ci = bioequivalence_90ci(test_values, reference_values)
@@ -20,7 +20,7 @@ print(f"BE: {ci.be_met}")
 ## Quick Start
 
 ```python
-from openpkpd.nca import bioequivalence_90ci
+from neopkpd.nca import bioequivalence_90ci
 
 # AUC values from crossover study
 test_auc = [45.2, 52.1, 38.7, 61.3, 49.8, 55.4, 42.1, 58.9]
@@ -42,7 +42,7 @@ print(f"BE criteria met: {ci.be_met}")
 ### Basic Calculation
 
 ```python
-from openpkpd.nca import bioequivalence_90ci
+from neopkpd.nca import bioequivalence_90ci
 
 ci = bioequivalence_90ci(test_values, ref_values)
 
@@ -84,7 +84,7 @@ ci = bioequivalence_90ci(
 Two One-Sided Tests for equivalence:
 
 ```python
-from openpkpd.nca import tost_analysis
+from neopkpd.nca import tost_analysis
 
 result = tost_analysis(
     test_values,
@@ -115,7 +115,7 @@ class TOSTResult:
 ## Geometric Mean Ratio
 
 ```python
-from openpkpd.nca import geometric_mean_ratio
+from neopkpd.nca import geometric_mean_ratio
 
 gmr = geometric_mean_ratio(test_values, ref_values)
 print(f"GMR: {gmr * 100:.2f}%")
@@ -128,7 +128,7 @@ print(f"GMR: {gmr * 100:.2f}%")
 ## Within-Subject CV
 
 ```python
-from openpkpd.nca import within_subject_cv
+from neopkpd.nca import within_subject_cv
 
 # From crossover data
 cv = within_subject_cv(
@@ -156,7 +156,7 @@ else:
 ### 2x2 Crossover (Standard)
 
 ```python
-from openpkpd.nca import analyze_crossover_be
+from neopkpd.nca import analyze_crossover_be
 
 result = analyze_crossover_be(
     data,
@@ -212,7 +212,7 @@ result = analyze_parallel_be(
 For highly variable drugs (CV > 30%):
 
 ```python
-from openpkpd.nca import rsabe_analysis
+from neopkpd.nca import rsabe_analysis
 
 result = rsabe_analysis(
     test_values,
@@ -232,7 +232,7 @@ print(f"RSABE conclusion: {result.be_met}")
 Average Bioequivalence with Expanding Limits:
 
 ```python
-from openpkpd.nca import abel_analysis
+from neopkpd.nca import abel_analysis
 
 result = abel_analysis(
     test_values,
@@ -254,7 +254,7 @@ print(f"ABEL conclusion: {result.be_met}")
 ### For BE Study
 
 ```python
-from openpkpd.nca import be_sample_size
+from neopkpd.nca import be_sample_size
 
 n = be_sample_size(
     cv=0.25,           # Expected within-subject CV (25%)
@@ -271,7 +271,7 @@ print(f"Total subjects: {2 * n}")
 ### Power Calculation
 
 ```python
-from openpkpd.nca import be_power
+from neopkpd.nca import be_power
 
 power = be_power(
     n=24,
@@ -299,7 +299,7 @@ print(f"Expected power: {power * 100:.1f}%")
 
 ```python
 import pandas as pd
-from openpkpd.nca import (
+from neopkpd.nca import (
     run_population_nca, bioequivalence_90ci,
     tost_analysis, within_subject_cv, NCAConfig
 )
@@ -381,7 +381,7 @@ print(f"      BE concluded: {cmax_tost.be_concluded}")
 ### FDA-Style Report
 
 ```python
-from openpkpd.nca import generate_be_report
+from neopkpd.nca import generate_be_report
 
 report = generate_be_report(
     test_auc, ref_auc, test_cmax, ref_cmax,
@@ -410,7 +410,7 @@ print(report)
 ## Highly Variable Drug Analysis
 
 ```python
-from openpkpd.nca import (
+from neopkpd.nca import (
     within_subject_cv, rsabe_analysis, abel_analysis
 )
 

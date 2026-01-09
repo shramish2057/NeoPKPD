@@ -9,7 +9,7 @@ Comprehensive guide for modeling within-subject variability across different dos
 Inter-occasion variability (IOV) captures the random fluctuations in an individual's parameters from one dosing occasion to another, representing "day-to-day" or "visit-to-visit" variability.
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Define IOV with 15% CV on CL and 10% CV on Ka per occasion
 iov = IOVSpec(
@@ -233,7 +233,7 @@ cl_this_occasion = typical_cl * exp(eta_cl + kappa_cl)
 ### Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # 1. Define model and parameters
 model = TwoCompOral()
@@ -410,7 +410,7 @@ end
 ## Complete Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 using Statistics
 
 # ============================================

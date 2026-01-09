@@ -7,7 +7,7 @@ PK model for drugs that induce their own metabolism, leading to time-varying cle
 ## Usage
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Create autoinduction model
 model = autoinduction()
@@ -65,7 +65,7 @@ Initial: $E(0) = 1.0$
 ## Basic Example
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 model = autoinduction()
 params = CustomODEParams(
@@ -99,7 +99,7 @@ println("Enzyme level day 14: $(enzyme[313])x baseline")
 ## Clinical Example: Carbamazepine
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # Carbamazepine-like autoinduction
 kenz = 0.693 / (4 * 24)  # 4-day enzyme half-life
@@ -142,7 +142,7 @@ end
 ## Dose Adjustment Strategy
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 kenz = 0.693 / (5 * 24)
 

@@ -308,7 +308,7 @@ ALAG1 = THETA(5)
 F1 = THETA(6)
 ```
 
-In OpenPKPD:
+In NeoPKPD:
 ```julia
 AbsorptionModifiers(alag=THETA5, bioavailability=THETA6)
 ```

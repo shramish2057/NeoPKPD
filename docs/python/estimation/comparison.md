@@ -7,7 +7,7 @@ Tools for comparing nested and non-nested models.
 ## Overview
 
 ```python
-from openpkpd.estimation import likelihood_ratio_test, compare_models
+from neopkpd.estimation import likelihood_ratio_test, compare_models
 
 # Compare two models
 chi_sq, p_value = likelihood_ratio_test(
@@ -24,7 +24,7 @@ chi_sq, p_value = likelihood_ratio_test(
 For **nested models** (reduced is special case of full):
 
 ```python
-from openpkpd.estimation import likelihood_ratio_test
+from neopkpd.estimation import likelihood_ratio_test
 
 # Test if adding IIV on ka improves fit
 chi_sq, p_value = likelihood_ratio_test(
@@ -82,7 +82,7 @@ $$BIC = OFV + p \cdot \ln(n)$$
 ## Compare Multiple Models
 
 ```python
-from openpkpd.estimation import compare_models
+from neopkpd.estimation import compare_models
 
 # Compare multiple models at once
 comparison = compare_models(
@@ -196,7 +196,7 @@ if p < 0.05:
 ## Example: Complete Model Selection
 
 ```python
-from openpkpd.estimation import (
+from neopkpd.estimation import (
     estimate, likelihood_ratio_test, compare_models,
     EstimationConfig, FOCEIMethod
 )

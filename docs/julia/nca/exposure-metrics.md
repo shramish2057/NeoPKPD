@@ -17,7 +17,7 @@ Exposure metrics characterize drug exposure from concentration-time profiles wit
 The highest observed concentration:
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
 conc = [0.0, 1.8, 2.5, 2.0, 1.2, 0.6, 0.3, 0.075]
@@ -89,7 +89,7 @@ cavg = nca_cavg(times, conc, 24.0, NCAConfig())
 
 ### AUC Methods
 
-OpenPKPD supports three AUC calculation methods:
+NeoPKPD supports three AUC calculation methods:
 
 | Method | Usage | Formula |
 |--------|-------|---------|
@@ -273,7 +273,7 @@ config = NCAConfig(blq_handling=BLQMissing(), lloq=0.05)
 ## Example: Complete Exposure Analysis
 
 ```julia
-using OpenPKPDCore
+using NeoPKPDCore
 
 # PK data
 times = [0.0, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 24.0]

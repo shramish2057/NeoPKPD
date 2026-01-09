@@ -1,5 +1,5 @@
 """
-Tests for OpenPKPD VPC Module
+Tests for NeoPKPD VPC Module
 
 Tests comprehensive VPC functionality including:
 - Binning strategies (Quantile, EqualWidth, KMeans)
@@ -18,7 +18,7 @@ class TestBinningStrategies:
 
     def test_quantile_binning_basic(self):
         """Test basic quantile binning."""
-        from openpkpd.vpc import QuantileBinning
+        from neopkpd.vpc import QuantileBinning
 
         binning = QuantileBinning(5)
         assert binning.n_bins == 5
@@ -33,7 +33,7 @@ class TestBinningStrategies:
 
     def test_quantile_binning_uneven_data(self):
         """Test quantile binning with uneven data distribution."""
-        from openpkpd.vpc import QuantileBinning
+        from neopkpd.vpc import QuantileBinning
 
         binning = QuantileBinning(4)
         # Dense sampling at start, sparse at end
@@ -45,7 +45,7 @@ class TestBinningStrategies:
 
     def test_equal_width_binning(self):
         """Test equal-width binning."""
-        from openpkpd.vpc import EqualWidthBinning
+        from neopkpd.vpc import EqualWidthBinning
 
         binning = EqualWidthBinning(4)
         times = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16])
@@ -58,7 +58,7 @@ class TestBinningStrategies:
 
     def test_kmeans_binning(self):
         """Test k-means based binning."""
-        from openpkpd.vpc import KMeansBinning
+        from neopkpd.vpc import KMeansBinning
 
         binning = KMeansBinning(3)
         # Data with natural clusters
@@ -70,7 +70,7 @@ class TestBinningStrategies:
 
     def test_binning_empty_data(self):
         """Test binning with empty data."""
-        from openpkpd.vpc import QuantileBinning
+        from neopkpd.vpc import QuantileBinning
 
         binning = QuantileBinning(5)
         bins = binning.compute_bins(np.array([]))
@@ -79,7 +79,7 @@ class TestBinningStrategies:
 
     def test_binning_validation(self):
         """Test binning parameter validation."""
-        from openpkpd.vpc import QuantileBinning
+        from neopkpd.vpc import QuantileBinning
 
         with pytest.raises(ValueError):
             QuantileBinning(1)  # Must have at least 2 bins
@@ -90,7 +90,7 @@ class TestBLQHandling:
 
     def test_blq_m1_discard(self):
         """Test M1: Discard all BLQ."""
-        from openpkpd.vpc import handle_blq, BLQMethod
+        from neopkpd.vpc import handle_blq, BLQMethod
 
         values = np.array([0.05, 0.5, 2.0, 1.5, 0.08])
         times = np.array([0, 0.5, 1, 2, 4])
@@ -105,7 +105,7 @@ class TestBLQHandling:
 
     def test_blq_m4_replace(self):
         """Test M4: Replace with LLOQ/2."""
-        from openpkpd.vpc import handle_blq, BLQMethod
+        from neopkpd.vpc import handle_blq, BLQMethod
 
         values = np.array([0.05, 0.5, 2.0, 1.5, 0.08])
         times = np.array([0, 0.5, 1, 2, 4])
@@ -119,7 +119,7 @@ class TestBLQHandling:
 
     def test_blq_m5_before_after_tmax(self):
         """Test M5: 0 before Tmax, LLOQ/2 after."""
-        from openpkpd.vpc import handle_blq, BLQMethod
+        from neopkpd.vpc import handle_blq, BLQMethod
 
         values = np.array([0.05, 0.5, 2.0, 1.5, 0.08])  # Tmax at index 2
         times = np.array([0, 0.5, 1, 2, 4])
@@ -132,7 +132,7 @@ class TestBLQHandling:
 
     def test_blq_m7_before_after_tmax(self):
         """Test M7: 0 before Tmax, discard after."""
-        from openpkpd.vpc import handle_blq, BLQMethod
+        from neopkpd.vpc import handle_blq, BLQMethod
 
         values = np.array([0.05, 0.5, 2.0, 1.5, 0.08])
         times = np.array([0, 0.5, 1, 2, 4])
@@ -149,7 +149,7 @@ class TestVPCConfig:
 
     def test_config_defaults(self):
         """Test default configuration values."""
-        from openpkpd.vpc import VPCConfig
+        from neopkpd.vpc import VPCConfig
 
         config = VPCConfig()
 
@@ -161,7 +161,7 @@ class TestVPCConfig:
 
     def test_config_custom(self):
         """Test custom configuration."""
-        from openpkpd.vpc import VPCConfig, QuantileBinning
+        from neopkpd.vpc import VPCConfig, QuantileBinning
 
         config = VPCConfig(
             pi_levels=[0.10, 0.50, 0.90],
@@ -177,7 +177,7 @@ class TestVPCConfig:
 
     def test_config_validation(self):
         """Test configuration validation."""
-        from openpkpd.vpc import VPCConfig
+        from neopkpd.vpc import VPCConfig
 
         # Invalid pi_levels
         with pytest.raises(ValueError):
@@ -197,7 +197,7 @@ class TestVPCPython:
 
     def test_vpc_python_basic(self):
         """Test basic pure Python VPC."""
-        from openpkpd.vpc import compute_vpc_python, VPCConfig, QuantileBinning
+        from neopkpd.vpc import compute_vpc_python, VPCConfig, QuantileBinning
 
         # Generate test data
         np.random.seed(42)
@@ -235,7 +235,7 @@ class TestVPCPython:
 
     def test_vpc_python_with_blq(self):
         """Test pure Python VPC with BLQ handling."""
-        from openpkpd.vpc import compute_vpc_python, VPCConfig, BLQMethod
+        from neopkpd.vpc import compute_vpc_python, VPCConfig, BLQMethod
 
         np.random.seed(42)
         obs_times = np.array([0, 1, 2, 4, 8, 12, 24])
@@ -263,7 +263,7 @@ class TestResultExtraction:
     @pytest.fixture
     def mock_vpc_result(self):
         """Create a mock VPC result for testing."""
-        from openpkpd.vpc import (
+        from neopkpd.vpc import (
             VPCResult, VPCBin, VPCPercentileData, VPCConfig,
             QuantileBinning
         )
@@ -309,7 +309,7 @@ class TestResultExtraction:
 
     def test_get_bin_midpoints(self, mock_vpc_result):
         """Test bin midpoint extraction."""
-        from openpkpd.vpc import get_bin_midpoints
+        from neopkpd.vpc import get_bin_midpoints
 
         midpoints = get_bin_midpoints(mock_vpc_result)
 
@@ -319,7 +319,7 @@ class TestResultExtraction:
 
     def test_get_observed_percentile(self, mock_vpc_result):
         """Test observed percentile extraction."""
-        from openpkpd.vpc import get_observed_percentile
+        from neopkpd.vpc import get_observed_percentile
 
         median = get_observed_percentile(mock_vpc_result, 0.50)
 
@@ -329,7 +329,7 @@ class TestResultExtraction:
 
     def test_get_simulated_median(self, mock_vpc_result):
         """Test simulated median extraction."""
-        from openpkpd.vpc import get_simulated_median
+        from neopkpd.vpc import get_simulated_median
 
         sim_median = get_simulated_median(mock_vpc_result, 0.50)
 
@@ -339,7 +339,7 @@ class TestResultExtraction:
 
     def test_get_simulated_ci(self, mock_vpc_result):
         """Test simulated CI extraction."""
-        from openpkpd.vpc import get_simulated_ci
+        from neopkpd.vpc import get_simulated_ci
 
         lower, upper = get_simulated_ci(mock_vpc_result, 0.50)
 
@@ -356,7 +356,7 @@ class TestVPCJulia:
     def julia_initialized(self):
         """Check if Julia is available."""
         try:
-            from openpkpd._julia_bridge import get_julia
+            from neopkpd._julia_bridge import get_julia
             get_julia()
             return True
         except Exception:
@@ -365,7 +365,7 @@ class TestVPCJulia:
 
     def test_compute_vpc_julia(self, julia_initialized):
         """Test Julia-connected VPC computation."""
-        from openpkpd.vpc import compute_vpc, VPCConfig, QuantileBinning
+        from neopkpd.vpc import compute_vpc, VPCConfig, QuantileBinning
 
         observed = {
             "subjects": [
@@ -409,7 +409,7 @@ class TestVPCJulia:
 
     def test_compute_pcvpc_julia(self, julia_initialized):
         """Test Julia-connected pcVPC computation."""
-        from openpkpd.vpc import compute_pcvpc, VPCConfig
+        from neopkpd.vpc import compute_pcvpc, VPCConfig
 
         observed = {
             "subjects": [
@@ -449,7 +449,7 @@ class TestStratifiedVPC:
 
     def test_stratified_vpc_python(self):
         """Test stratified VPC with pure Python."""
-        from openpkpd.vpc import compute_vpc_python, VPCConfig
+        from neopkpd.vpc import compute_vpc_python, VPCConfig
 
         # Create data with two groups
         np.random.seed(42)

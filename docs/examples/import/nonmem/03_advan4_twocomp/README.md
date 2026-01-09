@@ -16,11 +16,11 @@ Import a two-compartment IV bolus model from NONMEM.
 |------|-------------|
 | [run003.ctl](run003.ctl) | NONMEM control file |
 | [convert.py](convert.py) | Python conversion |
-| [expected.json](expected.json) | Expected OpenPKPD spec |
+| [expected.json](expected.json) | Expected NeoPKPD spec |
 
 ## Parameter Mapping
 
-| NONMEM | OpenPKPD |
+| NONMEM | NeoPKPD |
 |--------|----------|
 | THETA(1) = CL | params.CL |
 | THETA(2) = V1 | params.V1 |

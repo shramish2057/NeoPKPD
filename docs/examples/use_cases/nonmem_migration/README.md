@@ -1,6 +1,6 @@
 # NONMEM Migration Use Case
 
-Complete workflow for migrating NONMEM models to OpenPKPD, demonstrating
+Complete workflow for migrating NONMEM models to NeoPKPD, demonstrating
 how to convert an existing NONMEM population PK model and validate that
 simulation results match.
 
@@ -56,16 +56,16 @@ $SIGMA
 
 ```bash
 # Run migration workflow
-julia --project=core/OpenPKPDCore docs/examples/use_cases/nonmem_migration/run.jl
+julia --project=core/NeoPKPDCore docs/examples/use_cases/nonmem_migration/run.jl
 
 # Validate outputs
-julia --project=core/OpenPKPDCore docs/examples/use_cases/nonmem_migration/validate.jl
+julia --project=core/NeoPKPDCore docs/examples/use_cases/nonmem_migration/validate.jl
 ```
 
 ## Migration Mapping
 
 ### Model Type
-| NONMEM | OpenPKPD |
+| NONMEM | NeoPKPD |
 |--------|----------|
 | ADVAN1 | OneCompIVBolus |
 | ADVAN2 | OneCompOralFirstOrder |
@@ -73,7 +73,7 @@ julia --project=core/OpenPKPDCore docs/examples/use_cases/nonmem_migration/valid
 | ADVAN4 | TwoCompOral |
 
 ### Parameters
-| NONMEM | OpenPKPD |
+| NONMEM | NeoPKPD |
 |--------|----------|
 | THETA(1) | typical_cl |
 | THETA(2) | typical_v |
@@ -83,7 +83,7 @@ julia --project=core/OpenPKPDCore docs/examples/use_cases/nonmem_migration/valid
 | OMEGA(3,3) | omega_ka |
 
 ### Covariates
-| NONMEM | OpenPKPD |
+| NONMEM | NeoPKPD |
 |--------|----------|
 | (WT/70)**0.75 | PowerCovariate(exponent=0.75, reference=70.0) |
 | (WT/70) | PowerCovariate(exponent=1.0, reference=70.0) |

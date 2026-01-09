@@ -1,10 +1,10 @@
-# Monolix to OpenPKPD Converter
-# Converts parsed Monolix projects to OpenPKPD model specifications
+# Monolix to NeoPKPD Converter
+# Converts parsed Monolix projects to NeoPKPD model specifications
 
-export convert_monolix_to_openpkpd, MonolixConversionResult, check_unsupported_monolix_constructs
+export convert_monolix_to_neopkpd, MonolixConversionResult, check_unsupported_monolix_constructs
 
 """
-Result of converting a Monolix project file to OpenPKPD format.
+Result of converting a Monolix project file to NeoPKPD format.
 
 Fields:
 - model_spec: The converted ModelSpec (or nothing if conversion failed)
@@ -12,7 +12,7 @@ Fields:
 - error_spec: Residual error specification
 - warnings: Any warnings generated during conversion
 - errors: Any errors that prevented conversion
-- parameter_mapping: Mapping from Monolix parameters to OpenPKPD parameters
+- parameter_mapping: Mapping from Monolix parameters to NeoPKPD parameters
 - unsupported: List of unsupported constructs detected
 """
 struct MonolixConversionResult
@@ -153,7 +153,7 @@ function check_unsupported_monolix_constructs(mlx::MonolixProject)::Vector{Unsup
 end
 
 """
-Convert a Monolix project to OpenPKPD format.
+Convert a Monolix project to NeoPKPD format.
 
 Arguments:
 - mlx: Parsed MonolixProject
@@ -164,7 +164,7 @@ Arguments:
 Returns:
 - MonolixConversionResult containing converted specs and diagnostics
 """
-function convert_monolix_to_openpkpd(
+function convert_monolix_to_neopkpd(
     mlx::MonolixProject;
     doses::Vector{DoseEvent}=DoseEvent[],
     name::String="",
@@ -203,7 +203,7 @@ function convert_monolix_to_openpkpd(
         return MonolixConversionResult(nothing, nothing, nothing, warnings, errors, parameter_mapping, unsupported)
     end
 
-    # Determine OpenPKPD model kind
+    # Determine NeoPKPD model kind
     model_kind_sym = nothing
     if mlx.model.model_type !== nothing
         model_kind_sym = get_monolix_model_mapping(mlx.model.model_type.model)
@@ -285,7 +285,7 @@ function convert_monolix_to_openpkpd(
 end
 
 """
-Infer OpenPKPD model kind from Monolix structural model properties.
+Infer NeoPKPD model kind from Monolix structural model properties.
 """
 function _infer_model_kind(model::MonolixStructuralModel)::Union{Nothing,Symbol}
     is_oral = model.admin_type == "oral" || model.absorption == "firstorder"
@@ -378,9 +378,9 @@ function _convert_monolix_iiv(
 
     for p in parameters
         if p.has_iiv && p.omega > 0.0
-            # Map parameter name to OpenPKPD symbol
+            # Map parameter name to NeoPKPD symbol
             name_lower = lowercase(p.name)
-            openpkpd_sym = if name_lower in ["ka", "kabs", "k_a"]
+            neopkpd_sym = if name_lower in ["ka", "kabs", "k_a"]
                 :Ka
             elseif name_lower in ["cl", "clearance"]
                 :CL
@@ -401,9 +401,9 @@ function _convert_monolix_iiv(
             # Monolix stores omega as SD for log-normal distribution
             # If distribution is logNormal, omega is on log-scale
             if p.distribution == "logNormal"
-                omegas_dict[openpkpd_sym] = p.omega  # Already SD
+                omegas_dict[neopkpd_sym] = p.omega  # Already SD
             else
-                omegas_dict[openpkpd_sym] = p.omega
+                omegas_dict[neopkpd_sym] = p.omega
                 push!(warnings, "Non-logNormal distribution $(p.distribution) for $(p.name) - may need manual adjustment")
             end
         end

@@ -130,7 +130,7 @@ end
 Complete Monolix project representation.
 
 This structure captures the essential elements needed to convert
-a Monolix project to OpenPKPD format.
+a Monolix project to NeoPKPD format.
 
 Fields:
 - description: Project description
@@ -151,7 +151,7 @@ struct MonolixProject
     raw_text::String
 end
 
-# Mapping from Monolix model names to OpenPKPD model kinds
+# Mapping from Monolix model names to NeoPKPD model kinds
 const MONOLIX_MODEL_MAP = Dict{String,Symbol}(
     # One-compartment models
     "pk_bolus1cpt_Vk_PLASMA" => :OneCompIVBolus,
@@ -174,7 +174,7 @@ const MONOLIX_MODEL_MAP = Dict{String,Symbol}(
 )
 
 """
-Get the OpenPKPD model kind for a Monolix model name.
+Get the NeoPKPD model kind for a Monolix model name.
 
 Returns the corresponding Symbol or nothing if not supported.
 """

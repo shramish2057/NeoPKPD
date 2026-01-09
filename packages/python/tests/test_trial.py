@@ -1,5 +1,5 @@
 """
-Tests for OpenPKPD Trial Module.
+Tests for NeoPKPD Trial Module.
 
 These tests verify the trial simulation, study designs, dosing regimens,
 virtual population generation, and statistical analysis functions.
@@ -8,7 +8,7 @@ virtual population generation, and statistical analysis functions.
 import pytest
 import math
 
-from openpkpd.trial import (
+from neopkpd.trial import (
     # Designs
     parallel_design,
     crossover_2x2,

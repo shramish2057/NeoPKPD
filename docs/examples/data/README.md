@@ -23,7 +23,7 @@ Examples demonstrating import of clinical data in CDISC and custom formats.
 ## Basic Usage
 
 ```python
-from openpkpd.data import load_cdisc
+from neopkpd.data import load_cdisc
 
 # Load from CSV files
 data = load_cdisc(
@@ -32,17 +32,17 @@ data = load_cdisc(
     dm="dm.csv"
 )
 
-# Access as OpenPKPD format
+# Access as NeoPKPD format
 print(f"Subjects: {len(data.subjects)}")
 print(f"Observations: {len(data.observations)}")
 print(f"Doses: {len(data.doses)}")
 ```
 
-## CDISC to OpenPKPD Mapping
+## CDISC to NeoPKPD Mapping
 
 ### PC Domain
 
-| CDISC Variable | OpenPKPD |
+| CDISC Variable | NeoPKPD |
 |----------------|----------|
 | USUBJID | subject_id |
 | PCTPTNUM / PCELTM | time |
@@ -52,7 +52,7 @@ print(f"Doses: {len(data.doses)}")
 
 ### EX Domain
 
-| CDISC Variable | OpenPKPD |
+| CDISC Variable | NeoPKPD |
 |----------------|----------|
 | USUBJID | subject_id |
 | EXSTDTC + EXSTTM | dose_time |
@@ -62,7 +62,7 @@ print(f"Doses: {len(data.doses)}")
 
 ### DM Domain
 
-| CDISC Variable | OpenPKPD |
+| CDISC Variable | NeoPKPD |
 |----------------|----------|
 | USUBJID | subject_id |
 | AGE | covariates.age |

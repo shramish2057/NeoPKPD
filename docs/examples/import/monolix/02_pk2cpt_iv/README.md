@@ -15,11 +15,11 @@ Import a two-compartment IV model from Monolix project.
 |------|-------------|
 | [project.mlxtran](project.mlxtran) | Monolix project file |
 | [convert.py](convert.py) | Python conversion |
-| [expected.json](expected.json) | Expected OpenPKPD spec |
+| [expected.json](expected.json) | Expected NeoPKPD spec |
 
 ## Parameter Mapping
 
-| Monolix | OpenPKPD |
+| Monolix | NeoPKPD |
 |---------|----------|
 | Cl_pop | params.CL |
 | V1_pop | params.V1 |
