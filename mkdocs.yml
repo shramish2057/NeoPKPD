@@ -179,6 +179,8 @@ nav:
     - Data Import:
       - python/data/index.md
       - CDISC Formats: python/data/cdisc.md
+      - NONMEM Import: python/data/nonmem.md
+      - Monolix Import: python/data/monolix.md
 
   - Examples:
     - examples/README.md

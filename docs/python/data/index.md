@@ -16,6 +16,22 @@ The `openpkpd.data` module provides utilities for importing and preparing PK/PD 
 
     [:octicons-arrow-right-24: CDISC Import](cdisc.md)
 
+-   :material-file-code:{ .lg .middle } **NONMEM Import**
+
+    ---
+
+    Parse NONMEM control files
+
+    [:octicons-arrow-right-24: NONMEM](nonmem.md)
+
+-   :material-file-document:{ .lg .middle } **Monolix Import**
+
+    ---
+
+    Parse Monolix project files
+
+    [:octicons-arrow-right-24: Monolix](monolix.md)
+
 -   :material-file-delimited:{ .lg .middle } **CSV Files**
 
     ---
@@ -23,14 +39,6 @@ The `openpkpd.data` module provides utilities for importing and preparing PK/PD 
     Standard CSV data import
 
     [:octicons-arrow-right-24: CSV Import](#csv-import)
-
--   :material-database:{ .lg .middle } **SAS Transport (XPT)**
-
-    ---
-
-    SAS transport file format
-
-    [:octicons-arrow-right-24: XPT Import](#xpt-import)
 
 </div>
 
@@ -283,6 +291,8 @@ nca_results = run_population_nca(est_data)
 
 ## Next Steps
 
-- [CDISC Import Details](cdisc.md)
-- [NCA Module](../nca/index.md)
-- [Trial Simulation](../trial/index.md)
+- [CDISC Import Details](cdisc.md) - SDTM and ADaM data
+- [NONMEM Import](nonmem.md) - Import control stream files
+- [Monolix Import](monolix.md) - Import mlxtran projects
+- [NCA Module](../nca/index.md) - Non-compartmental analysis
+- [Estimation](../estimation/index.md) - Population modeling
