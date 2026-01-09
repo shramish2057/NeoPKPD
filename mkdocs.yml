@@ -93,6 +93,8 @@ nav:
       - SAEM Algorithm: julia/estimation/saem.md
       - Laplacian: julia/estimation/laplacian.md
       - Diagnostics: julia/estimation/diagnostics.md
+      - Bootstrap Analysis: julia/estimation/bootstrap.md
+      - Model Comparison: julia/estimation/comparison.md
     - Visual Predictive Check:
       - julia/vpc/index.md
       - Standard VPC: julia/vpc/standard.md
@@ -152,6 +154,14 @@ nav:
       - Dosing Regimens: python/trial/dosing.md
       - Virtual Population: python/trial/population.md
       - Power Analysis: python/trial/power.md
+    - Parameter Estimation:
+      - python/estimation/index.md
+      - FOCE-I Method: python/estimation/foce.md
+      - SAEM Algorithm: python/estimation/saem.md
+      - Laplacian: python/estimation/laplacian.md
+      - Diagnostics: python/estimation/diagnostics.md
+      - Bootstrap Analysis: python/estimation/bootstrap.md
+      - Model Comparison: python/estimation/comparison.md
     - Visualization:
       - python/viz/index.md
       - Backends & Themes: python/viz/backends.md
