@@ -64,11 +64,18 @@ nav:
         - Three-Compartment IV: julia/models/pk/threecomp-iv.md
         - Transit Absorption: julia/models/pk/transit-absorption.md
         - Michaelis-Menten: julia/models/pk/michaelis-menten.md
+        - TMDD: julia/models/pk/tmdd.md
+        - Parallel Absorption: julia/models/pk/parallel-absorption.md
+        - Enterohepatic Recirculation: julia/models/pk/enterohepatic.md
+        - Autoinduction: julia/models/pk/autoinduction.md
       - Pharmacodynamic Models:
         - Direct Emax: julia/models/pd/direct-emax.md
         - Sigmoid Emax: julia/models/pd/sigmoid-emax.md
         - Effect Compartment: julia/models/pd/effect-compartment.md
         - Indirect Response: julia/models/pd/indirect-response.md
+        - Transit Compartment PD: julia/models/pd/transit-pd.md
+        - Disease Progression: julia/models/pd/disease-progression.md
+        - Tolerance Models: julia/models/pd/tolerance.md
     - Population Modeling:
       - julia/population/index.md
       - Inter-Individual Variability: julia/population/iiv.md
@@ -116,11 +123,18 @@ nav:
         - Three-Compartment: python/models/pk/threecomp.md
         - Transit Absorption: python/models/pk/transit.md
         - Michaelis-Menten: python/models/pk/michaelis-menten.md
+        - TMDD: python/models/pk/tmdd.md
+        - Parallel Absorption: python/models/pk/parallel-absorption.md
+        - Enterohepatic Recirculation: python/models/pk/enterohepatic.md
+        - Autoinduction: python/models/pk/autoinduction.md
       - Pharmacodynamic Models:
         - Direct Emax: python/models/pd/direct-emax.md
         - Sigmoid Emax: python/models/pd/sigmoid-emax.md
         - Effect Compartment: python/models/pd/effect-compartment.md
         - Indirect Response: python/models/pd/indirect-response.md
+        - Transit Compartment PD: python/models/pd/transit-pd.md
+        - Disease Progression: python/models/pd/disease-progression.md
+        - Tolerance Models: python/models/pd/tolerance.md
     - Population Modeling:
       - python/population/index.md
       - Population IV Bolus: python/population/iv-bolus.md
