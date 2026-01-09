@@ -164,6 +164,10 @@ jobs:
 
       - uses: julia-actions/cache@v2
 
+      - name: Install dependencies
+        run: |
+          julia -e 'using Pkg; Pkg.activate("packages/core"); Pkg.instantiate()'
+
       - name: Test IV infusion
         run: |
           julia --project=packages/core -e '
@@ -209,6 +213,10 @@ jobs:
 
       - uses: julia-actions/cache@v2
 
+      - name: Install dependencies
+        run: |
+          julia -e 'using Pkg; Pkg.activate("packages/core"); Pkg.instantiate()'
+
       - name: Test population simulation
         run: |
           julia --project=packages/core -e '
@@ -248,6 +256,10 @@ jobs:
           version: ${{ env.JULIA_VERSION }}
 
       - uses: julia-actions/cache@v2
+
+      - name: Install dependencies
+        run: |
+          julia -e 'using Pkg; Pkg.activate("packages/core"); Pkg.instantiate()'
 
       - name: Test sensitivity analysis
         run: |
@@ -639,6 +651,10 @@ jobs:
           version: ${{ env.JULIA_VERSION }}
 
       - uses: julia-actions/cache@v2
+
+      - name: Install dependencies
+        run: |
+          julia -e 'using Pkg; Pkg.activate("packages/core"); Pkg.instantiate()'
 
       - name: Check version consistency
         run: |
