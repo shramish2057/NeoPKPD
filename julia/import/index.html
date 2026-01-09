@@ -7283,43 +7283,44 @@
 <hr />
 <h2 id="migration-workflow">Migration Workflow<a class="headerlink" href="#migration-workflow" title="Permanent link">&para;</a></h2>
 <h3 id="nonmem-to-openpkpd">NONMEM to OpenPKPD<a class="headerlink" href="#nonmem-to-openpkpd" title="Permanent link">&para;</a></h3>
-<pre class="mermaid"><code>graph LR
-    A[NONMEM .ctl] --&gt; B[import_nonmem]
-    B --&gt; C[ParsedModel]
-    C --&gt; D[to_model_spec]
-    D --&gt; E[OpenPKPD ModelSpec]
-    E --&gt; F[Simulate/Estimate]</code></pre>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>graph LR
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    A[NONMEM .ctl] --&gt; B[import_nonmem]
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    B --&gt; C[ParsedModel]
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    C --&gt; D[to_model_spec]
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    D --&gt; E[OpenPKPD ModelSpec]
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    E --&gt; F[Simulate/Estimate]
+</span></code></pre></div>
 <h3 id="step-by-step">Step-by-Step<a class="headerlink" href="#step-by-step" title="Permanent link">&para;</a></h3>
 <ol>
 <li>
 <p><strong>Parse control stream</strong>
-<div class="language-julia highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">parsed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">import_nonmem</span><span class="p">(</span><span class="s">&quot;run001.ctl&quot;</span><span class="p">)</span>
+<div class="language-julia highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">parsed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">import_nonmem</span><span class="p">(</span><span class="s">&quot;run001.ctl&quot;</span><span class="p">)</span>
 </span></code></pre></div></p>
 </li>
 <li>
 <p><strong>Review parsed model</strong>
-<div class="language-julia highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">println</span><span class="p">(</span><span class="s">&quot;ADVAN: &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">parsed</span><span class="o">.</span><span class="n">advan</span><span class="p">)</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">println</span><span class="p">(</span><span class="s">&quot;Parameters: &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">parsed</span><span class="o">.</span><span class="n">theta</span><span class="p">)</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">println</span><span class="p">(</span><span class="s">&quot;Random effects: &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">parsed</span><span class="o">.</span><span class="n">omega</span><span class="p">)</span>
+<div class="language-julia highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">println</span><span class="p">(</span><span class="s">&quot;ADVAN: &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">parsed</span><span class="o">.</span><span class="n">advan</span><span class="p">)</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">println</span><span class="p">(</span><span class="s">&quot;Parameters: &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">parsed</span><span class="o">.</span><span class="n">theta</span><span class="p">)</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">println</span><span class="p">(</span><span class="s">&quot;Random effects: &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">parsed</span><span class="o">.</span><span class="n">omega</span><span class="p">)</span>
 </span></code></pre></div></p>
 </li>
 <li>
 <p><strong>Convert to OpenPKPD</strong>
-<div class="language-julia highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">spec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_model_spec</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
+<div class="language-julia highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">spec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">to_model_spec</span><span class="p">(</span><span class="n">parsed</span><span class="p">)</span>
 </span></code></pre></div></p>
 </li>
 <li>
 <p><strong>Validate with simulation</strong>
-<div class="language-julia highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">simulate</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span><span class="w"> </span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">solver</span><span class="p">)</span>
+<div class="language-julia highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">simulate</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span><span class="w"> </span><span class="n">grid</span><span class="p">,</span><span class="w"> </span><span class="n">solver</span><span class="p">)</span>
 </span></code></pre></div></p>
 </li>
 <li>
 <p><strong>Compare to NONMEM output</strong>
-<div class="language-julia highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c"># Load NONMEM predictions</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">nm_pred</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load_nonmem_output</span><span class="p">(</span><span class="s">&quot;run001.tab&quot;</span><span class="p">)</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c"># Compare</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nd">@assert</span><span class="w"> </span><span class="n">isapprox</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">observations</span><span class="p">[</span><span class="ss">:conc</span><span class="p">],</span><span class="w"> </span><span class="n">nm_pred</span><span class="o">.</span><span class="n">IPRED</span><span class="p">,</span><span class="w"> </span><span class="n">rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<div class="language-julia highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c"># Load NONMEM predictions</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">nm_pred</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load_nonmem_output</span><span class="p">(</span><span class="s">&quot;run001.tab&quot;</span><span class="p">)</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c"># Compare</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nd">@assert</span><span class="w"> </span><span class="n">isapprox</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">observations</span><span class="p">[</span><span class="ss">:conc</span><span class="p">],</span><span class="w"> </span><span class="n">nm_pred</span><span class="o">.</span><span class="n">IPRED</span><span class="p">,</span><span class="w"> </span><span class="n">rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
 </span></code></pre></div></p>
 </li>
 </ol>
@@ -7439,7 +7440,7 @@
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.esm.min.mjs" type="module"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
