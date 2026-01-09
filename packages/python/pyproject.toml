@@ -9,6 +9,7 @@ description = "Python interface for OpenPKPDCore (Julia) with deterministic arti
 requires-python = ">=3.10"
 dependencies = [
   "juliacall>=0.9.20",
+  "numpy>=1.20",
 ]
 
 [project.optional-dependencies]
