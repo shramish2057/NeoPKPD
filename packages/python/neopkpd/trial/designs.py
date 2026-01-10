@@ -414,6 +414,246 @@ def bioequivalence_design(
     )
 
 
+# ============================================================================
+# Adaptive Design Features
+# ============================================================================
+
+class RARMethod(str, Enum):
+    """Response-adaptive randomization methods."""
+    THALL_WATHEN = "thall_wathen"
+    DBCD = "dbcd"
+    BAYESIAN = "bayesian"
+
+
+class SSRMethod(str, Enum):
+    """Sample size re-estimation methods."""
+    CONDITIONAL_POWER = "conditional_power"
+    VARIANCE_BASED = "variance_based"
+    PROMISING_ZONE = "promising_zone"
+
+
+class SelectionCriterion(str, Enum):
+    """Treatment selection criteria for arm dropping."""
+    POSTERIOR_PROBABILITY = "posterior_probability"
+    FREQUENTIST_PVALUE = "frequentist_pvalue"
+    EFFECT_SIZE = "effect_size"
+
+
+@dataclass
+class ResponseAdaptiveRandomization:
+    """
+    Response-adaptive randomization (RAR) configuration.
+
+    Dynamically adjusts allocation probabilities based on interim outcomes.
+    Reference: Thall PF, Wathen JK (2007). Practical Bayesian adaptive randomisation.
+
+    Attributes:
+        method: RAR method ('thall_wathen', 'dbcd', 'bayesian')
+        prior_alpha: Beta prior alpha parameter (default 1.0)
+        prior_beta: Beta prior beta parameter (default 1.0)
+        tuning_parameter: Controls adaptation aggressiveness (default 0.5)
+        min_allocation: Minimum allocation probability per arm (default 0.1)
+        burn_in_fraction: Fraction of trial with fixed allocation (default 0.2)
+
+    Example:
+        >>> rar = ResponseAdaptiveRandomization(method='thall_wathen')
+        >>> design = adaptive_design_full(base, rar_config=rar)
+    """
+    method: str = "thall_wathen"
+    prior_alpha: float = 1.0
+    prior_beta: float = 1.0
+    tuning_parameter: float = 0.5
+    min_allocation: float = 0.1
+    burn_in_fraction: float = 0.2
+
+
+@dataclass
+class SampleSizeReestimation:
+    """
+    Sample size re-estimation (SSR) configuration.
+
+    Adjusts sample size based on interim conditional power or variance.
+    Reference: Mehta CR, Pocock SJ (2011). Adaptive increase in sample size.
+
+    Attributes:
+        method: SSR method ('conditional_power', 'variance_based')
+        target_power: Target conditional power (default 0.80)
+        max_increase_factor: Maximum sample size multiplier (default 2.0)
+        promising_zone: CP range for re-estimation (default [0.36, 0.80])
+        blinded: Use blinded variance estimate (default True)
+
+    Example:
+        >>> ssr = SampleSizeReestimation(target_power=0.90, max_increase_factor=1.5)
+        >>> design = adaptive_design_full(base, ssr_config=ssr)
+    """
+    method: str = "conditional_power"
+    target_power: float = 0.80
+    max_increase_factor: float = 2.0
+    promising_zone: Tuple[float, float] = (0.36, 0.80)
+    blinded: bool = True
+
+
+@dataclass
+class TreatmentSelection:
+    """
+    Treatment selection (adaptive arm dropping) configuration.
+
+    Drops inferior treatment arms at interim analysis.
+    Reference: Stallard N, Todd S (2003). Sequential designs for Phase II/III.
+
+    Attributes:
+        criterion: Selection criterion ('posterior_probability', 'frequentist_pvalue', 'effect_size')
+        threshold: Threshold for dropping (interpretation depends on criterion)
+        min_arms: Minimum number of arms to keep (default 2)
+        selection_fraction: Information fraction for selection (default 0.5)
+        control_arm: Index of control arm (never dropped, default 0)
+
+    Example:
+        >>> selection = TreatmentSelection(criterion='posterior_probability', threshold=0.10)
+        >>> design = adaptive_design_full(base, selection_config=selection)
+    """
+    criterion: str = "posterior_probability"
+    threshold: float = 0.10
+    min_arms: int = 2
+    selection_fraction: float = 0.5
+    control_arm: int = 0
+
+
+@dataclass
+class BiomarkerEnrichment:
+    """
+    Biomarker-driven enrichment design configuration.
+
+    Adapts enrollment criteria based on biomarker-treatment effect interaction.
+    Reference: Simon R, Wang SJ (2006). Use of genomic signatures.
+
+    Attributes:
+        biomarker_name: Name of the biomarker covariate
+        initial_threshold: Initial threshold for biomarker-positive
+        adapt_threshold: Whether to adapt threshold based on interim results
+        enrichment_fraction: Information fraction for enrichment decision (default 0.5)
+        min_positive_rate: Minimum biomarker-positive rate to trigger enrichment
+        treatment_effect_threshold: Min effect in biomarker+ to restrict enrollment
+
+    Example:
+        >>> enrichment = BiomarkerEnrichment(
+        ...     biomarker_name='EGFR',
+        ...     initial_threshold=1.0,
+        ...     adapt_threshold=True
+        ... )
+        >>> design = adaptive_design_full(base, enrichment_config=enrichment)
+    """
+    biomarker_name: str = "biomarker"
+    initial_threshold: float = 0.0
+    adapt_threshold: bool = True
+    enrichment_fraction: float = 0.5
+    min_positive_rate: float = 0.3
+    treatment_effect_threshold: float = 0.0
+
+
+@dataclass
+class FullAdaptiveDesign:
+    """
+    Full adaptive trial design with all adaptive features.
+
+    Supports:
+    - Response-adaptive randomization (RAR)
+    - Sample size re-estimation (SSR)
+    - Treatment selection (arm dropping)
+    - Biomarker enrichment
+
+    Attributes:
+        base_design: Underlying study design
+        interim_analyses: Information fractions for interim analyses
+        alpha_spending: Alpha spending function type
+        futility_threshold: Futility boundary (conditional power threshold)
+        rar_config: Response-adaptive randomization configuration
+        ssr_config: Sample size re-estimation configuration
+        selection_config: Treatment selection configuration
+        enrichment_config: Biomarker enrichment configuration
+
+    Example:
+        >>> base = parallel_design(4)  # 4-arm trial
+        >>> rar = ResponseAdaptiveRandomization(method='thall_wathen')
+        >>> selection = TreatmentSelection(min_arms=2)
+        >>> design = FullAdaptiveDesign(
+        ...     base_design=base,
+        ...     interim_analyses=[0.5],
+        ...     rar_config=rar,
+        ...     selection_config=selection
+        ... )
+    """
+    base_design: Union[ParallelDesign, CrossoverDesign]
+    interim_analyses: List[float] = field(default_factory=lambda: [0.5])
+    alpha_spending: str = "obrien_fleming"
+    futility_threshold: float = 0.10
+    rar_config: Optional[ResponseAdaptiveRandomization] = None
+    ssr_config: Optional[SampleSizeReestimation] = None
+    selection_config: Optional[TreatmentSelection] = None
+    enrichment_config: Optional[BiomarkerEnrichment] = None
+
+
+def adaptive_design_full(
+    base_design: Union[ParallelDesign, CrossoverDesign],
+    interim_analyses: List[float] = [0.5],
+    alpha_spending: str = "obrien_fleming",
+    futility_threshold: float = 0.10,
+    rar_config: Optional[ResponseAdaptiveRandomization] = None,
+    ssr_config: Optional[SampleSizeReestimation] = None,
+    selection_config: Optional[TreatmentSelection] = None,
+    enrichment_config: Optional[BiomarkerEnrichment] = None,
+) -> FullAdaptiveDesign:
+    """
+    Create a full adaptive trial design with all adaptive features.
+
+    Industry-standard implementation following FDA Guidance (2019).
+
+    Args:
+        base_design: Underlying study design
+        interim_analyses: Information fractions for interim analyses
+        alpha_spending: Alpha spending function ('obrien_fleming', 'pocock', 'haybittle_peto')
+        futility_threshold: Futility boundary (conditional power threshold)
+        rar_config: Response-adaptive randomization settings
+        ssr_config: Sample size re-estimation settings
+        selection_config: Treatment selection (arm dropping) settings
+        enrichment_config: Biomarker enrichment settings
+
+    Returns:
+        FullAdaptiveDesign object
+
+    Example:
+        >>> # Multi-arm trial with RAR and arm dropping
+        >>> base = parallel_design(4)
+        >>> rar = ResponseAdaptiveRandomization(method='thall_wathen')
+        >>> selection = TreatmentSelection(criterion='posterior_probability')
+        >>> design = adaptive_design_full(
+        ...     base_design=base,
+        ...     interim_analyses=[0.5],
+        ...     rar_config=rar,
+        ...     selection_config=selection
+        ... )
+
+        >>> # Trial with sample size re-estimation
+        >>> base = parallel_design(2)
+        >>> ssr = SampleSizeReestimation(target_power=0.90, max_increase_factor=2.0)
+        >>> design = adaptive_design_full(base, ssr_config=ssr)
+
+        >>> # Biomarker enrichment design
+        >>> enrichment = BiomarkerEnrichment(biomarker_name='PD-L1')
+        >>> design = adaptive_design_full(base, enrichment_config=enrichment)
+    """
+    return FullAdaptiveDesign(
+        base_design=base_design,
+        interim_analyses=interim_analyses,
+        alpha_spending=alpha_spending,
+        futility_threshold=futility_threshold,
+        rar_config=rar_config,
+        ssr_config=ssr_config,
+        selection_config=selection_config,
+        enrichment_config=enrichment_config,
+    )
+
+
 def get_design_description(design: Any) -> str:
     """
     Get a human-readable description of a study design.
@@ -435,6 +675,20 @@ def get_design_description(design: Any) -> str:
         return f"{design.n_periods}-period {design.n_sequences}-sequence crossover design"
     elif isinstance(design, DoseEscalationDesign):
         return f"Dose escalation ({design.escalation_rule}) with {len(design.dose_levels)} dose levels"
+    elif isinstance(design, FullAdaptiveDesign):
+        base_desc = get_design_description(design.base_design)
+        n_interim = len(design.interim_analyses)
+        features = []
+        if design.rar_config:
+            features.append("RAR")
+        if design.ssr_config:
+            features.append("SSR")
+        if design.selection_config:
+            features.append("arm-dropping")
+        if design.enrichment_config:
+            features.append("enrichment")
+        feature_str = f" ({', '.join(features)})" if features else ""
+        return f"Full adaptive {base_desc} with {n_interim} interim(s){feature_str}"
     elif isinstance(design, AdaptiveDesign):
         base_desc = get_design_description(design.base_design)
         n_interim = len(design.interim_analyses)

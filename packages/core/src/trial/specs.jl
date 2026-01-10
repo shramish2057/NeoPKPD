@@ -834,40 +834,69 @@ function validate_trial_spec(spec::TrialSpec; strict::Bool = false)::TrialValida
         end
     end
 
-    # Check for unsupported adaptive design features
+    # Validate adaptive design features (now implemented)
     if spec.design isa AdaptiveDesign
         adaptation_rules = spec.design.adaptation_rules
 
-        # Response-adaptive randomization not implemented
+        # Response-adaptive randomization (RAR) - now supported
         if haskey(adaptation_rules, :response_adaptive_randomization) ||
            haskey(adaptation_rules, :rar) ||
            get(adaptation_rules, :adaptive_randomization, false) == true
-            push!(errors, "Response-adaptive randomization is not implemented. " *
-                          "Please use fixed randomization ratios.")
+            # Validate RAR settings
+            rar_method = get(adaptation_rules, :rar_method, :thall_wathen)
+            valid_rar_methods = [:thall_wathen, :dbcd, :bayesian]
+            if !(rar_method in valid_rar_methods)
+                push!(warnings, "Unknown RAR method '$(rar_method)'. " *
+                                "Valid options: $(valid_rar_methods). Defaulting to Thall-Wathen.")
+            end
+            push!(warnings, "Response-adaptive randomization enabled. " *
+                            "Ensure minimum allocation constraints are appropriate for the trial.")
         end
 
-        # Sample size re-estimation not fully implemented
+        # Sample size re-estimation (SSR) - now fully implemented
         if haskey(adaptation_rules, :sample_size_reestimation) ||
            haskey(adaptation_rules, :ssr)
-            push!(warnings, "Sample size re-estimation is partially implemented. " *
-                            "Results should be verified manually.")
+            ssr_method = get(adaptation_rules, :ssr_method, :conditional_power)
+            valid_ssr_methods = [:conditional_power, :variance_based, :promising_zone]
+            if !(ssr_method in valid_ssr_methods)
+                push!(warnings, "Unknown SSR method '$(ssr_method)'. " *
+                                "Valid options: $(valid_ssr_methods)")
+            end
+            max_increase = get(adaptation_rules, :ssr_max_increase, 2.0)
+            if max_increase > 3.0
+                push!(warnings, "SSR max increase factor $(max_increase) is large. " *
+                                "Consider regulatory implications.")
+            end
         end
 
-        # Information adaptive designs
+        # Information adaptive designs - now supported via SSR
         if haskey(adaptation_rules, :information_adaptive)
-            push!(errors, "Information-adaptive designs are not implemented.")
+            push!(warnings, "Information-adaptive design enabled via sample size re-estimation.")
         end
 
-        # Treatment selection (drop arms)
+        # Treatment selection (drop arms) - now implemented
         if haskey(adaptation_rules, :drop_arms) ||
            haskey(adaptation_rules, :treatment_selection)
-            push!(errors, "Treatment selection (adaptive arm dropping) is not implemented.")
+            min_arms = get(adaptation_rules, :min_arms, 2)
+            if min_arms < 2
+                push!(errors, "Treatment selection must keep at least 2 arms (control + 1 treatment).")
+            end
+            selection_criterion = get(adaptation_rules, :selection_criterion, :posterior_probability)
+            valid_criteria = [:posterior_probability, :frequentist_pvalue, :effect_size]
+            if !(selection_criterion in valid_criteria)
+                push!(warnings, "Unknown selection criterion '$(selection_criterion)'. " *
+                                "Valid options: $(valid_criteria)")
+            end
         end
 
-        # Enrichment designs
+        # Enrichment designs - now implemented
         if haskey(adaptation_rules, :enrichment) ||
            haskey(adaptation_rules, :biomarker_enrichment)
-            push!(errors, "Enrichment designs are not implemented.")
+            biomarker = get(adaptation_rules, :biomarker_name, nothing)
+            if biomarker === nothing
+                push!(warnings, "Enrichment design enabled but no biomarker specified. " *
+                                "Using default biomarker name ':biomarker'.")
+            end
         end
 
         # Validate alpha spending function

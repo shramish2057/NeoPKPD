@@ -34,6 +34,7 @@ from .designs import (
     dose_escalation_mtpi,
     dose_escalation_crm,
     adaptive_design,
+    adaptive_design_full,
     bioequivalence_design,
     get_design_description,
     ParallelDesign,
@@ -41,6 +42,16 @@ from .designs import (
     DoseEscalationDesign,
     BioequivalenceDesign,
     AdaptiveDesign,
+    FullAdaptiveDesign,
+    # Adaptive design configurations
+    ResponseAdaptiveRandomization,
+    SampleSizeReestimation,
+    TreatmentSelection,
+    BiomarkerEnrichment,
+    # Enums
+    RARMethod,
+    SSRMethod,
+    SelectionCriterion,
 )
 
 from .regimens import (
@@ -137,6 +148,7 @@ __all__ = [
     "dose_escalation_mtpi",
     "dose_escalation_crm",
     "adaptive_design",
+    "adaptive_design_full",
     "bioequivalence_design",
     "get_design_description",
     "ParallelDesign",
@@ -144,6 +156,15 @@ __all__ = [
     "DoseEscalationDesign",
     "BioequivalenceDesign",
     "AdaptiveDesign",
+    "FullAdaptiveDesign",
+    # Adaptive design configurations
+    "ResponseAdaptiveRandomization",
+    "SampleSizeReestimation",
+    "TreatmentSelection",
+    "BiomarkerEnrichment",
+    "RARMethod",
+    "SSRMethod",
+    "SelectionCriterion",
     # Regimens
     "dosing_qd",
     "dosing_bid",
