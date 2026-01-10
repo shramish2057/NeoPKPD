@@ -1055,39 +1055,48 @@ def compute_vpc(
             int(solver.get("maxiters", 10**7)),
         )
 
-    # Build VPC config
+    # Build VPC config entirely through Julia seval to avoid UInt64 conversion issues
+    # Determine binning type and n_bins
     if isinstance(config.binning, QuantileBinning):
-        binning = jl.NeoPKPDCore.QuantileBinning(config.binning.n_bins)
+        binning_type = "QuantileBinning"
+        n_bins = config.binning.n_bins
     elif isinstance(config.binning, EqualWidthBinning):
-        binning = jl.NeoPKPDCore.EqualWidthBinning(config.binning.n_bins)
+        binning_type = "EqualWidthBinning"
+        n_bins = config.binning.n_bins
     elif isinstance(config.binning, KMeansBinning):
-        binning = jl.NeoPKPDCore.KMeansBinning(config.binning.n_bins)
+        binning_type = "KMeansBinning"
+        n_bins = config.binning.n_bins
     else:
-        binning = jl.NeoPKPDCore.QuantileBinning(10)
+        binning_type = "QuantileBinning"
+        n_bins = 10
 
-    pi_levels = jl.seval("Float64[]")
-    for level in config.pi_levels:
-        jl.seval("push!")(pi_levels, float(level))
+    # Build pi_levels as Julia array
+    pi_levels_str = "[" + ", ".join(str(float(l)) for l in config.pi_levels) + "]"
 
-    stratify_vec = jl.seval("Symbol[]")
+    # Build stratify_by as Julia Symbol array
     if config.stratify_by:
-        for s in config.stratify_by:
-            jl.seval("push!")(stratify_vec, jl.Symbol(s))
+        stratify_str = "[" + ", ".join(f":{s}" for s in config.stratify_by) + "]"
+    else:
+        stratify_str = "Symbol[]"
 
-    # Build seed as UInt64
-    seed_jl = jl.seval(f"UInt64({config.seed})")
+    # Build lloq
+    lloq_str = str(float(config.lloq)) if config.lloq else "nothing"
 
-    vpc_config = jl.NeoPKPDCore.VPCConfig(
-        pi_levels=pi_levels,
-        ci_level=float(config.ci_level),
-        binning=binning,
-        n_simulations=config.n_simulations,
-        n_bootstrap=config.n_bootstrap,
-        prediction_corrected=config.prediction_corrected,
-        stratify_by=stratify_vec,
-        lloq=float(config.lloq) if config.lloq else jl.nothing,
-        seed=seed_jl,
+    # Build VPCConfig entirely in Julia to preserve UInt64 type
+    vpc_config_code = f"""
+    NeoPKPDCore.VPCConfig(
+        pi_levels = Float64{pi_levels_str},
+        ci_level = {float(config.ci_level)},
+        binning = NeoPKPDCore.{binning_type}({n_bins}),
+        n_simulations = {config.n_simulations},
+        n_bootstrap = {config.n_bootstrap},
+        prediction_corrected = {str(config.prediction_corrected).lower()},
+        stratify_by = {stratify_str},
+        lloq = {lloq_str},
+        seed = UInt64({config.seed})
     )
+    """
+    vpc_config = jl.seval(vpc_config_code)
 
     # Build error spec if provided
     if error_spec is not None:
