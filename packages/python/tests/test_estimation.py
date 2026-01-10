@@ -298,7 +298,6 @@ class TestLaplacianEstimation:
 class TestSAEMEstimation:
     """Test SAEM estimation method."""
 
-    @pytest.mark.skip(reason="SAEM causes Bus error in Python-Julia bridge - requires JuliaCall investigation")
     def test_saem_onecomp_iv(self, julia_initialized, onecomp_observed_data, basic_grid, basic_solver):
         """Test SAEM estimation for one-compartment IV bolus."""
         from neopkpd.estimation import estimate, EstimationConfig
@@ -496,7 +495,6 @@ class TestBootstrap:
         assert config.ci_level == 0.95
         assert config.ci_method == BootstrapCIMethod.PERCENTILE
 
-    @pytest.mark.skip(reason="Bootstrap has Python-Julia interop issues - all replicates fail when calling estimation_fn")
     def test_bootstrap_run(self, julia_initialized, onecomp_observed_data, basic_grid, basic_solver):
         """Test running bootstrap analysis."""
         from neopkpd.estimation import run_bootstrap, EstimationConfig, BootstrapConfig

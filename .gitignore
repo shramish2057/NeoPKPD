@@ -63,6 +63,7 @@ site/
 .settings/
 *.sublime-project
 *.sublime-workspace
+.claude
 
 # -----------------------------------------------------------------------------
 # OS Files

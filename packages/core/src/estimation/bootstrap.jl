@@ -46,7 +46,7 @@ end
 
 export BootstrapSpec, BootstrapResult, BootstrapDiagnostics
 export OmegaBootstrapSummary, SigmaBootstrapSummary
-export run_bootstrap, run_bootstrap_parallel_impl, stratified_resample, compute_bootstrap_ci
+export run_bootstrap, run_bootstrap_native, run_bootstrap_parallel_impl, stratified_resample, compute_bootstrap_ci
 export BootstrapCIMethod, PercentileCI, BCCI, StudentizedCI, BasicCI
 export BootstrapType, CaseBootstrap, ParametricBootstrap, ResidualBootstrap
 export generate_bootstrap_summary, format_regulatory_table
@@ -1588,5 +1588,143 @@ function compute_bootstrap_stability(result::BootstrapResult)::Dict{Symbol, Any}
         :stability_grade => max_cv < 20.0 && max_skew < 0.5 ? "Excellent" :
                             max_cv < 35.0 && max_skew < 1.0 ? "Good" :
                             max_cv < 50.0 ? "Acceptable" : "Poor"
+    )
+end
+
+
+# ============================================================================
+# Native Bootstrap Function (No Callback Required)
+# ============================================================================
+
+"""
+    run_bootstrap_native(observed_data, model_spec, est_config, spec; grid, solver, strata, verbose)
+
+Run bootstrap analysis without requiring a callback function.
+
+This is the preferred method for calling from Python via JuliaCall, as it avoids
+the callback interop issues that can cause crashes when Python closures are
+called from Julia loops.
+
+# Arguments
+- `observed_data`: ObservedData containing subjects
+- `model_spec`: ModelSpec defining the PK/PD model
+- `est_config`: EstimationConfig with estimation settings
+- `spec`: BootstrapSpec with bootstrap settings
+- `grid`: SimGrid for simulation time points
+- `solver`: SolverSpec for ODE solver settings
+- `strata`: Optional stratification vector
+- `verbose`: Print progress information
+
+# Returns
+- BootstrapResult with estimates, CIs, and diagnostics
+
+# Example
+```julia
+result = run_bootstrap_native(
+    data,
+    model_spec,
+    est_config,
+    BootstrapSpec(n_bootstrap=500),
+    grid=sim_grid,
+    solver=solver_spec
+)
+```
+"""
+function run_bootstrap_native(
+    observed_data::ObservedData,
+    model_spec::ModelSpec,
+    est_config::EstimationConfig,
+    spec::BootstrapSpec;
+    grid::SimGrid,
+    solver::SolverSpec,
+    strata::Union{Nothing, Vector}=nothing,
+    verbose::Bool=false
+)::BootstrapResult
+    rng = StableRNG(spec.seed)
+
+    n_subjects = length(observed_data.subjects)
+    subject_ids = [s.subject_id for s in observed_data.subjects]
+
+    # Run original estimation to get point estimate
+    if verbose
+        println("Running original estimation...")
+    end
+    original_result = estimate(observed_data, model_spec, est_config; grid=grid, solver=solver)
+    original_theta = Vector{Float64}(original_result.theta)
+    n_params = length(original_theta)
+
+    # Storage for bootstrap estimates
+    theta_estimates = zeros(spec.n_bootstrap, n_params)
+    omega_estimates = Matrix{Float64}[]
+    sigma_estimates = Float64[]
+
+    n_successful = 0
+    n_failed = 0
+    iterations = Float64[]
+
+    for b in 1:spec.n_bootstrap
+        if verbose && b % 100 == 0
+            println("Bootstrap replicate $b / $(spec.n_bootstrap)")
+        end
+
+        try
+            # Resample subjects
+            if strata !== nothing
+                resampled_indices = stratified_resample(subject_ids, strata, rng)
+            else
+                resampled_indices = stratified_resample(n_subjects, rng)
+            end
+
+            # Create resampled dataset
+            resampled_data = _create_resampled_data(observed_data, resampled_indices)
+
+            # Run estimation on resampled data (native Julia call, no callback)
+            boot_result = estimate(resampled_data, model_spec, est_config; grid=grid, solver=solver)
+
+            # Store estimates
+            theta_estimates[b, :] = Vector{Float64}(boot_result.theta)
+
+            if boot_result.omega !== nothing
+                push!(omega_estimates, Matrix{Float64}(boot_result.omega))
+            end
+            if boot_result.sigma !== nothing && hasproperty(boot_result.sigma, :params) &&
+               hasproperty(boot_result.sigma.params, :sigma)
+                push!(sigma_estimates, boot_result.sigma.params.sigma)
+            end
+
+            if boot_result.n_iterations > 0
+                push!(iterations, Float64(boot_result.n_iterations))
+            end
+
+            n_successful += 1
+        catch e
+            n_failed += 1
+            theta_estimates[b, :] .= NaN
+            if verbose
+                println("Bootstrap replicate $b failed: $e")
+            end
+        end
+    end
+
+    # Check success rate
+    success_rate = n_successful / spec.n_bootstrap
+    if success_rate < spec.min_success_rate
+        @warn "Bootstrap success rate ($success_rate) below minimum threshold ($(spec.min_success_rate))"
+    end
+
+    if verbose
+        println("Bootstrap complete: $n_successful successful, $n_failed failed")
+    end
+
+    # Aggregate and return results
+    return _aggregate_bootstrap_results(
+        theta_estimates,
+        omega_estimates,
+        sigma_estimates,
+        original_theta,
+        n_successful,
+        n_failed,
+        iterations,
+        spec
     )
 end

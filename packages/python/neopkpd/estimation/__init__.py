@@ -396,11 +396,14 @@ def estimate(
             compute_robust_se=config.foce_compute_robust_se
         )
     elif config.method == "saem":
+        # CRITICAL: parallel_chains=false prevents Bus error in Python-Julia bridge
+        # Julia's @threads with closures conflicts with Python's GIL via JuliaCall
         method = jl.NeoPKPDCore.SAEMMethod(
             n_burn=config.saem_n_burn,
             n_iter=config.saem_n_iter,
             n_chains=config.saem_n_chains,
-            n_mcmc_steps=config.saem_n_mcmc_steps
+            n_mcmc_steps=config.saem_n_mcmc_steps,
+            parallel_chains=False
         )
     elif config.method == "laplacian":
         method = jl.NeoPKPDCore.LaplacianMethod()
@@ -572,7 +575,8 @@ def run_bootstrap(
     if estimation_config.method == "foce":
         method = jl.NeoPKPDCore.FOCEIMethod()
     elif estimation_config.method == "saem":
-        method = jl.NeoPKPDCore.SAEMMethod(n_burn=100, n_iter=100)  # Reduced for bootstrap
+        # parallel_chains=False prevents Bus error in Python-Julia bridge
+        method = jl.NeoPKPDCore.SAEMMethod(n_burn=100, n_iter=100, parallel_chains=False)
     else:
         method = jl.NeoPKPDCore.LaplacianMethod()
 
@@ -635,18 +639,23 @@ def run_bootstrap(
     boot_spec = jl.NeoPKPDCore.BootstrapSpec(
         n_bootstrap=bootstrap_config.n_bootstrap,
         # Note: seed not passed - Julia uses default UInt64(12345) to avoid Python->Julia Int64/UInt64 issues
-        parallel=bootstrap_config.parallel,
+        parallel=False,  # Disable parallel to avoid threading issues with JuliaCall
         ci_level=bootstrap_config.ci_level,
         ci_method=ci_method_map[bootstrap_config.ci_method],
         min_success_rate=bootstrap_config.min_success_rate,
     )
 
-    # Create estimation function closure
-    def estimation_fn(data):
-        return jl.NeoPKPDCore.estimate(data, model_spec, est_config, grid=grid_jl, solver=solver_jl)
-
-    # Run bootstrap
-    result = jl.NeoPKPDCore.run_bootstrap(estimation_fn, obs, boot_spec, verbose=False)
+    # Use run_bootstrap_native which doesn't require a callback
+    # This avoids Python-Julia callback interop issues that cause crashes
+    result = jl.NeoPKPDCore.run_bootstrap_native(
+        obs,
+        model_spec,
+        est_config,
+        boot_spec,
+        grid=grid_jl,
+        solver=solver_jl,
+        verbose=False
+    )
 
     return _convert_bootstrap_result(result)
 
@@ -1055,10 +1064,306 @@ def _count_omega_params(omega: List[List[float]]) -> int:
     return len(omega)
 
 
+# ============================================================================
+# Stepwise Covariate Modeling (SCM)
+# ============================================================================
+
+class CovariateRelationshipType(str, Enum):
+    """Type of covariate-parameter relationship."""
+    LINEAR = "linear"
+    POWER = "power"
+    EXPONENTIAL = "exponential"
+
+
+@dataclass
+class CovariateRelationship:
+    """
+    Defines a potential covariate-parameter relationship to test in SCM.
+
+    Attributes:
+        param: Parameter affected by covariate (e.g., "CL", "V")
+        covariate: Covariate name (e.g., "WT", "AGE")
+        relationship: Type of relationship (linear, power, exponential)
+        reference: Reference value for centering (e.g., median weight)
+    """
+    param: str
+    covariate: str
+    relationship: CovariateRelationshipType = CovariateRelationshipType.POWER
+    reference: float = 1.0
+
+
+@dataclass
+class SCMConfig:
+    """
+    Configuration for stepwise covariate modeling.
+
+    Attributes:
+        relationships: List of covariate relationships to test
+        forward_p_value: P-value threshold for forward inclusion (default: 0.05)
+        backward_p_value: P-value threshold for backward elimination (default: 0.01)
+        max_iterations: Maximum iterations for forward/backward steps
+    """
+    relationships: List[CovariateRelationship]
+    forward_p_value: float = 0.05
+    backward_p_value: float = 0.01
+    max_iterations: int = 100
+
+
+@dataclass
+class SCMStepResult:
+    """Result of a single SCM step."""
+    param: str
+    covariate: str
+    relationship: str
+    ofv_change: float
+    p_value: float
+    coefficient: float
+    coefficient_se: float
+    included: bool
+    step_type: str  # "forward" or "backward"
+
+
+@dataclass
+class SCMResult:
+    """
+    Complete result of stepwise covariate modeling.
+
+    Attributes:
+        final_model: List of included covariate relationships
+        forward_steps: Results from forward selection
+        backward_steps: Results from backward elimination
+        base_ofv: OFV of base model (no covariates)
+        final_ofv: OFV of final model
+        n_forward_iterations: Number of forward selection iterations
+        n_backward_iterations: Number of backward elimination iterations
+    """
+    final_model: List[CovariateRelationship]
+    forward_steps: List[SCMStepResult]
+    backward_steps: List[SCMStepResult]
+    base_ofv: float
+    final_ofv: float
+    n_forward_iterations: int
+    n_backward_iterations: int
+
+
+def run_scm(
+    observed_data: Dict[str, Any],
+    model_kind: str,
+    estimation_config: EstimationConfig,
+    scm_config: SCMConfig,
+    grid: Dict[str, Any],
+    solver: Optional[Dict[str, Any]] = None,
+) -> SCMResult:
+    """
+    Run stepwise covariate modeling (SCM) analysis.
+
+    Performs forward selection and backward elimination to identify
+    significant covariate effects on PK parameters.
+
+    Args:
+        observed_data: Observed data dictionary with subjects containing covariates
+        model_kind: PK model type (e.g., "OneCompIVBolus")
+        estimation_config: Configuration for base estimation
+        scm_config: SCM configuration with relationships to test
+        grid: Simulation time grid
+        solver: Optional solver settings
+
+    Returns:
+        SCMResult with selected covariates, p-values, and OFV changes
+
+    Example:
+        >>> relationships = [
+        ...     CovariateRelationship("CL", "WT", CovariateRelationshipType.POWER, 70.0),
+        ...     CovariateRelationship("V", "WT", CovariateRelationshipType.POWER, 70.0),
+        ...     CovariateRelationship("CL", "AGE", CovariateRelationshipType.LINEAR, 40.0),
+        ... ]
+        >>> scm_config = SCMConfig(relationships, forward_p_value=0.05)
+        >>> result = run_scm(data, "OneCompIVBolus", est_config, scm_config, grid)
+        >>> print(f"Selected covariates: {len(result.final_model)}")
+    """
+    jl = _require_julia()
+
+    # Build observed data with covariates
+    SubjectData = jl.NeoPKPDCore.SubjectData
+    ObservedData = jl.NeoPKPDCore.ObservedData
+    DoseEvent = jl.NeoPKPDCore.DoseEvent
+
+    # Create Julia vector to hold subjects
+    subjects_vec = jl.seval("SubjectData[]")
+    for subj in observed_data["subjects"]:
+        # Create dose vector
+        doses_vec = jl.seval("DoseEvent[]")
+        for d in subj.get("doses", []):
+            dose = DoseEvent(float(d["time"]), float(d["amount"]))
+            jl.seval("push!")(doses_vec, dose)
+
+        # Convert times and observations to Julia Vector{Float64}
+        times_vec = jl.seval("Float64[]")
+        for t in subj["times"]:
+            jl.seval("push!")(times_vec, float(t))
+
+        obs_vec = jl.seval("Float64[]")
+        for o in subj["observations"]:
+            jl.seval("push!")(obs_vec, float(o))
+
+        # Convert covariates to Julia Dict{Symbol, Any}
+        cov_dict = jl.seval("Dict{Symbol, Any}()")
+        for key, val in subj.get("covariates", {}).items():
+            jl.seval("setindex!")(cov_dict, float(val), jl.Symbol(key))
+
+        subj_data = SubjectData(
+            subj["subject_id"],
+            times_vec,
+            obs_vec,
+            doses_vec,
+            covariates=cov_dict
+        )
+        jl.seval("push!")(subjects_vec, subj_data)
+
+    obs = ObservedData(subjects_vec)
+
+    # Build model spec
+    model_spec = _build_base_model_spec(jl, model_kind, estimation_config.theta_init)
+
+    # Build estimation config
+    n_theta = len(estimation_config.theta_init)
+    omega_init = np.array(estimation_config.omega_init) if estimation_config.omega_init else np.eye(n_theta) * 0.09
+
+    if estimation_config.method == "foce":
+        method = jl.NeoPKPDCore.FOCEIMethod()
+    elif estimation_config.method == "saem":
+        method = jl.NeoPKPDCore.SAEMMethod(n_burn=100, n_iter=100, parallel_chains=False)
+    else:
+        method = jl.NeoPKPDCore.LaplacianMethod()
+
+    sigma_spec = _build_sigma_spec(jl, estimation_config.sigma_type, estimation_config.sigma_init)
+
+    theta_init_jl = _to_julia_float_vec(jl, [float(x) for x in estimation_config.theta_init])
+    theta_lower_jl = _to_julia_float_vec(jl, [float(x) for x in (estimation_config.theta_lower or [1e-6] * n_theta)])
+    theta_upper_jl = _to_julia_float_vec(jl, [float(x) for x in (estimation_config.theta_upper or [1e6] * n_theta)])
+    theta_names_jl = _to_julia_symbol_vec(jl, estimation_config.theta_names or [f"theta_{i}" for i in range(n_theta)])
+    omega_init_jl = _to_julia_matrix(jl, omega_init.tolist())
+    omega_names_jl = _to_julia_symbol_vec(jl, estimation_config.omega_names or [f"eta_{i}" for i in range(omega_init.shape[0])])
+
+    est_config = jl.NeoPKPDCore.EstimationConfig(
+        method,
+        theta_init=theta_init_jl,
+        theta_lower=theta_lower_jl,
+        theta_upper=theta_upper_jl,
+        theta_names=theta_names_jl,
+        omega_init=omega_init_jl,
+        omega_names=omega_names_jl,
+        omega_structure=jl.NeoPKPDCore.DiagonalOmega(),
+        sigma_init=sigma_spec,
+        max_iter=estimation_config.max_iter,
+        tol=estimation_config.tol,
+        compute_se=True,
+        compute_ci=False,
+        verbose=False,
+    )
+
+    # Build grid and solver
+    saveat_jl = _to_julia_float_vec(jl, [float(x) for x in grid["saveat"]])
+    grid_jl = jl.NeoPKPDCore.SimGrid(
+        float(grid["t0"]),
+        float(grid["t1"]),
+        saveat_jl,
+    )
+
+    if solver is None:
+        solver_jl = jl.NeoPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
+    else:
+        solver_jl = jl.NeoPKPDCore.SolverSpec(
+            jl.Symbol(solver.get("alg", "Tsit5")),
+            float(solver.get("reltol", 1e-8)),
+            float(solver.get("abstol", 1e-10)),
+            int(solver.get("maxiters", 10**6)),
+        )
+
+    # Build covariate relationships
+    relationships_vec = jl.seval("CovariateRelationship[]")
+    for rel in scm_config.relationships:
+        jl_rel = jl.NeoPKPDCore.CovariateRelationship(
+            jl.Symbol(rel.param),
+            jl.Symbol(rel.covariate),
+            relationship=jl.Symbol(rel.relationship.value),
+            reference=float(rel.reference)
+        )
+        jl.seval("push!")(relationships_vec, jl_rel)
+
+    # Build SCM spec
+    scm_spec = jl.NeoPKPDCore.SCMSpec(
+        relationships_vec,
+        forward_p_value=scm_config.forward_p_value,
+        backward_p_value=scm_config.backward_p_value,
+        max_iterations=scm_config.max_iterations,
+    )
+
+    # Run SCM
+    result = jl.NeoPKPDCore.run_scm_native(
+        obs,
+        model_spec,
+        est_config,
+        scm_spec,
+        grid=grid_jl,
+        solver=solver_jl,
+        verbose=False
+    )
+
+    # Convert result to Python types
+    final_model = []
+    for rel in result.final_model:
+        final_model.append(CovariateRelationship(
+            param=str(rel.param),
+            covariate=str(rel.covariate),
+            relationship=CovariateRelationshipType(str(rel.relationship)),
+            reference=float(rel.reference)
+        ))
+
+    forward_steps = []
+    for step in result.forward_steps:
+        forward_steps.append(SCMStepResult(
+            param=str(step.relationship.param),
+            covariate=str(step.relationship.covariate),
+            relationship=str(step.relationship.relationship),
+            ofv_change=float(step.ofv_change),
+            p_value=float(step.p_value),
+            coefficient=float(step.coefficient),
+            coefficient_se=float(step.coefficient_se),
+            included=bool(step.included),
+            step_type=str(step.step_type)
+        ))
+
+    backward_steps = []
+    for step in result.backward_steps:
+        backward_steps.append(SCMStepResult(
+            param=str(step.relationship.param),
+            covariate=str(step.relationship.covariate),
+            relationship=str(step.relationship.relationship),
+            ofv_change=float(step.ofv_change),
+            p_value=float(step.p_value),
+            coefficient=float(step.coefficient),
+            coefficient_se=float(step.coefficient_se),
+            included=bool(step.included),
+            step_type=str(step.step_type)
+        ))
+
+    return SCMResult(
+        final_model=final_model,
+        forward_steps=forward_steps,
+        backward_steps=backward_steps,
+        base_ofv=float(result.base_ofv),
+        final_ofv=float(result.final_ofv),
+        n_forward_iterations=int(result.n_forward_iterations),
+        n_backward_iterations=int(result.n_backward_iterations)
+    )
+
+
 __all__ = [
     # Main functions
     "estimate",
     "run_bootstrap",
+    "run_scm",
     "compare_models",
     "likelihood_ratio_test",
     "compute_diagnostics",
@@ -1069,6 +1374,8 @@ __all__ = [
     "BLQConfig",
     "IOVSpec",
     "CovariateOnIIV",
+    "SCMConfig",
+    "CovariateRelationship",
     # Result types
     "EstimationResult",
     "BootstrapResult",
@@ -1076,8 +1383,11 @@ __all__ = [
     "DiagnosticsSummary",
     "BLQSummary",
     "ModelComparisonResult",
+    "SCMResult",
+    "SCMStepResult",
     # Enums
     "BLQMethod",
     "OmegaStructure",
     "BootstrapCIMethod",
+    "CovariateRelationshipType",
 ]

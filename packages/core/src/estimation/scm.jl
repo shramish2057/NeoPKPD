@@ -5,7 +5,7 @@ using Distributions
 using LinearAlgebra
 
 export SCMResult, SCMSpec, CovariateRelationship
-export run_scm, forward_selection, backward_elimination
+export run_scm, run_scm_native, forward_selection, backward_elimination
 # Note: likelihood_ratio_test is defined in diagnostics.jl
 
 # ============================================================================
@@ -145,36 +145,90 @@ function build_covariate_effect(rel::CovariateRelationship)::Function
 end
 
 """
-Create a modified OFV function that includes a covariate effect.
+Apply covariate effect to a population parameter value.
 
 Arguments:
-- base_ofv_fn: Original OFV function taking theta vector
-- rel: Covariate relationship to add
-- covariate_values: Vector of covariate values (one per individual)
-- param_index: Index of the parameter in theta vector
-- n_base_params: Number of parameters in base model
+- theta_pop: Population parameter value
+- cov_value: Individual covariate value
+- beta: Covariate coefficient
+- rel: Covariate relationship specification
+
+Returns:
+- Adjusted individual parameter value
 """
-function create_covariate_ofv(
-    base_ofv_fn::Function,
-    rel::CovariateRelationship,
-    covariate_values::Vector{Float64},
-    param_index::Int,
-    n_base_params::Int
-)::Function
-    effect_fn = build_covariate_effect(rel)
-
-    function covariate_ofv(theta_extended::Vector{Float64})::Float64
-        # theta_extended = [base_params..., covariate_coefficient]
-        theta_base = theta_extended[1:n_base_params]
-        beta = theta_extended[end]
-
-        # This is a simplified version - in practice, you'd need to
-        # modify individual predictions based on covariate values
-        # For now, return base OFV (placeholder for actual implementation)
-        return base_ofv_fn(theta_base)
+function apply_covariate_effect(
+    theta_pop::Float64,
+    cov_value::Float64,
+    beta::Float64,
+    rel::CovariateRelationship
+)::Float64
+    if rel.relationship == :linear
+        # θ_i = θ_pop * (1 + β * (COV - REF))
+        return theta_pop * (1.0 + beta * (cov_value - rel.reference))
+    elseif rel.relationship == :power
+        # θ_i = θ_pop * (COV / REF)^β
+        # Guard against negative/zero covariate values
+        ratio = max(cov_value, 1e-10) / max(rel.reference, 1e-10)
+        return theta_pop * ratio^beta
+    elseif rel.relationship == :exponential
+        # θ_i = θ_pop * exp(β * (COV - REF))
+        return theta_pop * exp(beta * (cov_value - rel.reference))
+    else
+        return theta_pop  # No effect for unknown relationship
     end
+end
 
-    return covariate_ofv
+"""
+Get covariate values for a specific covariate from all subjects.
+
+Returns a vector of covariate values, one per subject.
+Missing values are replaced with the reference value.
+"""
+function get_covariate_values(
+    observed_data::ObservedData,
+    covariate_name::Symbol,
+    reference::Float64
+)::Vector{Float64}
+    values = Float64[]
+    for subj in observed_data.subjects
+        if haskey(subj.covariates, covariate_name)
+            val = subj.covariates[covariate_name]
+            push!(values, Float64(val))
+        else
+            # Use reference value for missing covariates
+            push!(values, reference)
+        end
+    end
+    return values
+end
+
+"""
+Map parameter name to theta index based on model kind.
+
+Returns the 1-based index into theta for the parameter, or nothing if not found.
+"""
+function get_param_index(model_kind, param::Symbol)::Union{Int, Nothing}
+    # Standard PK parameter mappings
+    param_maps = Dict(
+        :OneCompIVBolus => Dict(:CL => 1, :V => 2),
+        :OneCompOralFirstOrder => Dict(:CL => 1, :V => 2, :Ka => 3),
+        :TwoCompIVBolus => Dict(:CL => 1, :V1 => 2, :Q => 3, :V2 => 4),
+        :TwoCompOralFirstOrder => Dict(:CL => 1, :V1 => 2, :Q => 3, :V2 => 4, :Ka => 5),
+        :ThreeCompIVBolus => Dict(:CL => 1, :V1 => 2, :Q2 => 3, :V2 => 4, :Q3 => 5, :V3 => 6),
+    )
+
+    model_name = string(typeof(model_kind).name.name)
+    if haskey(param_maps, Symbol(model_name))
+        param_map = param_maps[Symbol(model_name)]
+        if haskey(param_map, param)
+            return param_map[param]
+        end
+        # Also check common aliases
+        if param == :V && haskey(param_map, :V1)
+            return param_map[:V1]
+        end
+    end
+    return nothing
 end
 
 # ============================================================================
@@ -521,3 +575,274 @@ function standard_pk_covariates(;
 end
 
 export standard_pk_covariates
+
+
+# ============================================================================
+# Native SCM Function (For Python Integration)
+# ============================================================================
+
+"""
+    run_scm_native(observed_data, model_spec, est_config, scm_spec; grid, solver, verbose)
+
+Run stepwise covariate modeling without requiring a callback function.
+
+This is the preferred method for calling from Python via JuliaCall, as it
+creates the estimation function internally and handles all covariate effect
+computations.
+
+# Arguments
+- `observed_data`: ObservedData containing subjects with covariates
+- `model_spec`: ModelSpec defining the base PK/PD model
+- `est_config`: EstimationConfig with estimation settings
+- `scm_spec`: SCMSpec with covariate relationships to test
+- `grid`: SimGrid for simulation time points
+- `solver`: SolverSpec for ODE solver settings
+- `verbose`: Print progress information
+
+# Returns
+- SCMResult with selected covariates, steps, and OFV changes
+
+# Example
+```julia
+# Define covariate relationships to test
+relationships = [
+    CovariateRelationship(:CL, :WT, relationship=:power, reference=70.0),
+    CovariateRelationship(:V, :WT, relationship=:power, reference=70.0),
+    CovariateRelationship(:CL, :AGE, relationship=:linear, reference=40.0),
+]
+
+scm_spec = SCMSpec(relationships, forward_p_value=0.05, backward_p_value=0.01)
+
+result = run_scm_native(
+    observed_data,
+    model_spec,
+    est_config,
+    scm_spec,
+    grid=sim_grid,
+    solver=solver_spec
+)
+```
+"""
+function run_scm_native(
+    observed_data::ObservedData,
+    model_spec::ModelSpec,
+    est_config::EstimationConfig,
+    scm_spec::SCMSpec;
+    grid::SimGrid,
+    solver::SolverSpec,
+    verbose::Bool=false
+)::SCMResult
+    # Extract base theta from estimation config
+    base_theta = Vector{Float64}(est_config.theta_init)
+    n_base_params = length(base_theta)
+
+    # Pre-extract covariate values for each relationship
+    covariate_cache = Dict{Symbol, Vector{Float64}}()
+    for rel in scm_spec.relationships
+        if !haskey(covariate_cache, rel.covariate)
+            covariate_cache[rel.covariate] = get_covariate_values(
+                observed_data, rel.covariate, rel.reference
+            )
+        end
+    end
+
+    # Create the estimation function that handles covariate effects
+    function estimate_with_covariates(relationships::Vector{CovariateRelationship})
+        n_covariates = length(relationships)
+
+        if n_covariates == 0
+            # Base model: just run standard estimation
+            try
+                result = estimate(observed_data, model_spec, est_config; grid=grid, solver=solver)
+                theta_se = result.theta_se !== nothing ? result.theta_se : zeros(n_base_params)
+                return (result.ofv, Vector{Float64}(result.theta), Vector{Float64}(theta_se))
+            catch e
+                if verbose
+                    println("Base estimation failed: $e")
+                end
+                return (Inf, base_theta, zeros(n_base_params))
+            end
+        end
+
+        # Extended model with covariate effects
+        # theta_extended = [base_params..., beta_1, beta_2, ..., beta_n]
+        n_extended = n_base_params + n_covariates
+        theta_init_extended = vcat(base_theta, zeros(n_covariates))
+
+        # Build mapping from relationship to parameter index and covariate values
+        rel_info = []
+        for (i, rel) in enumerate(relationships)
+            param_idx = get_param_index(model_spec.kind, rel.param)
+            if param_idx === nothing
+                if verbose
+                    println("Warning: Parameter $(rel.param) not found in model, skipping")
+                end
+                continue
+            end
+            cov_values = covariate_cache[rel.covariate]
+            push!(rel_info, (rel=rel, param_idx=param_idx, cov_values=cov_values, beta_idx=n_base_params + i))
+        end
+
+        if isempty(rel_info)
+            # No valid relationships, return base model results
+            try
+                result = estimate(observed_data, model_spec, est_config; grid=grid, solver=solver)
+                theta_se = result.theta_se !== nothing ? result.theta_se : zeros(n_base_params)
+                return (result.ofv, Vector{Float64}(result.theta), Vector{Float64}(theta_se))
+            catch e
+                return (Inf, base_theta, zeros(n_base_params))
+            end
+        end
+
+        # Compute OFV for extended model by modifying individual predictions
+        # For each subject, apply covariate effects to the relevant parameters
+        function compute_extended_ofv(theta_ext::Vector{Float64})::Float64
+            theta_base = theta_ext[1:n_base_params]
+            betas = theta_ext[n_base_params+1:end]
+
+            total_ll = 0.0
+            n_obs = 0
+
+            for (subj_idx, subj) in enumerate(observed_data.subjects)
+                # Start with population parameters
+                theta_individual = copy(theta_base)
+
+                # Apply covariate effects for this subject
+                for (j, info) in enumerate(rel_info)
+                    beta = betas[j]
+                    cov_val = info.cov_values[subj_idx]
+                    theta_pop = theta_individual[info.param_idx]
+                    theta_individual[info.param_idx] = apply_covariate_effect(
+                        theta_pop, cov_val, beta, info.rel
+                    )
+                end
+
+                # Ensure all parameters are positive
+                if any(theta_individual .<= 0)
+                    return Inf
+                end
+
+                # Create individual model spec with adjusted parameters
+                try
+                    ind_params = theta_to_params(theta_individual, model_spec)
+                    ind_model = ModelSpec(model_spec.kind, model_spec.name, ind_params, subj.doses)
+
+                    # Simulate
+                    sim_result = simulate(ind_model, grid, solver)
+
+                    # Compute residuals
+                    for (i, t) in enumerate(subj.times)
+                        idx = searchsortedfirst(sim_result.t, t)
+                        if idx > length(sim_result.t)
+                            idx = length(sim_result.t)
+                        elseif idx > 1 && abs(sim_result.t[idx] - t) > abs(sim_result.t[idx-1] - t)
+                            idx = idx - 1
+                        end
+
+                        pred = sim_result.observations[:conc][idx]
+                        obs = subj.observations[i]
+
+                        # Proportional error model: SD = sigma * pred
+                        sigma = est_config.sigma_init.params.sigma
+                        sd = sigma * max(pred, 1e-10)
+
+                        # Log-likelihood contribution
+                        resid = (obs - pred) / sd
+                        total_ll -= 0.5 * (resid^2 + log(2π) + 2*log(sd))
+                        n_obs += 1
+                    end
+                catch e
+                    return Inf
+                end
+            end
+
+            # Return -2LL (OFV)
+            return -2.0 * total_ll
+        end
+
+        # Optimize the extended model using simple gradient descent
+        # (A full implementation would use the same optimizer as the main estimation)
+        theta_opt = copy(theta_init_extended)
+        ofv_opt = compute_extended_ofv(theta_opt)
+
+        # Simple optimization: coordinate descent with line search
+        step_sizes = vcat(fill(0.1, n_base_params), fill(0.01, n_covariates))
+        max_opt_iter = 100
+        tol = 1e-4
+
+        for iter in 1:max_opt_iter
+            improved = false
+            for p in 1:n_extended
+                # Try positive and negative steps
+                for direction in [1.0, -1.0]
+                    theta_test = copy(theta_opt)
+                    theta_test[p] += direction * step_sizes[p]
+
+                    # Ensure positivity for base params
+                    if p <= n_base_params && theta_test[p] <= 0
+                        continue
+                    end
+
+                    ofv_test = compute_extended_ofv(theta_test)
+                    if ofv_test < ofv_opt - tol
+                        theta_opt = theta_test
+                        ofv_opt = ofv_test
+                        improved = true
+                        step_sizes[p] *= 1.2  # Increase step size on success
+                    else
+                        step_sizes[p] *= 0.5  # Decrease on failure
+                    end
+                end
+            end
+
+            if !improved
+                break
+            end
+        end
+
+        # Compute approximate SEs using finite differences of Hessian diagonal
+        theta_se = zeros(n_extended)
+        h = 1e-5
+        ofv_center = compute_extended_ofv(theta_opt)
+
+        for p in 1:n_extended
+            theta_plus = copy(theta_opt)
+            theta_minus = copy(theta_opt)
+            theta_plus[p] += h * max(abs(theta_opt[p]), 1.0)
+            theta_minus[p] -= h * max(abs(theta_opt[p]), 1.0)
+
+            ofv_plus = compute_extended_ofv(theta_plus)
+            ofv_minus = compute_extended_ofv(theta_minus)
+
+            # Second derivative approximation
+            d2 = (ofv_plus - 2*ofv_center + ofv_minus) / (h * max(abs(theta_opt[p]), 1.0))^2
+
+            if d2 > 0
+                theta_se[p] = sqrt(2.0 / d2)  # SE from curvature of -2LL
+            else
+                theta_se[p] = 0.0
+            end
+        end
+
+        return (ofv_opt, theta_opt, theta_se)
+    end
+
+    # Run SCM with the covariate-aware estimation function
+    if verbose
+        println("Starting SCM with $(length(scm_spec.relationships)) candidate relationships")
+    end
+
+    result = run_scm(estimate_with_covariates, base_theta, scm_spec)
+
+    if verbose
+        println("\nSCM completed:")
+        println("  Forward steps: $(result.n_forward_iterations)")
+        println("  Backward steps: $(result.n_backward_iterations)")
+        println("  Final model: $(length(result.final_model)) covariates")
+        println("  ΔOFV: $(round(result.base_ofv - result.final_ofv, digits=2))")
+    end
+
+    return result
+end
+
+export run_scm_native

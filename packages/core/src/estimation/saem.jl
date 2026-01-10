@@ -2023,7 +2023,10 @@ function compute_standard_errors_saem(
         omega_se_diag = omega_diag .* sqrt.(abs.(log_omega_var))
         sigma_se_vals = sigma_vals .* sqrt.(abs.(log_sigma_var))
 
-        return theta_se, omega_se_diag, sigma_se_vals, true, condition_num, eigenvalue_ratio
+        # Convert omega SE from diagonal vector to full matrix (EstimationResult expects Matrix)
+        omega_se_matrix = Diagonal(omega_se_diag) |> Matrix
+
+        return theta_se, omega_se_matrix, sigma_se_vals, true, condition_num, eigenvalue_ratio
     catch e
         return nothing, nothing, nothing, false, condition_num, eigenvalue_ratio
     end

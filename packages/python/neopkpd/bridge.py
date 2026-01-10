@@ -145,6 +145,19 @@ def _require_julia() -> Any:
     return _JL
 
 
+def get_julia() -> Any:
+    """
+    Get the Julia main module, initializing if necessary.
+
+    This is the public API for getting the Julia runtime.
+    Use this in modules that need access to Julia.
+
+    Returns:
+        The Julia main module with NeoPKPDCore loaded.
+    """
+    return _require_julia()
+
+
 # ============================================================================
 # Result Conversion Utilities
 # ============================================================================
