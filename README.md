@@ -211,7 +211,7 @@ NeoPKPD uses independent version numbers for numerical behavior:
 |---------|---------|-------|
 | Event Semantics | 1.0.0 | Dose handling |
 | Solver Semantics | 1.0.0 | ODE solver behavior |
-| Artifact Schema | 1.1.0 | JSON format with compliance metadata |
+| Artifact Schema | 1.0.0 | JSON format |
 
 Any change to numerical output requires a version bump.
 

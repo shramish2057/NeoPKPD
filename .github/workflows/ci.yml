@@ -229,7 +229,7 @@ jobs:
               spec = ModelSpec(OneCompIVBolus(), "pop_test", params, doses)
 
               iiv = IIVSpec(LogNormalIIV(), Dict(:CL => 0.3, :V => 0.2), UInt64(12345), 50)
-              pop_spec = PopulationSpec(spec, iiv, nothing, nothing, [])
+              pop_spec = PopulationSpec(spec, iiv, nothing, nothing, IndividualCovariates[])
 
               grid = SimGrid(0.0, 24.0, collect(0.0:1.0:24.0))
               solver = SolverSpec(:Tsit5, 1e-8, 1e-10, 10_000_000)
@@ -275,12 +275,14 @@ jobs:
               grid = SimGrid(0.0, 24.0, collect(0.0:1.0:24.0))
               solver = SolverSpec(:Tsit5, 1e-10, 1e-12, 10_000_000)
 
-              result = run_sensitivity_single(spec, grid, solver, :CL, 0.1, :conc)
+              pert = Perturbation(RelativePerturbation(), :CL, 0.1)
+              plan = PerturbationPlan("sens_test", [pert])
+              result = run_sensitivity(spec, grid, solver; plan=plan, observation=:conc)
 
-              @test result.plan_name == "sens_test"
+              @test result.plan.name == "sens_test"
               @test result.observation == :conc
-              @test length(result.base_series) == length(grid.saveat)
-              @test length(result.pert_series) == length(grid.saveat)
+              @test length(result.base_metric_series) == length(grid.saveat)
+              @test length(result.pert_metric_series) == length(grid.saveat)
               @test result.metrics.max_abs_delta >= 0
 
               println("Sensitivity analysis tests passed")

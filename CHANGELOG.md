@@ -198,6 +198,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Semantics Versions
 - Event Semantics: 1.0.0
 - Solver Semantics: 1.0.0
-- Artifact Schema: 1.1.0
+- Artifact Schema: 1.0.0
 
 [0.1.0]: https://github.com/shramish2057/openpkpd/releases/tag/v0.1.0
