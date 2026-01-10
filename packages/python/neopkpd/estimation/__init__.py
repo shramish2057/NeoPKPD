@@ -841,6 +841,173 @@ def get_individual_predictions(result: EstimationResult) -> Dict[str, Dict[str, 
 
 
 # ============================================================================
+# NPDE (Normalized Prediction Distribution Errors)
+# ============================================================================
+
+@dataclass
+class NPDEResult:
+    """
+    Result of NPDE computation.
+
+    Attributes:
+        npde: All NPDE values (pooled across subjects)
+        pde: All pde values (prediction distribution errors)
+        npde_by_subject: NPDE values per subject
+        pde_by_subject: pde values per subject
+        n_observations: Total number of observations
+        n_simulations: Number of Monte Carlo simulations used
+        mean_npde: Mean of NPDE (should be ~0 for good model)
+        std_npde: Std of NPDE (should be ~1 for good model)
+    """
+    npde: List[float]
+    pde: List[float]
+    npde_by_subject: List[List[float]]
+    pde_by_subject: List[List[float]]
+    n_observations: int
+    n_simulations: int
+    mean_npde: float
+    std_npde: float
+
+
+def compute_npde(
+    observed_data: Dict[str, Any],
+    model_kind: str,
+    result: EstimationResult,
+    grid: Dict[str, Any],
+    solver: Optional[Dict[str, Any]] = None,
+    n_sim: int = 1000,
+    seed: int = 12345,
+) -> NPDEResult:
+    """
+    Compute NPDE (Normalized Prediction Distribution Errors) using Monte Carlo simulation.
+
+    NPDE is an industry-standard diagnostic for assessing model adequacy.
+    If the model correctly describes the data, NPDE should follow a standard
+    normal distribution N(0, 1).
+
+    Reference: Brendel et al. (2006), Comets et al. (2008)
+
+    Args:
+        observed_data: Observed data dictionary with subjects
+        model_kind: PK model type (e.g., "OneCompIVBolus")
+        result: EstimationResult from parameter estimation
+        grid: Simulation time grid
+        solver: Optional solver settings
+        n_sim: Number of Monte Carlo simulations (default: 1000, FDA recommends ≥500)
+        seed: Random seed for reproducibility
+
+    Returns:
+        NPDEResult with NPDE values and diagnostics
+
+    Example:
+        >>> npde_result = compute_npde(data, "OneCompIVBolus", est_result, grid)
+        >>> print(f"NPDE mean: {npde_result.mean_npde:.3f} (should be ~0)")
+        >>> print(f"NPDE std: {npde_result.std_npde:.3f} (should be ~1)")
+        >>>
+        >>> # Check model adequacy
+        >>> if abs(npde_result.mean_npde) < 0.1 and abs(npde_result.std_npde - 1) < 0.2:
+        ...     print("Model appears adequate")
+    """
+    jl = _require_julia()
+
+    # Build observed data
+    SubjectData = jl.NeoPKPDCore.SubjectData
+    ObservedData = jl.NeoPKPDCore.ObservedData
+    DoseEvent = jl.NeoPKPDCore.DoseEvent
+
+    subjects_vec = jl.seval("SubjectData[]")
+    for subj in observed_data["subjects"]:
+        doses_vec = jl.seval("DoseEvent[]")
+        for d in subj.get("doses", []):
+            dose = DoseEvent(float(d["time"]), float(d["amount"]))
+            jl.seval("push!")(doses_vec, dose)
+
+        times_vec = jl.seval("Float64[]")
+        for t in subj["times"]:
+            jl.seval("push!")(times_vec, float(t))
+
+        obs_vec = jl.seval("Float64[]")
+        for o in subj["observations"]:
+            jl.seval("push!")(obs_vec, float(o))
+
+        subj_data = SubjectData(
+            subj["subject_id"],
+            times_vec,
+            obs_vec,
+            doses_vec
+        )
+        jl.seval("push!")(subjects_vec, subj_data)
+
+    obs = ObservedData(subjects_vec)
+
+    # Build model spec
+    model_spec = _build_base_model_spec(jl, model_kind, result.theta)
+
+    # Convert theta, omega to Julia
+    theta_jl = _to_julia_float_vec(jl, [float(x) for x in result.theta])
+    omega_jl = _to_julia_matrix(jl, result.omega)
+
+    # Build sigma spec from result
+    sigma_jl = jl.NeoPKPDCore.ResidualErrorSpec(
+        jl.NeoPKPDCore.ProportionalError(),
+        jl.NeoPKPDCore.ProportionalErrorParams(float(result.sigma))
+    )
+
+    # Build grid and solver
+    saveat_jl = _to_julia_float_vec(jl, [float(x) for x in grid["saveat"]])
+    grid_jl = jl.NeoPKPDCore.SimGrid(
+        float(grid["t0"]),
+        float(grid["t1"]),
+        saveat_jl,
+    )
+
+    if solver is None:
+        solver_jl = jl.NeoPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
+    else:
+        solver_jl = jl.NeoPKPDCore.SolverSpec(
+            jl.Symbol(solver.get("alg", "Tsit5")),
+            float(solver.get("reltol", 1e-8)),
+            float(solver.get("abstol", 1e-10)),
+            int(solver.get("maxiters", 10**6)),
+        )
+
+    # Call Julia NPDE function
+    npde_jl = jl.NeoPKPDCore.compute_npde_monte_carlo(
+        obs, model_spec, theta_jl, omega_jl, sigma_jl, grid_jl, solver_jl,
+        n_sim=n_sim, seed=jl.UInt64(seed)
+    )
+
+    # Convert results to Python
+    npde = [float(x) for x in npde_jl[jl.Symbol("npde")]]
+    pde = [float(x) for x in npde_jl[jl.Symbol("pde")]]
+
+    npde_by_subject = []
+    for subj_npde in npde_jl[jl.Symbol("npde_by_subject")]:
+        npde_by_subject.append([float(x) for x in subj_npde])
+
+    pde_by_subject = []
+    for subj_pde in npde_jl[jl.Symbol("pde_by_subject")]:
+        pde_by_subject.append([float(x) for x in subj_pde])
+
+    n_observations = int(npde_jl[jl.Symbol("n_observations")])
+    n_simulations = int(npde_jl[jl.Symbol("n_simulations")])
+
+    mean_npde = float(np.mean(npde))
+    std_npde = float(np.std(npde))
+
+    return NPDEResult(
+        npde=npde,
+        pde=pde,
+        npde_by_subject=npde_by_subject,
+        pde_by_subject=pde_by_subject,
+        n_observations=n_observations,
+        n_simulations=n_simulations,
+        mean_npde=mean_npde,
+        std_npde=std_npde,
+    )
+
+
+# ============================================================================
 # Helper Functions
 # ============================================================================
 
@@ -1368,6 +1535,7 @@ __all__ = [
     "likelihood_ratio_test",
     "compute_diagnostics",
     "get_individual_predictions",
+    "compute_npde",
     # Configuration types
     "EstimationConfig",
     "BootstrapConfig",
@@ -1385,6 +1553,7 @@ __all__ = [
     "ModelComparisonResult",
     "SCMResult",
     "SCMStepResult",
+    "NPDEResult",
     # Enums
     "BLQMethod",
     "OmegaStructure",
