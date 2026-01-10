@@ -472,4 +472,11 @@ __all__ = [
     "ImportedModel",
     "NONMEMControlFile",
     "MonolixProject",
+
+    # Compliance (FDA 21 CFR Part 11)
+    "compliance",
 ]
+
+
+# FDA 21 CFR Part 11 Compliance Module
+from . import compliance

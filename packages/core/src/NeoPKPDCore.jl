@@ -114,6 +114,16 @@ include("serialization/deserialize_error.jl")
 include("serialization/serialize_tmdd.jl")
 include("serialization/deserialize_tmdd.jl")
 
+# ------------------------------------------------------------------
+# FDA 21 CFR Part 11 Compliance Module
+# Audit trails, data integrity, environment capture, validation reports
+# ------------------------------------------------------------------
+include("compliance/compliance.jl")
+
+# Compliance-aware serialization (extends base serialization with compliance_metadata)
+include("serialization/serialize_compliance.jl")
+include("serialization/deserialize_compliance.jl")
+
 include("analysis/exposure.jl")
 include("analysis/response_metrics.jl")
 
