@@ -14,20 +14,20 @@ _to_dict(x::JSON.Object) = Dict{String,Any}(x)
 # -------------------------
 
 const _MODEL_KIND_MAP = Dict{String,Function}(
-    "NeoPKPDCore.OneCompIVBolus" => () -> OneCompIVBolus(),
-    "NeoPKPDCore.OneCompOralFirstOrder" => () -> OneCompOralFirstOrder(),
-    "NeoPKPDCore.TwoCompIVBolus" => () -> TwoCompIVBolus(),
-    "NeoPKPDCore.TwoCompOral" => () -> TwoCompOral(),
-    "NeoPKPDCore.ThreeCompIVBolus" => () -> ThreeCompIVBolus(),
-    "NeoPKPDCore.TransitAbsorption" => () -> TransitAbsorption(),
-    "NeoPKPDCore.MichaelisMentenElimination" => () -> MichaelisMentenElimination(),
+    "NeoPKPD.OneCompIVBolus" => () -> OneCompIVBolus(),
+    "NeoPKPD.OneCompOralFirstOrder" => () -> OneCompOralFirstOrder(),
+    "NeoPKPD.TwoCompIVBolus" => () -> TwoCompIVBolus(),
+    "NeoPKPD.TwoCompOral" => () -> TwoCompOral(),
+    "NeoPKPD.ThreeCompIVBolus" => () -> ThreeCompIVBolus(),
+    "NeoPKPD.TransitAbsorption" => () -> TransitAbsorption(),
+    "NeoPKPD.MichaelisMentenElimination" => () -> MichaelisMentenElimination(),
 )
 
 const _PD_KIND_MAP = Dict{String,Function}(
-    "NeoPKPDCore.DirectEmax" => () -> DirectEmax(),
-    "NeoPKPDCore.SigmoidEmax" => () -> SigmoidEmax(),
-    "NeoPKPDCore.IndirectResponseTurnover" => () -> IndirectResponseTurnover(),
-    "NeoPKPDCore.BiophaseEquilibration" => () -> BiophaseEquilibration(),
+    "NeoPKPD.DirectEmax" => () -> DirectEmax(),
+    "NeoPKPD.SigmoidEmax" => () -> SigmoidEmax(),
+    "NeoPKPD.IndirectResponseTurnover" => () -> IndirectResponseTurnover(),
+    "NeoPKPD.BiophaseEquilibration" => () -> BiophaseEquilibration(),
 )
 
 function _require_key(d::Dict, k::String)
@@ -70,7 +70,7 @@ end
 
 function _parse_model_spec(d::Dict)::ModelSpec
     raw_kind = String(d["kind"])
-    kind_str = occursin(".", raw_kind) ? raw_kind : "NeoPKPDCore.$raw_kind"
+    kind_str = occursin(".", raw_kind) ? raw_kind : "NeoPKPD.$raw_kind"
 
     if !haskey(_MODEL_KIND_MAP, kind_str)
         error("Unsupported model kind in artifact: $(kind_str)")
@@ -137,7 +137,7 @@ end
 
 function _parse_pd_spec(d::Dict)::PDSpec
     raw_kind = String(d["kind"])
-    kind_str = occursin(".", raw_kind) ? raw_kind : "NeoPKPDCore.$raw_kind"
+    kind_str = occursin(".", raw_kind) ? raw_kind : "NeoPKPD.$raw_kind"
 
     if !haskey(_PD_KIND_MAP, kind_str)
         error("Unsupported PD kind in artifact: $(kind_str)")

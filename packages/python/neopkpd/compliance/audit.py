@@ -82,14 +82,14 @@ def create_audit_record(
 
     # Map Python enum to Julia enum
     julia_actions = {
-        AuditAction.CREATE: jl.NeoPKPDCore.AUDIT_CREATE,
-        AuditAction.REPLAY: jl.NeoPKPDCore.AUDIT_REPLAY,
-        AuditAction.VALIDATE: jl.NeoPKPDCore.AUDIT_VALIDATE,
-        AuditAction.MODIFY: jl.NeoPKPDCore.AUDIT_MODIFY,
+        AuditAction.CREATE: jl.NeoPKPD.AUDIT_CREATE,
+        AuditAction.REPLAY: jl.NeoPKPD.AUDIT_REPLAY,
+        AuditAction.VALIDATE: jl.NeoPKPD.AUDIT_VALIDATE,
+        AuditAction.MODIFY: jl.NeoPKPD.AUDIT_MODIFY,
     }
 
     julia_action = julia_actions[action]
-    record = jl.NeoPKPDCore.create_audit_record(
+    record = jl.NeoPKPD.create_audit_record(
         action=julia_action,
         previous_execution_id=previous_execution_id,
     )
@@ -130,13 +130,13 @@ def verify_audit_record(record: AuditRecord) -> bool:
 
     # Reconstruct Julia record
     julia_actions = {
-        AuditAction.CREATE: jl.NeoPKPDCore.AUDIT_CREATE,
-        AuditAction.REPLAY: jl.NeoPKPDCore.AUDIT_REPLAY,
-        AuditAction.VALIDATE: jl.NeoPKPDCore.AUDIT_VALIDATE,
-        AuditAction.MODIFY: jl.NeoPKPDCore.AUDIT_MODIFY,
+        AuditAction.CREATE: jl.NeoPKPD.AUDIT_CREATE,
+        AuditAction.REPLAY: jl.NeoPKPD.AUDIT_REPLAY,
+        AuditAction.VALIDATE: jl.NeoPKPD.AUDIT_VALIDATE,
+        AuditAction.MODIFY: jl.NeoPKPD.AUDIT_MODIFY,
     }
 
-    julia_record = jl.NeoPKPDCore.AuditRecord(
+    julia_record = jl.NeoPKPD.AuditRecord(
         record.execution_id,
         record.timestamp_utc,
         record.timezone_offset,
@@ -149,7 +149,7 @@ def verify_audit_record(record: AuditRecord) -> bool:
         record.record_hash,
     )
 
-    return bool(jl.NeoPKPDCore.verify_audit_record(julia_record))
+    return bool(jl.NeoPKPD.verify_audit_record(julia_record))
 
 
 def get_execution_id(artifact: Dict[str, Any]) -> Optional[str]:

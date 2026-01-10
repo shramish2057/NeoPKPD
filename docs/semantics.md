@@ -305,7 +305,7 @@ l2_norm_delta = sqrt(sum((base[i] - pert[i])^2))
 ### Verifying Semantics Match
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Check current versions
 println("Event semantics: ", EVENT_SEMANTICS_VERSION)

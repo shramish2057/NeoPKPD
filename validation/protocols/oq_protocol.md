@@ -42,7 +42,7 @@ This protocol covers:
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 spec = ModelSpec(
     OneCompIVBolus(),
     "test",
@@ -69,7 +69,7 @@ result = simulate(spec, grid, solver)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore, JSON
+using NeoPKPD, JSON
 
 # Load golden artifact
 artifact = JSON.parsefile("validation/golden/onecomp_iv_bolus_1.json")
@@ -92,7 +92,7 @@ new_result = replayed["concentration"]
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 spec = ModelSpec(...)
 bounds = ParameterBounds(Dict(:CL => (0.5, 2.0), :V => (5.0, 20.0)))
 gsa_spec = GlobalSensitivitySpec(
@@ -117,7 +117,7 @@ result = run_sobol_sensitivity(spec, grid, solver, gsa_spec)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 gsa_spec = GlobalSensitivitySpec(
     MorrisMethod(n_trajectories=10),
     bounds
@@ -140,7 +140,7 @@ result = run_morris_sensitivity(spec, grid, solver, gsa_spec)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore, JSON
+using NeoPKPD, JSON
 
 # Serialize
 artifact = serialize_execution(model_spec=spec, grid=grid, solver=solver, result=result)
@@ -166,7 +166,7 @@ result2 = replay_execution(artifact2)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 artifact = serialize_execution(...)
 add_compliance_metadata!(artifact)
@@ -189,7 +189,7 @@ meta = artifact["compliance_metadata"]
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 artifact = serialize_execution(...)
 add_compliance_metadata!(artifact)
@@ -216,7 +216,7 @@ result2 = verify_artifact_integrity(artifact)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 record = create_audit_record()
 is_valid = verify_audit_record(record)
@@ -234,7 +234,7 @@ is_valid = verify_audit_record(record)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 gsa_spec1 = GlobalSensitivitySpec(..., seed=UInt64(42))
 gsa_spec2 = GlobalSensitivitySpec(..., seed=UInt64(42))
@@ -255,7 +255,7 @@ result2 = run_sobol_sensitivity(spec, grid, solver, gsa_spec2)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore, JSON
+using NeoPKPD, JSON
 
 for file in readdir("validation/golden")
     artifact = JSON.parsefile(joinpath("validation/golden", file))

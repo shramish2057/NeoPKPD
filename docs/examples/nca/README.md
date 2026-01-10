@@ -25,7 +25,7 @@ Examples demonstrating NCA metrics computation from concentration-time data.
 ## Usage
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Compute NCA metrics
 result = compute_nca(

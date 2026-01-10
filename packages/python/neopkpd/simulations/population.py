@@ -68,15 +68,15 @@ def simulate_population_iv_bolus(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-    OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    IIVSpec = jl.NeoPKPDCore.IIVSpec
-    LogNormalIIV = jl.NeoPKPDCore.LogNormalIIV
-    PopulationSpec = jl.NeoPKPDCore.PopulationSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+    OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    IIVSpec = jl.NeoPKPD.IIVSpec
+    LogNormalIIV = jl.NeoPKPD.LogNormalIIV
+    PopulationSpec = jl.NeoPKPD.PopulationSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -92,7 +92,7 @@ def simulate_population_iv_bolus(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate_population(pop, grid, solver)
+    res = jl.NeoPKPD.simulate_population(pop, grid, solver)
     return _popresult_to_py(res)
 
 
@@ -160,23 +160,23 @@ def simulate_population_oral(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-    OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    IIVSpec = jl.NeoPKPDCore.IIVSpec
-    IOVSpec = jl.NeoPKPDCore.IOVSpec
-    LogNormalIIV = jl.NeoPKPDCore.LogNormalIIV
-    OccasionDefinition = jl.NeoPKPDCore.OccasionDefinition
-    PopulationSpec = jl.NeoPKPDCore.PopulationSpec
-    IndividualCovariates = jl.NeoPKPDCore.IndividualCovariates
-    CovariateModel = jl.NeoPKPDCore.CovariateModel
-    CovariateEffect = jl.NeoPKPDCore.CovariateEffect
-    LinearCovariate = jl.NeoPKPDCore.LinearCovariate
-    PowerCovariate = jl.NeoPKPDCore.PowerCovariate
-    ExpCovariate = jl.NeoPKPDCore.ExpCovariate
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+    OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    IIVSpec = jl.NeoPKPD.IIVSpec
+    IOVSpec = jl.NeoPKPD.IOVSpec
+    LogNormalIIV = jl.NeoPKPD.LogNormalIIV
+    OccasionDefinition = jl.NeoPKPD.OccasionDefinition
+    PopulationSpec = jl.NeoPKPD.PopulationSpec
+    IndividualCovariates = jl.NeoPKPD.IndividualCovariates
+    CovariateModel = jl.NeoPKPD.CovariateModel
+    CovariateEffect = jl.NeoPKPD.CovariateEffect
+    LinearCovariate = jl.NeoPKPD.LinearCovariate
+    PowerCovariate = jl.NeoPKPD.PowerCovariate
+    ExpCovariate = jl.NeoPKPD.ExpCovariate
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -233,5 +233,5 @@ def simulate_population_oral(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate_population(pop, grid, solver)
+    res = jl.NeoPKPD.simulate_population(pop, grid, solver)
     return _popresult_to_py(res)

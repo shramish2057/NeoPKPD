@@ -9,7 +9,7 @@ Comprehensive guide for importing CDISC/SDTM and ADaM formatted data into NeoPKP
 NeoPKPD supports importing data from CDISC (Clinical Data Interchange Standards Consortium) formats, including SDTM (Study Data Tabulation Model) and ADaM (Analysis Data Model) datasets.
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Import CDISC data
 data = import_cdisc(
@@ -210,7 +210,7 @@ STUDY01,SUBJ001,LAMZHL,Terminal Half-life,8.5,h,PK PARAMETERS
 ### Basic Import
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Import from CSV files
 data = import_cdisc(
@@ -536,7 +536,7 @@ STUDY01,SUBJ002,002,38,YEARS,F,ASIAN,NOT HISPANIC OR LATINO,200mg,TRT200,2024-01
 ### Julia Import Code
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Import CDISC data
 data = import_cdisc(

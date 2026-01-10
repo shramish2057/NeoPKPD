@@ -27,7 +27,7 @@ Bootstrap analysis provides non-parametric estimates of parameter uncertainty by
 Resample subjects with replacement - the gold standard for regulatory submissions:
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 using StableRNGs
 
 # After initial estimation
@@ -411,7 +411,7 @@ println("Empirical coverage: $(coverage * 100)%")
 ## Example: Full Bootstrap Analysis
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 using StableRNGs
 
 # Load and prepare data

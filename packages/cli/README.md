@@ -394,7 +394,7 @@ export PATH="$PATH:/path/to/julia/bin"
 ### Package Not Installed
 
 ```
-Error: ArgumentError: Package NeoPKPDCore not found
+Error: ArgumentError: Package NeoPKPD not found
 ```
 
 Install dependencies:

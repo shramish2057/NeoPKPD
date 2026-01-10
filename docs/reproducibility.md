@@ -31,7 +31,7 @@ Every simulation can be serialized to a JSON artifact containing everything need
 **Julia**:
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 spec = ModelSpec(...)
 grid = SimGrid(...)
@@ -246,11 +246,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
+          julia --project=core/NeoPKPD -e 'using Pkg; Pkg.instantiate()'
 
       - name: Run tests
         run: |
-          julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.test()'
+          julia --project=core/NeoPKPD -e 'using Pkg; Pkg.test()'
 
       - name: Validate golden artifacts
         run: |
@@ -385,7 +385,7 @@ When numerical behavior changes:
 ## Example: Complete Reproducibility Workflow
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # 1. Define simulation (all parameters explicit)
 spec = ModelSpec(

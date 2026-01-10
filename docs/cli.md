@@ -4,7 +4,7 @@ NeoPKPD provides a comprehensive command-line interface for PK/PD simulations, e
 
 ## Installation
 
-The CLI is located in `packages/cli/bin/neopkpd` and requires Julia with the NeoPKPDCore and NeoPKPDCLI packages.
+The CLI is located in `packages/cli/bin/neopkpd` and requires Julia with the NeoPKPD and NeoPKPDCLI packages.
 
 ```bash
 # Install dependencies
@@ -368,7 +368,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
-      - run: julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
+      - run: julia --project=core/NeoPKPD -e 'using Pkg; Pkg.instantiate()'
       - run: ./bin/neopkpd validate-golden
 ```
 
@@ -388,7 +388,7 @@ done
 
 ```bash
 # Generate new artifact
-julia --project=core/NeoPKPDCore my_simulation.jl
+julia --project=core/NeoPKPD my_simulation.jl
 
 # Compare with golden
 diff <(jq -S . validation/golden/pk_iv_bolus.json) <(jq -S . my_artifact.json)
@@ -409,13 +409,13 @@ Error: julia: command not found
 ### Package Not Installed
 
 ```
-Error: ArgumentError: Package NeoPKPDCore not found
+Error: ArgumentError: Package NeoPKPD not found
 ```
 
 **Solution**: Install dependencies:
 
 ```bash
-julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
+julia --project=core/NeoPKPD -e 'using Pkg; Pkg.instantiate()'
 julia --project=cli/NeoPKPDCLI -e 'using Pkg; Pkg.instantiate()'
 ```
 

@@ -67,7 +67,7 @@ Every simulation can produce a JSON artifact that:
          │                 │                     │
          ▼                 ▼                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     NeoPKPDCore                                │
+│                     NeoPKPD                                │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
 │  │   Models    │  │   Engine    │  │    Serialization        │ │
@@ -90,11 +90,11 @@ Every simulation can produce a JSON artifact that:
 
 ## Module Structure
 
-### Core (`core/NeoPKPDCore/`)
+### Core (`core/NeoPKPD/`)
 
 ```
 src/
-├── NeoPKPDCore.jl          # Module definition, exports
+├── NeoPKPD.jl          # Module definition, exports
 ├── specs/
 │   ├── specs.jl             # Core type definitions
 │   ├── sensitivity.jl       # Perturbation types
@@ -299,7 +299,7 @@ PerturbationKind (abstract)
    - `pk_ode!(du, u, p, t, ::NewModel)`
    - `pk_conc(u, p, ::NewModel)`
    - `pk_dose_target_index(::NewModel)`
-5. Add exports to `NeoPKPDCore.jl`
+5. Add exports to `NeoPKPD.jl`
 6. Add serialization support
 7. Add tests and golden artifacts
 

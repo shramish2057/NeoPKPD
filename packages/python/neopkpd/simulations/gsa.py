@@ -97,7 +97,7 @@ def run_sobol_sensitivity(
         >>> print(f"CL-V interaction: Sij={result.second_order[('CL', 'V')]:.3f}")
     """
     jl = _require_julia()
-    NC = jl.NeoPKPDCore
+    NC = jl.NeoPKPD
 
     # Build model spec
     model_kind = getattr(NC, model["kind"])()
@@ -239,7 +239,7 @@ def run_morris_sensitivity(
         >>> print(f"CL importance: mu*={result.indices['CL'].mu_star:.3f}")
     """
     jl = _require_julia()
-    NC = jl.NeoPKPDCore
+    NC = jl.NeoPKPD
 
     # Build model spec
     model_kind = getattr(NC, model["kind"])()

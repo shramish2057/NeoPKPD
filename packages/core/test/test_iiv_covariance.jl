@@ -2,7 +2,7 @@
 # Tests full covariance matrix support with correlations
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using StableRNGs
 using Statistics
@@ -167,7 +167,7 @@ using Statistics
 
             rng = StableRNG(12345)
             for i in 1:n_samples
-                eta_vec, _ = NeoPKPDCore.sample_eta_vector(om, rng)
+                eta_vec, _ = NeoPKPD.sample_eta_vector(om, rng)
                 etas_CL[i] = eta_vec[1]
                 etas_V[i] = eta_vec[2]
             end
@@ -195,7 +195,7 @@ using Statistics
 
             rng = StableRNG(12345)
             for i in 1:n_samples
-                eta_vec, param_names = NeoPKPDCore.sample_eta_vector(om, rng)
+                eta_vec, param_names = NeoPKPD.sample_eta_vector(om, rng)
                 cl_idx = findfirst(==(:CL), param_names)
                 v_idx = findfirst(==(:V), param_names)
                 etas_CL[i] = eta_vec[cl_idx === nothing ? 1 : cl_idx]
@@ -214,10 +214,10 @@ using Statistics
 
             # Sample with same seed twice
             rng1 = StableRNG(42)
-            eta1, _ = NeoPKPDCore.sample_eta_vector(om, rng1)
+            eta1, _ = NeoPKPD.sample_eta_vector(om, rng1)
 
             rng2 = StableRNG(42)
-            eta2, _ = NeoPKPDCore.sample_eta_vector(om, rng2)
+            eta2, _ = NeoPKPD.sample_eta_vector(om, rng2)
 
             @test eta1 ≈ eta2
         end
@@ -254,7 +254,7 @@ using Statistics
             iiv_orig = IIVSpec(LogNormalIIV(), omegas, UInt64(12345), 10)
 
             # Serialize
-            serialized = NeoPKPDCore._serialize_iiv(iiv_orig)
+            serialized = NeoPKPD._serialize_iiv(iiv_orig)
 
             @test haskey(serialized, "kind")
             @test haskey(serialized, "omegas")
@@ -263,7 +263,7 @@ using Statistics
             @test !haskey(serialized, "omega_matrix")
 
             # Deserialize
-            iiv_parsed = NeoPKPDCore._parse_iiv(serialized)
+            iiv_parsed = NeoPKPD._parse_iiv(serialized)
 
             @test iiv_parsed.omegas[:CL] ≈ iiv_orig.omegas[:CL]
             @test iiv_parsed.omegas[:V] ≈ iiv_orig.omegas[:V]
@@ -277,14 +277,14 @@ using Statistics
             iiv_orig = IIVSpec(LogNormalIIV(), om, UInt64(12345), 10)
 
             # Serialize
-            serialized = NeoPKPDCore._serialize_iiv(iiv_orig)
+            serialized = NeoPKPD._serialize_iiv(iiv_orig)
 
             @test haskey(serialized, "omega_matrix")
             @test serialized["omega_matrix"]["param_names"] == ["CL", "V"]
             @test serialized["omega_matrix"]["n_params"] == 2
 
             # Deserialize
-            iiv_parsed = NeoPKPDCore._parse_iiv(serialized)
+            iiv_parsed = NeoPKPD._parse_iiv(serialized)
 
             @test has_correlations(iiv_parsed)
             @test iiv_parsed.omega_matrix.param_names == param_names
@@ -334,7 +334,7 @@ using Statistics
         rng = StableRNG(42)
 
         for i in 1:n_samples
-            eta_vec, _ = NeoPKPDCore.sample_eta_vector(om, rng)
+            eta_vec, _ = NeoPKPD.sample_eta_vector(om, rng)
             etas[i, :] = eta_vec
         end
 

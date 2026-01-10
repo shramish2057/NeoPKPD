@@ -7,7 +7,7 @@ PK model for drugs that undergo biliary excretion and intestinal reabsorption, l
 ## Usage
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Create EHR model
 model = enterohepatic_recirculation()
@@ -58,7 +58,7 @@ $$\frac{dA_{bile}}{dt} = K_{bile} \cdot A_c - K_{reab} \cdot A_{bile}$$
 ## Basic Example
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 model = enterohepatic_recirculation()
 params = CustomODEParams(
@@ -95,7 +95,7 @@ end
 ## Effect of Reabsorption Fraction
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 model = enterohepatic_recirculation()
 f_reab_values = [0.0, 0.3, 0.6, 0.9]

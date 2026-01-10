@@ -1,4 +1,4 @@
-module NeoPKPDCore
+module NeoPKPD
 
 # ------------------------------------------------------------------
 # External dependencies

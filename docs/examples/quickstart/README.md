@@ -47,7 +47,7 @@ Dose (100 mg IV)
 ### Julia
 
 ```bash
-julia --project=core/NeoPKPDCore docs/examples/quickstart/julia_first_simulation.jl
+julia --project=core/NeoPKPD docs/examples/quickstart/julia_first_simulation.jl
 ```
 
 ### Python

@@ -2,7 +2,7 @@
 # Industry-standard tests based on NONMEM/Monolix validation scenarios
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 
 @testset "ALAG and Bioavailability Support" begin
 

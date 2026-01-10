@@ -13,7 +13,7 @@ Multiple dose NCA extends single-dose analysis to repeated dosing scenarios, pro
 ## Quick Start
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Steady-state data (after multiple doses)
 times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0]  # Within dosing interval
@@ -333,7 +333,7 @@ end
 ## Example: Complete Multiple Dose Analysis
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Drug administered Q12H at steady state
 times = [0.0, 0.5, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0]

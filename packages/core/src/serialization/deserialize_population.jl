@@ -8,7 +8,7 @@ function _parse_iiv(d)::Union{Nothing,IIVSpec}
     kind_str = String(d["kind"])
 
     # Normalize both qualified and unqualified forms
-    if kind_str == "LogNormalIIV" || kind_str == "NeoPKPDCore.LogNormalIIV"
+    if kind_str == "LogNormalIIV" || kind_str == "NeoPKPD.LogNormalIIV"
         kind = LogNormalIIV()
     else
         error("Unsupported IIV kind in artifact: $(kind_str)")
@@ -197,7 +197,7 @@ function _parse_iov(d)::Union{Nothing,IOVSpec}
 
     kind_str = String(d["kind"])
     # Normalize both qualified and unqualified forms
-    if kind_str != "NeoPKPDCore.LogNormalIIV" && kind_str != "LogNormalIIV"
+    if kind_str != "NeoPKPD.LogNormalIIV" && kind_str != "LogNormalIIV"
         error("Unsupported IOV kind in artifact: $(kind_str)")
     end
 

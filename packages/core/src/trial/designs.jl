@@ -361,7 +361,7 @@ function get_design_description(design::CrossoverDesign)
 end
 
 function get_design_description(design::DoseEscalationDesign)
-    rule_name = typeof(design.escalation_rule) |> string |> x -> replace(x, "NeoPKPDCore." => "")
+    rule_name = typeof(design.escalation_rule) |> string |> x -> replace(x, "NeoPKPD." => "")
     return "Dose escalation ($(rule_name)) with $(length(design.dose_levels)) dose levels"
 end
 

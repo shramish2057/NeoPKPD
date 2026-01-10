@@ -91,7 +91,7 @@ def version() -> str:
         '0.1.0'
     """
     jl = _require_julia()
-    return str(jl.NeoPKPDCore.NEOPKPD_VERSION)
+    return str(jl.NeoPKPD.NEOPKPD_VERSION)
 
 
 def _detect_repo_root(start: Optional[Path] = None) -> Path:
@@ -101,15 +101,15 @@ def _detect_repo_root(start: Optional[Path] = None) -> Path:
         # Check for packages/core/Project.toml (current structure)
         if (p / "packages" / "core" / "Project.toml").exists():
             return p
-        # Legacy: check for core/NeoPKPDCore/Project.toml
-        if (p / "core" / "NeoPKPDCore" / "Project.toml").exists():
+        # Legacy: check for core/NeoPKPD/Project.toml
+        if (p / "core" / "NeoPKPD" / "Project.toml").exists():
             return p
     raise RuntimeError("Could not locate repo root (packages/core/Project.toml not found).")
 
 
 def init_julia(repo_root: Optional[Union[str, Path]] = None) -> None:
     """
-    Initialize the Julia runtime and load NeoPKPDCore.
+    Initialize the Julia runtime and load NeoPKPD.
 
     This function activates the Julia project and loads the core simulation
     engine. It's safe to call multiple times - subsequent calls are no-ops.
@@ -133,7 +133,7 @@ def init_julia(repo_root: Optional[Union[str, Path]] = None) -> None:
     if (root / "packages" / "core" / "Project.toml").exists():
         core_project = root / "packages" / "core"
     else:
-        core_project = root / "core" / "NeoPKPDCore"
+        core_project = root / "core" / "NeoPKPD"
 
     from juliacall import Main as jl  # type: ignore
 
@@ -142,7 +142,7 @@ def init_julia(repo_root: Optional[Union[str, Path]] = None) -> None:
     jl.Pkg.activate(str(core_project))
     jl.Pkg.instantiate()
 
-    jl.seval("using NeoPKPDCore")
+    jl.seval("using NeoPKPD")
 
     _JL = jl
 
@@ -162,7 +162,7 @@ def get_julia() -> Any:
     Use this in modules that need access to Julia.
 
     Returns:
-        The Julia main module with NeoPKPDCore loaded.
+        The Julia main module with NeoPKPD loaded.
     """
     return _require_julia()
 
@@ -173,7 +173,7 @@ def get_julia() -> Any:
 
 def _simresult_to_py(res: Any) -> Dict[str, Any]:
     """
-    Convert NeoPKPDCore.SimResult to a Python dictionary.
+    Convert NeoPKPD.SimResult to a Python dictionary.
 
     Args:
         res: Julia SimResult object
@@ -190,7 +190,7 @@ def _simresult_to_py(res: Any) -> Dict[str, Any]:
 
 def _popresult_to_py(popres: Any) -> Dict[str, Any]:
     """
-    Convert NeoPKPDCore.PopulationResult to a Python dictionary.
+    Convert NeoPKPD.PopulationResult to a Python dictionary.
 
     Args:
         popres: Julia PopulationResult object
@@ -246,7 +246,7 @@ def _create_dose_event(jl: Any, dose_dict: Dict[str, Any]) -> Any:
     Returns:
         Julia DoseEvent object
     """
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    DoseEvent = jl.NeoPKPD.DoseEvent
     return DoseEvent(
         float(dose_dict["time"]),
         float(dose_dict["amount"]),
@@ -265,7 +265,7 @@ def _create_dose_events(jl: Any, doses: List[Dict[str, Any]]) -> Any:
     Returns:
         Julia Vector{DoseEvent}
     """
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    DoseEvent = jl.NeoPKPD.DoseEvent
     dose_objs = [_create_dose_event(jl, d) for d in doses]
     return _to_julia_vector(jl, dose_objs, DoseEvent)
 
@@ -300,18 +300,18 @@ def replay_artifact(path: Union[str, Path]) -> Dict[str, Any]:
         >>> print(f"Time points: {len(result['t'])}")
     """
     jl = _require_julia()
-    artifact = jl.NeoPKPDCore.read_execution_json(str(Path(path).resolve()))
+    artifact = jl.NeoPKPD.read_execution_json(str(Path(path).resolve()))
 
     atype = "single"
     if "artifact_type" in artifact:
         atype = str(artifact["artifact_type"])
 
     if atype == "population":
-        res = jl.NeoPKPDCore.replay_population_execution(artifact)
+        res = jl.NeoPKPD.replay_population_execution(artifact)
         return _popresult_to_py(res)
 
     if atype == "sensitivity_single":
-        res = jl.NeoPKPDCore.replay_sensitivity_execution(artifact)
+        res = jl.NeoPKPD.replay_sensitivity_execution(artifact)
         return {
             "plan": {"name": str(res.plan.name)},
             "observation": str(res.observation),
@@ -326,7 +326,7 @@ def replay_artifact(path: Union[str, Path]) -> Dict[str, Any]:
         }
 
     if atype == "sensitivity_population":
-        res = jl.NeoPKPDCore.replay_population_sensitivity_execution(artifact)
+        res = jl.NeoPKPD.replay_population_sensitivity_execution(artifact)
         return {
             "plan": {"name": str(res.plan.name)},
             "observation": str(res.observation),
@@ -341,7 +341,7 @@ def replay_artifact(path: Union[str, Path]) -> Dict[str, Any]:
             "metadata": dict(res.metadata),
         }
 
-    res = jl.NeoPKPDCore.replay_execution(artifact)
+    res = jl.NeoPKPD.replay_execution(artifact)
     return _simresult_to_py(res)
 
 
@@ -392,23 +392,23 @@ def write_single_artifact(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     kind = model["kind"]
     dose_list = [DoseEvent(float(d["time"]), float(d["amount"])) for d in model["doses"]]
     doses = _to_julia_vector(jl, dose_list, DoseEvent)
 
     if kind == "OneCompIVBolus":
-        OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-        Params = jl.NeoPKPDCore.OneCompIVBolusParams
+        OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+        Params = jl.NeoPKPD.OneCompIVBolusParams
         params = Params(float(model["params"]["CL"]), float(model["params"]["V"]))
         spec = ModelSpec(OneCompIVBolus(), "py_artifact", params, doses)
     elif kind == "OneCompOralFirstOrder":
-        OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-        Params = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+        Params = jl.NeoPKPD.OneCompOralFirstOrderParams
         params = Params(
             float(model["params"]["KA"]),
             float(model["params"]["CL"]),
@@ -434,9 +434,9 @@ def write_single_artifact(
             int(solver.get("maxiters", 10**7)),
         )
 
-    res = jl.NeoPKPDCore.simulate(spec, grid_jl, solver_jl)
+    res = jl.NeoPKPD.simulate(spec, grid_jl, solver_jl)
 
-    jl.NeoPKPDCore.write_execution_json(
+    jl.NeoPKPD.write_execution_json(
         str(Path(path).resolve()),
         model_spec=spec,
         grid=grid_jl,
@@ -499,12 +499,12 @@ def simulate_pk_iv_bolus(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-    OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+    OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -513,7 +513,7 @@ def simulate_pk_iv_bolus(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -570,12 +570,12 @@ def simulate_pk_oral_first_order(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-    OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+    OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -589,7 +589,7 @@ def simulate_pk_oral_first_order(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -661,12 +661,12 @@ def simulate_pk_twocomp_iv_bolus(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    TwoCompIVBolus = jl.NeoPKPDCore.TwoCompIVBolus
-    TwoCompIVBolusParams = jl.NeoPKPDCore.TwoCompIVBolusParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    TwoCompIVBolus = jl.NeoPKPD.TwoCompIVBolus
+    TwoCompIVBolusParams = jl.NeoPKPD.TwoCompIVBolusParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -679,7 +679,7 @@ def simulate_pk_twocomp_iv_bolus(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -738,12 +738,12 @@ def simulate_pk_twocomp_oral(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    TwoCompOral = jl.NeoPKPDCore.TwoCompOral
-    TwoCompOralParams = jl.NeoPKPDCore.TwoCompOralParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    TwoCompOral = jl.NeoPKPD.TwoCompOral
+    TwoCompOralParams = jl.NeoPKPD.TwoCompOralParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -756,7 +756,7 @@ def simulate_pk_twocomp_oral(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -823,12 +823,12 @@ def simulate_pk_threecomp_iv_bolus(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    ThreeCompIVBolus = jl.NeoPKPDCore.ThreeCompIVBolus
-    ThreeCompIVBolusParams = jl.NeoPKPDCore.ThreeCompIVBolusParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    ThreeCompIVBolus = jl.NeoPKPD.ThreeCompIVBolus
+    ThreeCompIVBolusParams = jl.NeoPKPD.ThreeCompIVBolusParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -841,7 +841,7 @@ def simulate_pk_threecomp_iv_bolus(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -905,12 +905,12 @@ def simulate_pk_transit_absorption(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    TransitAbsorption = jl.NeoPKPDCore.TransitAbsorption
-    TransitAbsorptionParams = jl.NeoPKPDCore.TransitAbsorptionParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    TransitAbsorption = jl.NeoPKPD.TransitAbsorption
+    TransitAbsorptionParams = jl.NeoPKPD.TransitAbsorptionParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -923,7 +923,7 @@ def simulate_pk_transit_absorption(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -987,12 +987,12 @@ def simulate_pk_michaelis_menten(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    MichaelisMentenElimination = jl.NeoPKPDCore.MichaelisMentenElimination
-    MichaelisMentenEliminationParams = jl.NeoPKPDCore.MichaelisMentenEliminationParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    MichaelisMentenElimination = jl.NeoPKPD.MichaelisMentenElimination
+    MichaelisMentenEliminationParams = jl.NeoPKPD.MichaelisMentenEliminationParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -1005,7 +1005,7 @@ def simulate_pk_michaelis_menten(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -1072,26 +1072,26 @@ def simulate_pkpd_direct_emax(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    PDSpec = jl.NeoPKPDCore.PDSpec
-    DirectEmax = jl.NeoPKPDCore.DirectEmax
-    DirectEmaxParams = jl.NeoPKPDCore.DirectEmaxParams
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    PDSpec = jl.NeoPKPD.PDSpec
+    DirectEmax = jl.NeoPKPD.DirectEmax
+    DirectEmaxParams = jl.NeoPKPD.DirectEmaxParams
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
 
     if pk_kind == "OneCompIVBolus":
-        OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-        OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
+        OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+        OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
         pk_spec = ModelSpec(OneCompIVBolus(), "py_pkpd_pk", OneCompIVBolusParams(float(cl), float(v)), doses_vec)
     elif pk_kind == "OneCompOralFirstOrder":
         if ka is None:
             raise ValueError("ka required for OneCompOralFirstOrder PK model")
-        OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-        OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+        OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
         pk_spec = ModelSpec(
             OneCompOralFirstOrder(), "py_pkpd_pk",
             OneCompOralFirstOrderParams(float(ka), float(cl), float(v)), doses_vec
@@ -1108,7 +1108,7 @@ def simulate_pkpd_direct_emax(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate_pkpd_coupled(pk_spec, pd_spec, grid, solver)
+    res = jl.NeoPKPD.simulate_pkpd_coupled(pk_spec, pd_spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -1176,26 +1176,26 @@ def simulate_pkpd_indirect_response(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    PDSpec = jl.NeoPKPDCore.PDSpec
-    IndirectResponseTurnover = jl.NeoPKPDCore.IndirectResponseTurnover
-    IndirectResponseTurnoverParams = jl.NeoPKPDCore.IndirectResponseTurnoverParams
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    PDSpec = jl.NeoPKPD.PDSpec
+    IndirectResponseTurnover = jl.NeoPKPD.IndirectResponseTurnover
+    IndirectResponseTurnoverParams = jl.NeoPKPD.IndirectResponseTurnoverParams
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
 
     if pk_kind == "OneCompIVBolus":
-        OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-        OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
+        OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+        OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
         pk_spec = ModelSpec(OneCompIVBolus(), "py_pkpd_pk", OneCompIVBolusParams(float(cl), float(v)), doses_vec)
     elif pk_kind == "OneCompOralFirstOrder":
         if ka is None:
             raise ValueError("ka required for OneCompOralFirstOrder PK model")
-        OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-        OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+        OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
         pk_spec = ModelSpec(
             OneCompOralFirstOrder(), "py_pkpd_pk",
             OneCompOralFirstOrderParams(float(ka), float(cl), float(v)), doses_vec
@@ -1212,7 +1212,7 @@ def simulate_pkpd_indirect_response(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate_pkpd_coupled(pk_spec, pd_spec, grid, solver)
+    res = jl.NeoPKPD.simulate_pkpd_coupled(pk_spec, pd_spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -1284,26 +1284,26 @@ def simulate_pkpd_sigmoid_emax(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    PDSpec = jl.NeoPKPDCore.PDSpec
-    SigmoidEmax = jl.NeoPKPDCore.SigmoidEmax
-    SigmoidEmaxParams = jl.NeoPKPDCore.SigmoidEmaxParams
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    PDSpec = jl.NeoPKPD.PDSpec
+    SigmoidEmax = jl.NeoPKPD.SigmoidEmax
+    SigmoidEmaxParams = jl.NeoPKPD.SigmoidEmaxParams
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
 
     if pk_kind == "OneCompIVBolus":
-        OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-        OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
+        OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+        OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
         pk_spec = ModelSpec(OneCompIVBolus(), "py_pkpd_pk", OneCompIVBolusParams(float(cl), float(v)), doses_vec)
     elif pk_kind == "OneCompOralFirstOrder":
         if ka is None:
             raise ValueError("ka required for OneCompOralFirstOrder PK model")
-        OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-        OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+        OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
         pk_spec = ModelSpec(
             OneCompOralFirstOrder(), "py_pkpd_pk",
             OneCompOralFirstOrderParams(float(ka), float(cl), float(v)), doses_vec
@@ -1320,7 +1320,7 @@ def simulate_pkpd_sigmoid_emax(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate_pkpd(pk_spec, pd_spec, grid, solver)
+    res = jl.NeoPKPD.simulate_pkpd(pk_spec, pd_spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -1398,26 +1398,26 @@ def simulate_pkpd_biophase_equilibration(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    PDSpec = jl.NeoPKPDCore.PDSpec
-    BiophaseEquilibration = jl.NeoPKPDCore.BiophaseEquilibration
-    BiophaseEquilibrationParams = jl.NeoPKPDCore.BiophaseEquilibrationParams
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    PDSpec = jl.NeoPKPD.PDSpec
+    BiophaseEquilibration = jl.NeoPKPD.BiophaseEquilibration
+    BiophaseEquilibrationParams = jl.NeoPKPD.BiophaseEquilibrationParams
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
 
     if pk_kind == "OneCompIVBolus":
-        OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-        OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
+        OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+        OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
         pk_spec = ModelSpec(OneCompIVBolus(), "py_pkpd_pk", OneCompIVBolusParams(float(cl), float(v)), doses_vec)
     elif pk_kind == "OneCompOralFirstOrder":
         if ka is None:
             raise ValueError("ka required for OneCompOralFirstOrder PK model")
-        OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-        OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+        OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
         pk_spec = ModelSpec(
             OneCompOralFirstOrder(), "py_pkpd_pk",
             OneCompOralFirstOrderParams(float(ka), float(cl), float(v)), doses_vec
@@ -1434,7 +1434,7 @@ def simulate_pkpd_biophase_equilibration(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate_pkpd(pk_spec, pd_spec, grid, solver)
+    res = jl.NeoPKPD.simulate_pkpd(pk_spec, pd_spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -1499,15 +1499,15 @@ def simulate_population_iv_bolus(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-    OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    IIVSpec = jl.NeoPKPDCore.IIVSpec
-    LogNormalIIV = jl.NeoPKPDCore.LogNormalIIV
-    PopulationSpec = jl.NeoPKPDCore.PopulationSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+    OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    IIVSpec = jl.NeoPKPD.IIVSpec
+    LogNormalIIV = jl.NeoPKPD.LogNormalIIV
+    PopulationSpec = jl.NeoPKPD.PopulationSpec
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -1523,7 +1523,7 @@ def simulate_population_iv_bolus(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate_population(pop, grid, solver)
+    res = jl.NeoPKPD.simulate_population(pop, grid, solver)
     return _popresult_to_py(res)
 
 
@@ -1591,23 +1591,23 @@ def simulate_population_oral(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-    OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    IIVSpec = jl.NeoPKPDCore.IIVSpec
-    IOVSpec = jl.NeoPKPDCore.IOVSpec
-    LogNormalIIV = jl.NeoPKPDCore.LogNormalIIV
-    OccasionDefinition = jl.NeoPKPDCore.OccasionDefinition
-    PopulationSpec = jl.NeoPKPDCore.PopulationSpec
-    IndividualCovariates = jl.NeoPKPDCore.IndividualCovariates
-    CovariateModel = jl.NeoPKPDCore.CovariateModel
-    CovariateEffect = jl.NeoPKPDCore.CovariateEffect
-    LinearCovariate = jl.NeoPKPDCore.LinearCovariate
-    PowerCovariate = jl.NeoPKPDCore.PowerCovariate
-    ExpCovariate = jl.NeoPKPDCore.ExpCovariate
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+    OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    IIVSpec = jl.NeoPKPD.IIVSpec
+    IOVSpec = jl.NeoPKPD.IOVSpec
+    LogNormalIIV = jl.NeoPKPD.LogNormalIIV
+    OccasionDefinition = jl.NeoPKPD.OccasionDefinition
+    PopulationSpec = jl.NeoPKPD.PopulationSpec
+    IndividualCovariates = jl.NeoPKPD.IndividualCovariates
+    CovariateModel = jl.NeoPKPD.CovariateModel
+    CovariateEffect = jl.NeoPKPD.CovariateEffect
+    LinearCovariate = jl.NeoPKPD.LinearCovariate
+    PowerCovariate = jl.NeoPKPD.PowerCovariate
+    ExpCovariate = jl.NeoPKPD.ExpCovariate
 
     dose_objs = [DoseEvent(float(d["time"]), float(d["amount"])) for d in doses]
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
@@ -1664,7 +1664,7 @@ def simulate_population_oral(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate_population(pop, grid, solver)
+    res = jl.NeoPKPD.simulate_population(pop, grid, solver)
     return _popresult_to_py(res)
 
 
@@ -1718,11 +1718,11 @@ def run_sensitivity(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    PerturbationPlan = jl.NeoPKPDCore.PerturbationPlan
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    PerturbationPlan = jl.NeoPKPD.PerturbationPlan
 
     # Parse model
     kind_str = model["kind"]
@@ -1732,13 +1732,13 @@ def run_sensitivity(
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
 
     if kind_str == "OneCompIVBolus":
-        OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-        OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
+        OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+        OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
         params = OneCompIVBolusParams(float(params_dict["CL"]), float(params_dict["V"]))
         model_spec = ModelSpec(OneCompIVBolus(), "py_sens", params, doses_vec)
     elif kind_str == "OneCompOralFirstOrder":
-        OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-        OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+        OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
         params = OneCompOralFirstOrderParams(
             float(params_dict["Ka"]),
             float(params_dict["CL"]),
@@ -1774,7 +1774,7 @@ def run_sensitivity(
     )
 
     # Run sensitivity analysis
-    res = jl.NeoPKPDCore.run_sensitivity(model_spec, grid_jl, solver_jl, plan, jl.Symbol(observation))
+    res = jl.NeoPKPD.run_sensitivity(model_spec, grid_jl, solver_jl, plan, jl.Symbol(observation))
 
     return SensitivityResult(
         plan_name=str(res.plan.name),
@@ -1812,7 +1812,7 @@ def cmax(result: Dict[str, Any], observation: str = "conc") -> float:
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.cmax(t, y))
+    return float(jl.NeoPKPD.cmax(t, y))
 
 
 def auc_trapezoid(result: Dict[str, Any], observation: str = "conc") -> float:
@@ -1833,7 +1833,7 @@ def auc_trapezoid(result: Dict[str, Any], observation: str = "conc") -> float:
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.auc_trapezoid(t, y))
+    return float(jl.NeoPKPD.auc_trapezoid(t, y))
 
 
 def emin(result: Dict[str, Any], observation: str = "effect") -> float:
@@ -1857,7 +1857,7 @@ def emin(result: Dict[str, Any], observation: str = "effect") -> float:
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.emin(t, y))
+    return float(jl.NeoPKPD.emin(t, y))
 
 
 def time_below(result: Dict[str, Any], threshold: float, observation: str = "conc") -> float:
@@ -1882,7 +1882,7 @@ def time_below(result: Dict[str, Any], threshold: float, observation: str = "con
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.time_below(t, y, float(threshold)))
+    return float(jl.NeoPKPD.time_below(t, y, float(threshold)))
 
 
 def auc_above_baseline(result: Dict[str, Any], baseline: float, observation: str = "effect") -> float:
@@ -1909,7 +1909,7 @@ def auc_above_baseline(result: Dict[str, Any], baseline: float, observation: str
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.auc_above_baseline(t, y, float(baseline)))
+    return float(jl.NeoPKPD.auc_above_baseline(t, y, float(baseline)))
 
 
 def tmax(result: Dict[str, Any], observation: str = "conc") -> float:

@@ -1,5 +1,5 @@
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using Random
 
@@ -201,7 +201,7 @@ using Random
         @testset "Perfect prediction" begin
             y = [1.0, 2.0, 3.0]
             f = [1.0, 2.0, 3.0]  # Perfect match
-            ll = NeoPKPDCore.component_log_likelihood(y, f, sigma)
+            ll = NeoPKPD.component_log_likelihood(y, f, sigma)
             # With sigma=1.0, -2LL = n*log(2π) for perfect fit
             expected_ll = -0.5 * 3 * log(2π)
             @test isapprox(ll, expected_ll, atol=1e-6)
@@ -210,7 +210,7 @@ using Random
         @testset "With residuals" begin
             y = [1.0, 2.0, 3.0]
             f = [1.5, 2.5, 3.5]  # 0.5 residual each
-            ll = NeoPKPDCore.component_log_likelihood(y, f, sigma)
+            ll = NeoPKPD.component_log_likelihood(y, f, sigma)
             # Higher residuals -> lower (more negative) LL
             @test ll < -0.5 * 3 * log(2π)
         end
@@ -343,7 +343,7 @@ using Random
                 1.0 0.0;
                 0.0 1.0
             ]
-            entropy = NeoPKPDCore.classification_entropy(posteriors)
+            entropy = NeoPKPD.classification_entropy(posteriors)
             @test isapprox(entropy, 0.0, atol=1e-10)
         end
 
@@ -352,7 +352,7 @@ using Random
                 0.5 0.5;
                 0.5 0.5
             ]
-            entropy = NeoPKPDCore.classification_entropy(posteriors)
+            entropy = NeoPKPD.classification_entropy(posteriors)
             # Maximum entropy for 2 classes is log(2)
             @test isapprox(entropy, log(2), atol=1e-6)
         end
@@ -362,7 +362,7 @@ using Random
                 0.9 0.1;
                 0.1 0.9
             ]
-            entropy = NeoPKPDCore.classification_entropy(posteriors)
+            entropy = NeoPKPD.classification_entropy(posteriors)
             @test entropy > 0.0
             @test entropy < log(2)
         end
@@ -378,7 +378,7 @@ using Random
             ]
             bounds = (0.01, 0.99)
 
-            new_probs = NeoPKPDCore.em_m_step_mixing_probs(posteriors, bounds)
+            new_probs = NeoPKPD.em_m_step_mixing_probs(posteriors, bounds)
 
             @test isapprox(new_probs[1], 0.5, atol=1e-6)
             @test isapprox(new_probs[2], 0.5, atol=1e-6)
@@ -394,7 +394,7 @@ using Random
             ]
             bounds = (0.01, 0.99)
 
-            new_probs = NeoPKPDCore.em_m_step_mixing_probs(posteriors, bounds)
+            new_probs = NeoPKPD.em_m_step_mixing_probs(posteriors, bounds)
 
             # Average of column 1: (0.9+0.8+0.9+0.8)/4 = 0.85
             @test isapprox(new_probs[1], 0.85, atol=1e-6)
@@ -409,7 +409,7 @@ using Random
             ]
             bounds = (0.05, 0.95)
 
-            new_probs = NeoPKPDCore.em_m_step_mixing_probs(posteriors, bounds)
+            new_probs = NeoPKPD.em_m_step_mixing_probs(posteriors, bounds)
 
             # Should be clamped and renormalized
             @test new_probs[1] <= bounds[2]
@@ -538,7 +538,7 @@ using Random
 
             mixing_probs = [0.5, 0.5]
 
-            ll = NeoPKPDCore.mixture_log_likelihood(
+            ll = NeoPKPD.mixture_log_likelihood(
                 observations,
                 predictions_by_component,
                 [sigma],
@@ -570,7 +570,7 @@ using Random
 
             mixing_probs = [0.5, 0.5]
 
-            ll = NeoPKPDCore.mixture_log_likelihood(
+            ll = NeoPKPD.mixture_log_likelihood(
                 observations,
                 predictions_by_component,
                 [sigma],

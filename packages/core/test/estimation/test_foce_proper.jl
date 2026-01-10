@@ -2,7 +2,7 @@
 # Tests the full Laplacian correction and interaction terms
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using Statistics
 using StableRNGs
@@ -133,19 +133,19 @@ using StableRNGs
         )
 
         # For proportional error, variance should depend on prediction
-        var_prop_low = NeoPKPDCore.compute_residual_variance(1.0, sigma_prop)
-        var_prop_high = NeoPKPDCore.compute_residual_variance(10.0, sigma_prop)
+        var_prop_low = NeoPKPD.compute_residual_variance(1.0, sigma_prop)
+        var_prop_high = NeoPKPD.compute_residual_variance(10.0, sigma_prop)
         @test var_prop_high > var_prop_low  # Variance increases with prediction
         @test var_prop_high / var_prop_low ≈ 100.0  # (10/1)^2
 
         # For additive error, variance should NOT depend on prediction
-        var_add_low = NeoPKPDCore.compute_residual_variance(1.0, sigma_add)
-        var_add_high = NeoPKPDCore.compute_residual_variance(10.0, sigma_add)
+        var_add_low = NeoPKPD.compute_residual_variance(1.0, sigma_add)
+        var_add_high = NeoPKPD.compute_residual_variance(10.0, sigma_add)
         @test var_add_high ≈ var_add_low
 
         # For combined error, variance should depend on prediction (but less than proportional)
-        var_comb_low = NeoPKPDCore.compute_residual_variance(1.0, sigma_comb)
-        var_comb_high = NeoPKPDCore.compute_residual_variance(10.0, sigma_comb)
+        var_comb_low = NeoPKPD.compute_residual_variance(1.0, sigma_comb)
+        var_comb_high = NeoPKPD.compute_residual_variance(10.0, sigma_comb)
         @test var_comb_high > var_comb_low
         @test var_comb_high / var_comb_low < 100.0  # Less than pure proportional
     end

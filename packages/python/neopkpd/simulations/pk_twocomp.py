@@ -95,11 +95,11 @@ def simulate_pk_twocomp_iv_bolus(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    TwoCompIVBolus = jl.NeoPKPDCore.TwoCompIVBolus
-    TwoCompIVBolusParams = jl.NeoPKPDCore.TwoCompIVBolusParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    TwoCompIVBolus = jl.NeoPKPD.TwoCompIVBolus
+    TwoCompIVBolusParams = jl.NeoPKPD.TwoCompIVBolusParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     # Create dose events with optional duration support
     doses_vec = _create_dose_events(jl, doses)
@@ -114,8 +114,8 @@ def simulate_pk_twocomp_iv_bolus(
 
     # Apply dose modifiers if specified
     if alag is not None or bioavailability is not None:
-        AbsorptionModifiers = jl.NeoPKPDCore.AbsorptionModifiers
-        ModelSpecWithModifiers = jl.NeoPKPDCore.ModelSpecWithModifiers
+        AbsorptionModifiers = jl.NeoPKPD.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.NeoPKPD.ModelSpecWithModifiers
         modifiers = AbsorptionModifiers(
             alag=float(alag) if alag is not None else 0.0,
             bioavailability=float(bioavailability) if bioavailability is not None else 1.0
@@ -125,9 +125,9 @@ def simulate_pk_twocomp_iv_bolus(
             TwoCompIVBolusParams(float(cl), float(v1), float(q), float(v2)),
             doses_vec, modifiers
         )
-        res = jl.NeoPKPDCore.simulate(spec_with_mod, grid, solver)
+        res = jl.NeoPKPD.simulate(spec_with_mod, grid, solver)
     else:
-        res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+        res = jl.NeoPKPD.simulate(spec, grid, solver)
 
     return _simresult_to_py(res)
 
@@ -209,11 +209,11 @@ def simulate_pk_twocomp_oral(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    TwoCompOral = jl.NeoPKPDCore.TwoCompOral
-    TwoCompOralParams = jl.NeoPKPDCore.TwoCompOralParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    TwoCompOral = jl.NeoPKPD.TwoCompOral
+    TwoCompOralParams = jl.NeoPKPD.TwoCompOralParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     # Create dose events with optional duration support
     doses_vec = _create_dose_events(jl, doses)
@@ -228,8 +228,8 @@ def simulate_pk_twocomp_oral(
 
     # Apply dose modifiers if specified
     if alag is not None or bioavailability is not None:
-        AbsorptionModifiers = jl.NeoPKPDCore.AbsorptionModifiers
-        ModelSpecWithModifiers = jl.NeoPKPDCore.ModelSpecWithModifiers
+        AbsorptionModifiers = jl.NeoPKPD.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.NeoPKPD.ModelSpecWithModifiers
         modifiers = AbsorptionModifiers(
             alag=float(alag) if alag is not None else 0.0,
             bioavailability=float(bioavailability) if bioavailability is not None else 1.0
@@ -239,8 +239,8 @@ def simulate_pk_twocomp_oral(
             TwoCompOralParams(float(ka), float(cl), float(v1), float(q), float(v2)),
             doses_vec, modifiers
         )
-        res = jl.NeoPKPDCore.simulate(spec_with_mod, grid, solver)
+        res = jl.NeoPKPD.simulate(spec_with_mod, grid, solver)
     else:
-        res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+        res = jl.NeoPKPD.simulate(spec, grid, solver)
 
     return _simresult_to_py(res)

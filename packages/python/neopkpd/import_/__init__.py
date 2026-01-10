@@ -715,20 +715,20 @@ def import_nonmem(
         ctl_text = f.read()
 
     # Parse the control file
-    ctl = jl.NeoPKPDCore.parse_nonmem_control(ctl_text)
+    ctl = jl.NeoPKPD.parse_nonmem_control(ctl_text)
 
     # Create dose events if provided
     jl_doses = jl.seval("DoseEvent[]")
     if doses:
         for d in doses:
-            dose = jl.NeoPKPDCore.DoseEvent(
+            dose = jl.NeoPKPD.DoseEvent(
                 float(d.get("time", 0.0)),
                 float(d.get("amount", 100.0))
             )
             jl.seval("push!")(jl_doses, dose)
 
     # Convert to NeoPKPD format
-    result = jl.NeoPKPDCore.convert_nonmem_to_neopkpd(ctl, doses=jl_doses)
+    result = jl.NeoPKPD.convert_nonmem_to_neopkpd(ctl, doses=jl_doses)
 
     return _convert_julia_import_result(result, "nonmem", str(path))
 
@@ -765,20 +765,20 @@ def import_monolix(
         mlx_text = f.read()
 
     # Parse the project file
-    project = jl.NeoPKPDCore.parse_monolix_project(mlx_text)
+    project = jl.NeoPKPD.parse_monolix_project(mlx_text)
 
     # Create dose events if provided
     jl_doses = jl.seval("DoseEvent[]")
     if doses:
         for d in doses:
-            dose = jl.NeoPKPDCore.DoseEvent(
+            dose = jl.NeoPKPD.DoseEvent(
                 float(d.get("time", 0.0)),
                 float(d.get("amount", 100.0))
             )
             jl.seval("push!")(jl_doses, dose)
 
     # Convert to NeoPKPD format
-    result = jl.NeoPKPDCore.convert_monolix_to_neopkpd(project, doses=jl_doses)
+    result = jl.NeoPKPD.convert_monolix_to_neopkpd(project, doses=jl_doses)
 
     return _convert_julia_import_result(result, "monolix", str(path))
 
@@ -854,7 +854,7 @@ def parse_nonmem_control(path: Union[str, Path]) -> NONMEMControlFile:
     with open(path, 'r') as f:
         ctl_text = f.read()
 
-    result = jl.NeoPKPDCore.parse_nonmem_control(ctl_text)
+    result = jl.NeoPKPD.parse_nonmem_control(ctl_text)
     return _convert_nonmem_control(result, ctl_text)
 
 
@@ -869,7 +869,7 @@ def parse_nonmem_control_text(text: str) -> NONMEMControlFile:
         NONMEMControlFile with parsed sections
     """
     jl = _require_julia()
-    result = jl.NeoPKPDCore.parse_nonmem_control(text)
+    result = jl.NeoPKPD.parse_nonmem_control(text)
     return _convert_nonmem_control(result, text)
 
 
@@ -894,7 +894,7 @@ def parse_monolix_project(path: Union[str, Path]) -> MonolixProject:
     with open(path, 'r') as f:
         mlx_text = f.read()
 
-    result = jl.NeoPKPDCore.parse_monolix_project(mlx_text)
+    result = jl.NeoPKPD.parse_monolix_project(mlx_text)
     return _convert_monolix_project(result, mlx_text)
 
 
@@ -909,7 +909,7 @@ def parse_monolix_project_text(text: str) -> MonolixProject:
         MonolixProject with parsed structure
     """
     jl = _require_julia()
-    result = jl.NeoPKPDCore.parse_monolix_project(text)
+    result = jl.NeoPKPD.parse_monolix_project(text)
     return _convert_monolix_project(result, text)
 
 

@@ -56,10 +56,10 @@ $SIGMA
 
 ```bash
 # Run migration workflow
-julia --project=core/NeoPKPDCore docs/examples/use_cases/nonmem_migration/run.jl
+julia --project=core/NeoPKPD docs/examples/use_cases/nonmem_migration/run.jl
 
 # Validate outputs
-julia --project=core/NeoPKPDCore docs/examples/use_cases/nonmem_migration/validate.jl
+julia --project=core/NeoPKPD docs/examples/use_cases/nonmem_migration/validate.jl
 ```
 
 ## Migration Mapping

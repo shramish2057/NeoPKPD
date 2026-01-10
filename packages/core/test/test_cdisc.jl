@@ -1,7 +1,7 @@
 # Test suite for CDISC/SDTM Data Support
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 
 @testset "CDISC Data Support" begin
 

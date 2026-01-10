@@ -42,18 +42,18 @@ def replay_artifact(path: Union[str, Path]) -> Dict[str, Any]:
         >>> print(f"Time points: {len(result['t'])}")
     """
     jl = _require_julia()
-    artifact = jl.NeoPKPDCore.read_execution_json(str(Path(path).resolve()))
+    artifact = jl.NeoPKPD.read_execution_json(str(Path(path).resolve()))
 
     atype = "single"
     if "artifact_type" in artifact:
         atype = str(artifact["artifact_type"])
 
     if atype == "population":
-        res = jl.NeoPKPDCore.replay_population_execution(artifact)
+        res = jl.NeoPKPD.replay_population_execution(artifact)
         return _popresult_to_py(res)
 
     if atype == "sensitivity_single":
-        res = jl.NeoPKPDCore.replay_sensitivity_execution(artifact)
+        res = jl.NeoPKPD.replay_sensitivity_execution(artifact)
         return {
             "plan": {"name": str(res.plan.name)},
             "observation": str(res.observation),
@@ -68,7 +68,7 @@ def replay_artifact(path: Union[str, Path]) -> Dict[str, Any]:
         }
 
     if atype == "sensitivity_population":
-        res = jl.NeoPKPDCore.replay_population_sensitivity_execution(artifact)
+        res = jl.NeoPKPD.replay_population_sensitivity_execution(artifact)
         return {
             "plan": {"name": str(res.plan.name)},
             "observation": str(res.observation),
@@ -83,7 +83,7 @@ def replay_artifact(path: Union[str, Path]) -> Dict[str, Any]:
             "metadata": dict(res.metadata),
         }
 
-    res = jl.NeoPKPDCore.replay_execution(artifact)
+    res = jl.NeoPKPD.replay_execution(artifact)
     return _simresult_to_py(res)
 
 
@@ -130,23 +130,23 @@ def write_single_artifact(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     kind = model["kind"]
     dose_list = [DoseEvent(float(d["time"]), float(d["amount"])) for d in model["doses"]]
     doses = _to_julia_vector(jl, dose_list, DoseEvent)
 
     if kind == "OneCompIVBolus":
-        OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-        Params = jl.NeoPKPDCore.OneCompIVBolusParams
+        OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+        Params = jl.NeoPKPD.OneCompIVBolusParams
         params = Params(float(model["params"]["CL"]), float(model["params"]["V"]))
         spec = ModelSpec(OneCompIVBolus(), "py_artifact", params, doses)
     elif kind == "OneCompOralFirstOrder":
-        OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-        Params = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+        Params = jl.NeoPKPD.OneCompOralFirstOrderParams
         params = Params(
             float(model["params"]["KA"]),
             float(model["params"]["CL"]),
@@ -172,9 +172,9 @@ def write_single_artifact(
             int(solver.get("maxiters", 10**7)),
         )
 
-    res = jl.NeoPKPDCore.simulate(spec, grid_jl, solver_jl)
+    res = jl.NeoPKPD.simulate(spec, grid_jl, solver_jl)
 
-    jl.NeoPKPDCore.write_execution_json(
+    jl.NeoPKPD.write_execution_json(
         str(Path(path).resolve()),
         model_spec=spec,
         grid=grid_jl,

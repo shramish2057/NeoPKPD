@@ -1,5 +1,5 @@
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using JSON
 
 @testset "FDA 21 CFR Part 11 Compliance Module" begin

@@ -66,7 +66,7 @@ def geometric_mean(values: List[float]) -> float:
     """
     jl = _require_julia()
     v = _to_julia_float_vector(jl, values)
-    return float(jl.NeoPKPDCore.geometric_mean(v))
+    return float(jl.NeoPKPD.geometric_mean(v))
 
 
 def geometric_mean_ratio(
@@ -92,7 +92,7 @@ def geometric_mean_ratio(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, test_values)
     r = _to_julia_float_vector(jl, reference_values)
-    return float(jl.NeoPKPDCore.geometric_mean_ratio(t, r))
+    return float(jl.NeoPKPD.geometric_mean_ratio(t, r))
 
 
 def within_subject_cv(
@@ -120,7 +120,7 @@ def within_subject_cv(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, test_values)
     r = _to_julia_float_vector(jl, reference_values)
-    return float(jl.NeoPKPDCore.within_subject_cv(t, r))
+    return float(jl.NeoPKPD.within_subject_cv(t, r))
 
 
 # ============================================================================
@@ -160,7 +160,7 @@ def bioequivalence_90ci(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, test_values)
     r = _to_julia_float_vector(jl, reference_values)
-    result = jl.NeoPKPDCore.bioequivalence_90ci(t, r, log_transform=log_transform)
+    result = jl.NeoPKPD.bioequivalence_90ci(t, r, log_transform=log_transform)
 
     return {
         "gmr": float(result.gmr),
@@ -217,7 +217,7 @@ def tost_analysis(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, test_values)
     r = _to_julia_float_vector(jl, reference_values)
-    result = jl.NeoPKPDCore.tost_analysis(
+    result = jl.NeoPKPD.tost_analysis(
         t, r,
         theta_lower=theta_lower,
         theta_upper=theta_upper,
@@ -264,7 +264,7 @@ def be_conclusion(
         >>> print(f"BE conclusion: {conclusion}")
     """
     jl = _require_julia()
-    result = jl.NeoPKPDCore.be_conclusion(
+    result = jl.NeoPKPD.be_conclusion(
         ci_lower, ci_upper,
         theta_lower=theta_lower,
         theta_upper=theta_upper
@@ -332,7 +332,7 @@ def run_bioequivalence(
     r = _to_julia_float_vector(jl, reference_values)
     param_sym = jl.Symbol(parameter)
 
-    result = jl.NeoPKPDCore.create_be_result(
+    result = jl.NeoPKPD.create_be_result(
         param_sym, t, r,
         be_limits=be_limits
     )
@@ -396,13 +396,13 @@ def bioequivalence_90ci_design(
 
     # Create Julia design object
     if design == BEStudyDesign.CROSSOVER_2X2:
-        jl_design = jl.NeoPKPDCore.Crossover2x2()
+        jl_design = jl.NeoPKPD.Crossover2x2()
     elif design == BEStudyDesign.CROSSOVER_2X4:
-        jl_design = jl.NeoPKPDCore.Crossover2x4()
+        jl_design = jl.NeoPKPD.Crossover2x4()
     else:
-        jl_design = jl.NeoPKPDCore.ParallelGroup()
+        jl_design = jl.NeoPKPD.ParallelGroup()
 
-    result = jl.NeoPKPDCore.bioequivalence_90ci_design(
+    result = jl.NeoPKPD.bioequivalence_90ci_design(
         t, r, jl_design,
         log_transform=log_transform,
         alpha=alpha
@@ -438,13 +438,13 @@ def compute_be_degrees_of_freedom(
 
     # Create Julia design object
     if design == BEStudyDesign.CROSSOVER_2X2:
-        jl_design = jl.NeoPKPDCore.Crossover2x2()
+        jl_design = jl.NeoPKPD.Crossover2x2()
     elif design == BEStudyDesign.CROSSOVER_2X4:
-        jl_design = jl.NeoPKPDCore.Crossover2x4()
+        jl_design = jl.NeoPKPD.Crossover2x4()
     else:
-        jl_design = jl.NeoPKPDCore.ParallelGroup()
+        jl_design = jl.NeoPKPD.ParallelGroup()
 
-    return int(jl.NeoPKPDCore.compute_be_degrees_of_freedom(jl_design, n))
+    return int(jl.NeoPKPD.compute_be_degrees_of_freedom(jl_design, n))
 
 
 # ============================================================================
@@ -557,7 +557,7 @@ def compute_swr(
     jl = _require_julia()
     r1 = _to_julia_float_vector(jl, reference_values_1)
     r2 = _to_julia_float_vector(jl, reference_values_2)
-    return float(jl.NeoPKPDCore.compute_swr(r1, r2))
+    return float(jl.NeoPKPD.compute_swr(r1, r2))
 
 
 def compute_within_subject_variance_reference(
@@ -587,7 +587,7 @@ def compute_within_subject_variance_reference(
         obs_vec = _to_julia_float_vector(jl, obs)
         jl.seval("push!")(ref_obs_jl, obs_vec)
 
-    result = jl.NeoPKPDCore.compute_within_subject_variance_reference(ref_obs_jl)
+    result = jl.NeoPKPD.compute_within_subject_variance_reference(ref_obs_jl)
 
     return {
         "swr_squared": float(result.swr_squared),
@@ -657,36 +657,36 @@ def rsabe_analysis(
     n_test = len(test_observations[0]) if test_observations else 1
     n_ref = len(reference_observations[0]) if reference_observations else 2
 
-    data = jl.NeoPKPDCore.ReplicateData(
+    data = jl.NeoPKPD.ReplicateData(
         subjects_jl, sequences_jl, test_obs_jl, ref_obs_jl,
         n_subjects, n_test, n_ref
     )
 
     # Create guidance
     if config.guidance == RegulatoryGuidance.FDA:
-        guidance = jl.NeoPKPDCore.FDAGuidance()
+        guidance = jl.NeoPKPD.FDAGuidance()
     elif config.guidance == RegulatoryGuidance.EMA:
-        guidance = jl.NeoPKPDCore.EMAGuidance()
+        guidance = jl.NeoPKPD.EMAGuidance()
     else:
-        guidance = jl.NeoPKPDCore.HealthCanadaGuidance()
+        guidance = jl.NeoPKPD.HealthCanadaGuidance()
 
     # Create design
     if config.design == ReplicateDesign.PARTIAL_REPLICATE_3X3:
-        design = jl.NeoPKPDCore.PartialReplicate3x3()
+        design = jl.NeoPKPD.PartialReplicate3x3()
     elif config.design == ReplicateDesign.FULL_REPLICATE_2X4:
-        design = jl.NeoPKPDCore.FullReplicate2x4()
+        design = jl.NeoPKPD.FullReplicate2x4()
     else:
-        design = jl.NeoPKPDCore.FullReplicate2x3()
+        design = jl.NeoPKPD.FullReplicate2x3()
 
     # Create config
-    rsabe_config = jl.NeoPKPDCore.RSABEConfig(
+    rsabe_config = jl.NeoPKPD.RSABEConfig(
         guidance=guidance,
         design=design,
         parameter=jl.Symbol(config.parameter),
         alpha=config.alpha
     )
 
-    result = jl.NeoPKPDCore.rsabe_analysis(data, rsabe_config)
+    result = jl.NeoPKPD.rsabe_analysis(data, rsabe_config)
 
     return RSABEResult(
         parameter=str(result.parameter),
@@ -766,26 +766,26 @@ def abel_analysis(
     n_test = len(test_observations[0]) if test_observations else 1
     n_ref = len(reference_observations[0]) if reference_observations else 2
 
-    data = jl.NeoPKPDCore.ReplicateData(
+    data = jl.NeoPKPD.ReplicateData(
         subjects_jl, sequences_jl, test_obs_jl, ref_obs_jl,
         n_subjects, n_test, n_ref
     )
 
     if config.design == ReplicateDesign.PARTIAL_REPLICATE_3X3:
-        design = jl.NeoPKPDCore.PartialReplicate3x3()
+        design = jl.NeoPKPD.PartialReplicate3x3()
     elif config.design == ReplicateDesign.FULL_REPLICATE_2X4:
-        design = jl.NeoPKPDCore.FullReplicate2x4()
+        design = jl.NeoPKPD.FullReplicate2x4()
     else:
-        design = jl.NeoPKPDCore.FullReplicate2x3()
+        design = jl.NeoPKPD.FullReplicate2x3()
 
-    rsabe_config = jl.NeoPKPDCore.RSABEConfig(
-        guidance=jl.NeoPKPDCore.EMAGuidance(),
+    rsabe_config = jl.NeoPKPD.RSABEConfig(
+        guidance=jl.NeoPKPD.EMAGuidance(),
         design=design,
         parameter=jl.Symbol(config.parameter),
         alpha=config.alpha
     )
 
-    result = jl.NeoPKPDCore.abel_analysis(data, rsabe_config)
+    result = jl.NeoPKPD.abel_analysis(data, rsabe_config)
 
     return ABELResult(
         parameter=str(result.parameter),
@@ -845,8 +845,8 @@ def abel_scaled_limits(swr: float) -> Dict[str, Any]:
         - is_scaled: Whether scaling was applied
     """
     jl = _require_julia()
-    guidance = jl.NeoPKPDCore.EMAGuidance()
-    result = jl.NeoPKPDCore.abel_scaled_limits(swr, guidance)
+    guidance = jl.NeoPKPD.EMAGuidance()
+    result = jl.NeoPKPD.abel_scaled_limits(swr, guidance)
 
     return {
         "lower": float(result.lower),

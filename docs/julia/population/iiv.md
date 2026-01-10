@@ -9,7 +9,7 @@ Comprehensive guide for modeling between-subject variability in population PK/PD
 Inter-individual variability (IIV) captures the differences in pharmacokinetic and pharmacodynamic parameters between subjects in a population.
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define IIV with 30% CV on CL and 20% CV on V
 omega = OmegaMatrix([
@@ -261,7 +261,7 @@ end
 ### Basic Simulation
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # 1. Define typical parameters
 typical_params = TwoCompOralParams(
@@ -438,7 +438,7 @@ end
 ## Complete Example
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 using Statistics
 
 # ============================================

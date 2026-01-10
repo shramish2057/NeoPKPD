@@ -1,7 +1,7 @@
 # Test suite for Residual Error Models
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 
 @testset "Residual Error Models" begin
     # Test predictions

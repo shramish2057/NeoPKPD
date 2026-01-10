@@ -1,7 +1,7 @@
 # Test suite for Parameter Estimation (NLME)
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using StableRNGs
 
@@ -317,7 +317,7 @@ using StableRNGs
         )
 
         # Run estimation
-        result = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = NeoPKPD.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test length(result.theta) == 2
@@ -364,7 +364,7 @@ using StableRNGs
             verbose=false
         )
 
-        result = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = NeoPKPD.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         # Check individual estimates
         @test length(result.individuals) == 1
@@ -405,12 +405,12 @@ using StableRNGs
         )
 
         # Test _count_omega_params
-        @test NeoPKPDCore._count_omega_params(DiagonalOmega(), 3) == 3
-        @test NeoPKPDCore._count_omega_params(FullOmega(), 3) == 6  # 3*4/2
-        @test NeoPKPDCore._count_omega_params(BlockOmega([2, 1]), 3) == 4  # 2*3/2 + 1
+        @test NeoPKPD._count_omega_params(DiagonalOmega(), 3) == 3
+        @test NeoPKPD._count_omega_params(FullOmega(), 3) == 6  # 3*4/2
+        @test NeoPKPD._count_omega_params(BlockOmega([2, 1]), 3) == 4  # 2*3/2 + 1
 
         # Test _count_sigma_params
-        @test NeoPKPDCore._count_sigma_params(sigma_spec) == 1
+        @test NeoPKPD._count_sigma_params(sigma_spec) == 1
 
         combined_spec = ResidualErrorSpec(
             CombinedError(),
@@ -418,7 +418,7 @@ using StableRNGs
             :conc,
             UInt64(1)
         )
-        @test NeoPKPDCore._count_sigma_params(combined_spec) == 2
+        @test NeoPKPD._count_sigma_params(combined_spec) == 2
     end
 
     # Include proper FOCE-I tests

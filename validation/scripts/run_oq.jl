@@ -8,7 +8,7 @@
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "..", "..", "packages", "core"))
 
-using NeoPKPDCore
+using NeoPKPD
 using Test
 using JSON
 using StableRNGs

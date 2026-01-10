@@ -65,7 +65,7 @@ julia --version
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 println(NEOPKPD_VERSION)
 ```
 
@@ -102,7 +102,7 @@ Pkg.status()
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 println(ARTIFACT_SCHEMA_VERSION)
 ```
 
@@ -118,7 +118,7 @@ println(ARTIFACT_SCHEMA_VERSION)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 config = get_compliance_config()
 println(config.level)
 ```
@@ -135,7 +135,7 @@ println(config.level)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 env = capture_environment()
 println("Julia: ", env.julia_version)
 println("NeoPKPD: ", env.neopkpd_version)
@@ -153,7 +153,7 @@ println("NeoPKPD: ", env.neopkpd_version)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 hash = compute_content_hash("test data")
 println(hash)
 ```

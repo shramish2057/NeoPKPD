@@ -99,11 +99,11 @@ def simulate_pk_threecomp_iv_bolus(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    ThreeCompIVBolus = jl.NeoPKPDCore.ThreeCompIVBolus
-    ThreeCompIVBolusParams = jl.NeoPKPDCore.ThreeCompIVBolusParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    ThreeCompIVBolus = jl.NeoPKPD.ThreeCompIVBolus
+    ThreeCompIVBolusParams = jl.NeoPKPD.ThreeCompIVBolusParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     # Create dose events with optional duration support
     doses_vec = _create_dose_events(jl, doses)
@@ -118,8 +118,8 @@ def simulate_pk_threecomp_iv_bolus(
 
     # Apply dose modifiers if specified
     if alag is not None or bioavailability is not None:
-        AbsorptionModifiers = jl.NeoPKPDCore.AbsorptionModifiers
-        ModelSpecWithModifiers = jl.NeoPKPDCore.ModelSpecWithModifiers
+        AbsorptionModifiers = jl.NeoPKPD.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.NeoPKPD.ModelSpecWithModifiers
         modifiers = AbsorptionModifiers(
             alag=float(alag) if alag is not None else 0.0,
             bioavailability=float(bioavailability) if bioavailability is not None else 1.0
@@ -129,8 +129,8 @@ def simulate_pk_threecomp_iv_bolus(
             ThreeCompIVBolusParams(float(cl), float(v1), float(q2), float(v2), float(q3), float(v3)),
             doses_vec, modifiers
         )
-        res = jl.NeoPKPDCore.simulate(spec_with_mod, grid, solver)
+        res = jl.NeoPKPD.simulate(spec_with_mod, grid, solver)
     else:
-        res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+        res = jl.NeoPKPD.simulate(spec, grid, solver)
 
     return _simresult_to_py(res)

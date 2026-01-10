@@ -58,7 +58,7 @@ NeoPKPD can import models from other pharmacometrics platforms, enabling migrati
 ### Quick Start
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Import NONMEM control stream
 model = import_nonmem("run001.ctl")

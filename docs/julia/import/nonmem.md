@@ -9,7 +9,7 @@ Comprehensive guide for importing NONMEM control stream files (.ctl, .mod) into 
 NeoPKPD can parse NONMEM control files and convert them to native NeoPKPD model specifications, enabling seamless migration from NONMEM workflows.
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 result = import_nonmem("run001.ctl")
 println("Model: $(result.model_type)")
@@ -23,7 +23,7 @@ println("Parameters: $(result.parameters)")
 ### Basic Import
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Import NONMEM control file
 result = import_nonmem("run001.ctl")
@@ -605,7 +605,7 @@ $COV PRINT=E
 ### Julia Import Code
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Import the control file
 result = import_nonmem("run001.ctl")

@@ -78,11 +78,11 @@ def simulate_pk_transit_absorption(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    TransitAbsorption = jl.NeoPKPDCore.TransitAbsorption
-    TransitAbsorptionParams = jl.NeoPKPDCore.TransitAbsorptionParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    TransitAbsorption = jl.NeoPKPD.TransitAbsorption
+    TransitAbsorptionParams = jl.NeoPKPD.TransitAbsorptionParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     # Create dose events with optional duration support
     doses_vec = _create_dose_events(jl, doses)
@@ -97,8 +97,8 @@ def simulate_pk_transit_absorption(
 
     # Apply dose modifiers if specified
     if alag is not None or bioavailability is not None:
-        AbsorptionModifiers = jl.NeoPKPDCore.AbsorptionModifiers
-        ModelSpecWithModifiers = jl.NeoPKPDCore.ModelSpecWithModifiers
+        AbsorptionModifiers = jl.NeoPKPD.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.NeoPKPD.ModelSpecWithModifiers
         modifiers = AbsorptionModifiers(
             alag=float(alag) if alag is not None else 0.0,
             bioavailability=float(bioavailability) if bioavailability is not None else 1.0
@@ -108,9 +108,9 @@ def simulate_pk_transit_absorption(
             TransitAbsorptionParams(int(n), float(ktr), float(ka), float(cl), float(v)),
             doses_vec, modifiers
         )
-        res = jl.NeoPKPDCore.simulate(spec_with_mod, grid, solver)
+        res = jl.NeoPKPD.simulate(spec_with_mod, grid, solver)
     else:
-        res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+        res = jl.NeoPKPD.simulate(spec, grid, solver)
 
     return _simresult_to_py(res)
 
@@ -182,11 +182,11 @@ def simulate_pk_michaelis_menten(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    MichaelisMentenElimination = jl.NeoPKPDCore.MichaelisMentenElimination
-    MichaelisMentenEliminationParams = jl.NeoPKPDCore.MichaelisMentenEliminationParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    MichaelisMentenElimination = jl.NeoPKPD.MichaelisMentenElimination
+    MichaelisMentenEliminationParams = jl.NeoPKPD.MichaelisMentenEliminationParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     # Create dose events with optional duration support
     doses_vec = _create_dose_events(jl, doses)
@@ -201,8 +201,8 @@ def simulate_pk_michaelis_menten(
 
     # Apply dose modifiers if specified
     if alag is not None or bioavailability is not None:
-        AbsorptionModifiers = jl.NeoPKPDCore.AbsorptionModifiers
-        ModelSpecWithModifiers = jl.NeoPKPDCore.ModelSpecWithModifiers
+        AbsorptionModifiers = jl.NeoPKPD.AbsorptionModifiers
+        ModelSpecWithModifiers = jl.NeoPKPD.ModelSpecWithModifiers
         modifiers = AbsorptionModifiers(
             alag=float(alag) if alag is not None else 0.0,
             bioavailability=float(bioavailability) if bioavailability is not None else 1.0
@@ -212,8 +212,8 @@ def simulate_pk_michaelis_menten(
             MichaelisMentenEliminationParams(float(vmax), float(km), float(v)),
             doses_vec, modifiers
         )
-        res = jl.NeoPKPDCore.simulate(spec_with_mod, grid, solver)
+        res = jl.NeoPKPD.simulate(spec_with_mod, grid, solver)
     else:
-        res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+        res = jl.NeoPKPD.simulate(spec, grid, solver)
 
     return _simresult_to_py(res)

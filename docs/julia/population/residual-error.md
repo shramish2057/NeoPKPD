@@ -9,7 +9,7 @@ Comprehensive guide for modeling unexplained variability in observations.
 Residual error models describe the discrepancy between model predictions and observed data, encompassing measurement error, model misspecification, and other unexplained variability.
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Proportional error (10% CV)
 error_model = ResidualErrorSpec(
@@ -464,7 +464,7 @@ analyte_errors = Dict(
 ## Complete Example
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 using Statistics
 using Random
 

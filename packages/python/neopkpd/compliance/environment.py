@@ -76,7 +76,7 @@ def get_environment_snapshot() -> EnvironmentSnapshot:
         NeoPKPD: 0.1.0
     """
     jl = get_julia()
-    env = jl.NeoPKPDCore.capture_environment()
+    env = jl.NeoPKPD.capture_environment()
 
     return EnvironmentSnapshot(
         julia_version=str(env.julia_version),

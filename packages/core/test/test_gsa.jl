@@ -1,5 +1,5 @@
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using Statistics
 using StableRNGs
 

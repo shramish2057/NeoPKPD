@@ -33,7 +33,7 @@ def nca_cmax(concentrations: List[float]) -> float:
     """
     jl = _require_julia()
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.nca_cmax(c))
+    return float(jl.NeoPKPD.nca_cmax(c))
 
 
 def nca_tmax(times: List[float], concentrations: List[float]) -> float:
@@ -54,7 +54,7 @@ def nca_tmax(times: List[float], concentrations: List[float]) -> float:
     jl = _require_julia()
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.nca_tmax(t, c))
+    return float(jl.NeoPKPD.nca_tmax(t, c))
 
 
 def nca_cmin(concentrations: List[float]) -> float:
@@ -73,7 +73,7 @@ def nca_cmin(concentrations: List[float]) -> float:
     """
     jl = _require_julia()
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.nca_cmin(c))
+    return float(jl.NeoPKPD.nca_cmin(c))
 
 
 def nca_clast(
@@ -95,7 +95,7 @@ def nca_clast(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.nca_clast(t, c, lloq=lloq))
+    return float(jl.NeoPKPD.nca_clast(t, c, lloq=lloq))
 
 
 def nca_tlast(
@@ -117,7 +117,7 @@ def nca_tlast(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.nca_tlast(t, c, lloq=lloq))
+    return float(jl.NeoPKPD.nca_tlast(t, c, lloq=lloq))
 
 
 def nca_cavg(
@@ -144,7 +144,7 @@ def nca_cavg(
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
     config = _make_nca_config(jl, method=method)
-    return float(jl.NeoPKPDCore.nca_cavg(t, c, tau, config))
+    return float(jl.NeoPKPD.nca_cavg(t, c, tau, config))
 
 
 # ============================================================================
@@ -190,7 +190,7 @@ def estimate_lambda_z(
     config = _make_nca_config(jl, method=method, lambda_z_min_points=min_points,
                               lambda_z_r2_threshold=r2_threshold)
 
-    result = jl.NeoPKPDCore.estimate_lambda_z(t, c, config)
+    result = jl.NeoPKPD.estimate_lambda_z(t, c, config)
 
     return {
         "lambda_z": _maybe_float(result.lambda_z),
@@ -224,7 +224,7 @@ def nca_half_life(lambda_z: float) -> float:
         >>> print(f"Half-life: {t_half:.2f} hours")
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_half_life(lambda_z))
+    return float(jl.NeoPKPD.nca_half_life(lambda_z))
 
 
 # ============================================================================
@@ -255,7 +255,7 @@ def auc_0_t(
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
     config = _make_nca_config(jl, method=method)
-    return float(jl.NeoPKPDCore.auc_0_t(t, c, config))
+    return float(jl.NeoPKPD.auc_0_t(t, c, config))
 
 
 def auc_0_inf(
@@ -288,7 +288,7 @@ def auc_0_inf(
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
     config = _make_nca_config(jl, method=method)
-    result = jl.NeoPKPDCore.auc_0_inf(t, c, lambda_z, clast, config)
+    result = jl.NeoPKPD.auc_0_inf(t, c, lambda_z, clast, config)
     return (float(result[0]), float(result[1]))
 
 
@@ -314,7 +314,7 @@ def auc_0_tau(
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
     config = _make_nca_config(jl, method=method)
-    return float(jl.NeoPKPDCore.auc_0_tau(t, c, tau, config))
+    return float(jl.NeoPKPD.auc_0_tau(t, c, tau, config))
 
 
 def auc_partial(
@@ -341,7 +341,7 @@ def auc_partial(
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
     config = _make_nca_config(jl, method=method)
-    return float(jl.NeoPKPDCore.auc_partial(t, c, t_start, t_end, config))
+    return float(jl.NeoPKPD.auc_partial(t, c, t_start, t_end, config))
 
 
 def aumc_0_t(
@@ -366,7 +366,7 @@ def aumc_0_t(
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
     config = _make_nca_config(jl, method=method)
-    return float(jl.NeoPKPDCore.aumc_0_t(t, c, config))
+    return float(jl.NeoPKPD.aumc_0_t(t, c, config))
 
 
 def aumc_0_inf(
@@ -395,7 +395,7 @@ def aumc_0_inf(
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
     config = _make_nca_config(jl, method=method)
-    return float(jl.NeoPKPDCore.aumc_0_inf(t, c, lambda_z, clast, tlast, config))
+    return float(jl.NeoPKPD.aumc_0_inf(t, c, lambda_z, clast, tlast, config))
 
 
 # ============================================================================
@@ -425,7 +425,7 @@ def nca_mrt(
     """
     jl = _require_julia()
     route_sym = jl.Symbol(route)
-    return float(jl.NeoPKPDCore.nca_mrt(aumc_0_inf, auc_0_inf, route=route_sym, t_inf=t_inf))
+    return float(jl.NeoPKPD.nca_mrt(aumc_0_inf, auc_0_inf, route=route_sym, t_inf=t_inf))
 
 
 def nca_cl_f(dose: float, auc_0_inf: float) -> float:
@@ -442,7 +442,7 @@ def nca_cl_f(dose: float, auc_0_inf: float) -> float:
         Apparent clearance
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_cl_f(dose, auc_0_inf))
+    return float(jl.NeoPKPD.nca_cl_f(dose, auc_0_inf))
 
 
 def nca_vz_f(dose: float, lambda_z: float, auc_0_inf: float) -> float:
@@ -460,7 +460,7 @@ def nca_vz_f(dose: float, lambda_z: float, auc_0_inf: float) -> float:
         Apparent volume of distribution
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_vz_f(dose, lambda_z, auc_0_inf))
+    return float(jl.NeoPKPD.nca_vz_f(dose, lambda_z, auc_0_inf))
 
 
 def nca_vss(cl: float, mrt: float) -> float:
@@ -477,7 +477,7 @@ def nca_vss(cl: float, mrt: float) -> float:
         Volume at steady state
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_vss(cl, mrt))
+    return float(jl.NeoPKPD.nca_vss(cl, mrt))
 
 
 def nca_bioavailability(
@@ -501,7 +501,7 @@ def nca_bioavailability(
         Relative bioavailability
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_bioavailability(auc_test, dose_test, auc_reference, dose_reference))
+    return float(jl.NeoPKPD.nca_bioavailability(auc_test, dose_test, auc_reference, dose_reference))
 
 
 # ============================================================================
@@ -527,7 +527,7 @@ def nca_ctrough(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.nca_ctrough(t, c, tau))
+    return float(jl.NeoPKPD.nca_ctrough(t, c, tau))
 
 
 def nca_c_at_time(
@@ -549,7 +549,7 @@ def nca_c_at_time(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.nca_c_at_time(t, c, target_time))
+    return float(jl.NeoPKPD.nca_c_at_time(t, c, target_time))
 
 
 def time_above_concentration(
@@ -571,7 +571,7 @@ def time_above_concentration(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.time_above_concentration(t, c, threshold))
+    return float(jl.NeoPKPD.time_above_concentration(t, c, threshold))
 
 
 # ============================================================================
@@ -592,7 +592,7 @@ def nca_cl(dose: float, auc_0_inf: float) -> float:
         Systemic clearance
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_cl(dose, auc_0_inf))
+    return float(jl.NeoPKPD.nca_cl(dose, auc_0_inf))
 
 
 def nca_vz(dose: float, lambda_z: float, auc_0_inf: float) -> float:
@@ -610,7 +610,7 @@ def nca_vz(dose: float, lambda_z: float, auc_0_inf: float) -> float:
         Terminal volume of distribution
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_vz(dose, lambda_z, auc_0_inf))
+    return float(jl.NeoPKPD.nca_vz(dose, lambda_z, auc_0_inf))
 
 
 def nca_mrt_iv(mrt_extravascular: float, absorption_time: float) -> float:
@@ -627,7 +627,7 @@ def nca_mrt_iv(mrt_extravascular: float, absorption_time: float) -> float:
         Estimated IV MRT
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_mrt_iv(mrt_extravascular, absorption_time))
+    return float(jl.NeoPKPD.nca_mrt_iv(mrt_extravascular, absorption_time))
 
 
 def nca_cl_ss(dose: float, auc_0_tau: float) -> float:
@@ -644,7 +644,7 @@ def nca_cl_ss(dose: float, auc_0_tau: float) -> float:
         Steady-state clearance
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_cl_ss(dose, auc_0_tau))
+    return float(jl.NeoPKPD.nca_cl_ss(dose, auc_0_tau))
 
 
 def nca_vss_from_aumc(dose: float, auc_0_inf: float, aumc_0_inf: float) -> float:
@@ -662,7 +662,7 @@ def nca_vss_from_aumc(dose: float, auc_0_inf: float, aumc_0_inf: float) -> float
         Volume at steady state
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_vss_from_aumc(dose, auc_0_inf, aumc_0_inf))
+    return float(jl.NeoPKPD.nca_vss_from_aumc(dose, auc_0_inf, aumc_0_inf))
 
 
 def nca_vc(dose: float, c0: float) -> float:
@@ -681,7 +681,7 @@ def nca_vc(dose: float, c0: float) -> float:
         Central volume of distribution
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_vc(dose, c0))
+    return float(jl.NeoPKPD.nca_vc(dose, c0))
 
 
 def nca_mean_absorption_time(mrt_po: float, mrt_iv: float) -> float:
@@ -698,7 +698,7 @@ def nca_mean_absorption_time(mrt_po: float, mrt_iv: float) -> float:
         Mean absorption time
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_mean_absorption_time(mrt_po, mrt_iv))
+    return float(jl.NeoPKPD.nca_mean_absorption_time(mrt_po, mrt_iv))
 
 
 def nca_c0_backextrap(
@@ -722,7 +722,7 @@ def nca_c0_backextrap(
     jl = _require_julia()
     t = _to_julia_float_vector(jl, times)
     c = _to_julia_float_vector(jl, concentrations)
-    return float(jl.NeoPKPDCore.nca_c0_backextrap(t, c, lambda_z))
+    return float(jl.NeoPKPD.nca_c0_backextrap(t, c, lambda_z))
 
 
 def nca_c0_from_regression(intercept: float) -> float:
@@ -739,7 +739,7 @@ def nca_c0_from_regression(intercept: float) -> float:
         Back-extrapolated C0
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_c0_from_regression(intercept))
+    return float(jl.NeoPKPD.nca_c0_from_regression(intercept))
 
 
 # ============================================================================
@@ -760,7 +760,7 @@ def nca_accumulation_index(auc_ss: float, auc_sd: float) -> float:
         Accumulation index
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_accumulation_index(auc_ss, auc_sd))
+    return float(jl.NeoPKPD.nca_accumulation_index(auc_ss, auc_sd))
 
 
 def nca_ptf(cmax: float, cmin: float, cavg: float) -> float:
@@ -778,7 +778,7 @@ def nca_ptf(cmax: float, cmin: float, cavg: float) -> float:
         Peak-trough fluctuation (%)
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_ptf(cmax, cmin, cavg))
+    return float(jl.NeoPKPD.nca_ptf(cmax, cmin, cavg))
 
 
 def nca_swing(cmax: float, cmin: float) -> float:
@@ -795,7 +795,7 @@ def nca_swing(cmax: float, cmin: float) -> float:
         Swing (%)
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_swing(cmax, cmin))
+    return float(jl.NeoPKPD.nca_swing(cmax, cmin))
 
 
 def nca_linearity_index(doses: List[float], aucs: List[float]) -> Dict[str, Any]:
@@ -815,7 +815,7 @@ def nca_linearity_index(doses: List[float], aucs: List[float]) -> Dict[str, Any]
     jl = _require_julia()
     d = _to_julia_float_vector(jl, doses)
     a = _to_julia_float_vector(jl, aucs)
-    result = jl.NeoPKPDCore.nca_linearity_index(d, a)
+    result = jl.NeoPKPD.nca_linearity_index(d, a)
     return {
         "beta": float(result.beta),
         "r_squared": float(result.r_squared),
@@ -837,7 +837,7 @@ def nca_time_to_steady_state(lambda_z: float, fraction: float = 0.90) -> float:
         Time to reach specified fraction of steady state
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_time_to_steady_state(lambda_z, fraction=fraction))
+    return float(jl.NeoPKPD.nca_time_to_steady_state(lambda_z, fraction=fraction))
 
 
 def nca_accumulation_predicted(lambda_z: float, tau: float) -> float:
@@ -856,7 +856,7 @@ def nca_accumulation_predicted(lambda_z: float, tau: float) -> float:
         Predicted accumulation index
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_accumulation_predicted(lambda_z, tau))
+    return float(jl.NeoPKPD.nca_accumulation_predicted(lambda_z, tau))
 
 
 def nca_accumulation_cmax(cmax_ss: float, cmax_sd: float) -> float:
@@ -873,7 +873,7 @@ def nca_accumulation_cmax(cmax_ss: float, cmax_sd: float) -> float:
         Cmax accumulation ratio
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_accumulation_cmax(cmax_ss, cmax_sd))
+    return float(jl.NeoPKPD.nca_accumulation_cmax(cmax_ss, cmax_sd))
 
 
 def nca_accumulation_cmin(cmin_ss: float, c_at_tau_sd: float) -> float:
@@ -890,7 +890,7 @@ def nca_accumulation_cmin(cmin_ss: float, c_at_tau_sd: float) -> float:
         Cmin accumulation ratio
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_accumulation_cmin(cmin_ss, c_at_tau_sd))
+    return float(jl.NeoPKPD.nca_accumulation_cmin(cmin_ss, c_at_tau_sd))
 
 
 def nca_dose_normalized_auc(auc: float, dose: float) -> float:
@@ -907,7 +907,7 @@ def nca_dose_normalized_auc(auc: float, dose: float) -> float:
         Dose-normalized AUC
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_dose_normalized_auc(auc, dose))
+    return float(jl.NeoPKPD.nca_dose_normalized_auc(auc, dose))
 
 
 def nca_dose_normalized_cmax(cmax: float, dose: float) -> float:
@@ -924,7 +924,7 @@ def nca_dose_normalized_cmax(cmax: float, dose: float) -> float:
         Dose-normalized Cmax
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_dose_normalized_cmax(cmax, dose))
+    return float(jl.NeoPKPD.nca_dose_normalized_cmax(cmax, dose))
 
 
 def nca_time_to_steady_state_doses(
@@ -946,7 +946,7 @@ def nca_time_to_steady_state_doses(
         Number of doses to reach steady state
     """
     jl = _require_julia()
-    return int(jl.NeoPKPDCore.nca_time_to_steady_state_doses(lambda_z, tau, fraction=fraction))
+    return int(jl.NeoPKPD.nca_time_to_steady_state_doses(lambda_z, tau, fraction=fraction))
 
 
 def nca_effective_half_life(auc_ss: float, auc_inf_sd: float) -> float:
@@ -961,7 +961,7 @@ def nca_effective_half_life(auc_ss: float, auc_inf_sd: float) -> float:
         Effective half-life
     """
     jl = _require_julia()
-    return float(jl.NeoPKPDCore.nca_effective_half_life(auc_ss, auc_inf_sd))
+    return float(jl.NeoPKPD.nca_effective_half_life(auc_ss, auc_inf_sd))
 
 
 # ============================================================================
@@ -979,14 +979,14 @@ def _make_nca_config(
     """Create Julia NCAConfig object."""
     # Select method type
     if method == "linear":
-        method_obj = jl.NeoPKPDCore.LinearMethod()
+        method_obj = jl.NeoPKPD.LinearMethod()
     elif method == "log_linear":
-        method_obj = jl.NeoPKPDCore.LogLinearMethod()
+        method_obj = jl.NeoPKPD.LogLinearMethod()
     else:
-        method_obj = jl.NeoPKPDCore.LinLogMixedMethod()
+        method_obj = jl.NeoPKPD.LinLogMixedMethod()
 
     if lloq is not None:
-        return jl.NeoPKPDCore.NCAConfig(
+        return jl.NeoPKPD.NCAConfig(
             method=method_obj,
             lambda_z_min_points=lambda_z_min_points,
             lambda_z_r2_threshold=lambda_z_r2_threshold,
@@ -994,7 +994,7 @@ def _make_nca_config(
             lloq=lloq,
         )
     else:
-        return jl.NeoPKPDCore.NCAConfig(
+        return jl.NeoPKPD.NCAConfig(
             method=method_obj,
             lambda_z_min_points=lambda_z_min_points,
             lambda_z_r2_threshold=lambda_z_r2_threshold,

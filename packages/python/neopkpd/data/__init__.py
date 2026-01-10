@@ -47,7 +47,7 @@ def read_cdisc_pc(path: Union[str, Path]) -> Dict[str, Any]:
         >>> print(f"Found {len(pc_data['records'])} concentration records")
     """
     jl = _require_julia()
-    result = jl.NeoPKPDCore.read_cdisc_pc(str(Path(path).resolve()))
+    result = jl.NeoPKPD.read_cdisc_pc(str(Path(path).resolve()))
     return _convert_cdisc_domain(result)
 
 
@@ -68,7 +68,7 @@ def read_cdisc_ex(path: Union[str, Path]) -> Dict[str, Any]:
         >>> print(f"Found {len(ex_data['records'])} dosing records")
     """
     jl = _require_julia()
-    result = jl.NeoPKPDCore.read_cdisc_ex(str(Path(path).resolve()))
+    result = jl.NeoPKPD.read_cdisc_ex(str(Path(path).resolve()))
     return _convert_cdisc_domain(result)
 
 
@@ -89,7 +89,7 @@ def read_cdisc_dm(path: Union[str, Path]) -> Dict[str, Any]:
         >>> print(f"Found {len(dm_data['records'])} subject demographics")
     """
     jl = _require_julia()
-    result = jl.NeoPKPDCore.read_cdisc_dm(str(Path(path).resolve()))
+    result = jl.NeoPKPD.read_cdisc_dm(str(Path(path).resolve()))
     return _convert_cdisc_domain(result)
 
 
@@ -122,7 +122,7 @@ def cdisc_to_observed_data(
     ex_jl = _convert_to_julia_domain(jl, ex_data, "EX") if ex_data else None
     dm_jl = _convert_to_julia_domain(jl, dm_data, "DM") if dm_data else None
 
-    result = jl.NeoPKPDCore.cdisc_to_observed_data(pc_jl, ex_jl, dm_jl)
+    result = jl.NeoPKPD.cdisc_to_observed_data(pc_jl, ex_jl, dm_jl)
     return _convert_observed_data(result)
 
 
@@ -185,7 +185,7 @@ def validate_cdisc_dataset(
         ...         print(f"Warning: {w}")
     """
     jl = _require_julia()
-    result = jl.NeoPKPDCore.validate_cdisc_dataset(
+    result = jl.NeoPKPD.validate_cdisc_dataset(
         str(Path(pc_path).resolve()),
         str(Path(ex_path).resolve()) if ex_path else None,
         str(Path(dm_path).resolve()) if dm_path else None,

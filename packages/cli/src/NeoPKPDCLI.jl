@@ -2,7 +2,7 @@ module NeoPKPDCLI
 
 using ArgParse
 using JSON
-using NeoPKPDCore
+using NeoPKPD
 
 # ============================================================================
 # Utility Functions
@@ -38,10 +38,10 @@ Example:
 """
 
 function cmd_version()
-    println("NeoPKPD " * NeoPKPDCore.NEOPKPD_VERSION)
-    println("Event semantics: " * NeoPKPDCore.EVENT_SEMANTICS_VERSION)
-    println("Solver semantics: " * NeoPKPDCore.SOLVER_SEMANTICS_VERSION)
-    println("Artifact schema: " * NeoPKPDCore.ARTIFACT_SCHEMA_VERSION)
+    println("NeoPKPD " * NeoPKPD.NEOPKPD_VERSION)
+    println("Event semantics: " * NeoPKPD.EVENT_SEMANTICS_VERSION)
+    println("Solver semantics: " * NeoPKPD.SOLVER_SEMANTICS_VERSION)
+    println("Artifact schema: " * NeoPKPD.ARTIFACT_SCHEMA_VERSION)
 end
 
 # ============================================================================
@@ -68,15 +68,15 @@ function cmd_replay(args)
     path = args["artifact"]
     out = get(args, "out", nothing)
 
-    artifact = NeoPKPDCore.read_execution_json(path)
+    artifact = NeoPKPD.read_execution_json(path)
     atype = get(artifact, "artifact_type", "single")
 
     if atype == "population"
-        res = NeoPKPDCore.replay_population_execution(artifact)
+        res = NeoPKPD.replay_population_execution(artifact)
         _info("Replayed population simulation with $(length(res.individuals)) individuals")
         if out !== nothing
-            parsed = NeoPKPDCore.deserialize_population_execution(artifact)
-            NeoPKPDCore.write_population_json(
+            parsed = NeoPKPD.deserialize_population_execution(artifact)
+            NeoPKPD.write_population_json(
                 out;
                 population_spec = parsed.population_spec,
                 grid = parsed.grid,
@@ -89,11 +89,11 @@ function cmd_replay(args)
     end
 
     if atype == "sensitivity_single"
-        res = NeoPKPDCore.replay_sensitivity_execution(artifact)
+        res = NeoPKPD.replay_sensitivity_execution(artifact)
         _info("Replayed single sensitivity analysis")
         if out !== nothing
-            parsed = NeoPKPDCore.deserialize_sensitivity_execution(artifact)
-            NeoPKPDCore.write_sensitivity_json(
+            parsed = NeoPKPD.deserialize_sensitivity_execution(artifact)
+            NeoPKPD.write_sensitivity_json(
                 out;
                 model_spec = parsed.model_spec,
                 grid = parsed.grid,
@@ -106,11 +106,11 @@ function cmd_replay(args)
     end
 
     if atype == "sensitivity_population"
-        res = NeoPKPDCore.replay_population_sensitivity_execution(artifact)
+        res = NeoPKPD.replay_population_sensitivity_execution(artifact)
         _info("Replayed population sensitivity analysis")
         if out !== nothing
-            parsed = NeoPKPDCore.deserialize_population_sensitivity_execution(artifact)
-            NeoPKPDCore.write_population_sensitivity_json(
+            parsed = NeoPKPD.deserialize_population_sensitivity_execution(artifact)
+            NeoPKPD.write_population_sensitivity_json(
                 out;
                 population_spec = parsed.population_spec,
                 grid = parsed.grid,
@@ -123,11 +123,11 @@ function cmd_replay(args)
     end
 
     # default: single execution
-    res = NeoPKPDCore.replay_execution(artifact)
+    res = NeoPKPD.replay_execution(artifact)
     _info("Replayed single simulation")
     if out !== nothing
-        parsed = NeoPKPDCore.deserialize_execution(artifact)
-        NeoPKPDCore.write_execution_json(
+        parsed = NeoPKPD.deserialize_execution(artifact)
+        NeoPKPD.write_execution_json(
             out;
             model_spec = parsed.model_spec,
             grid = parsed.grid,
@@ -242,48 +242,48 @@ function _parse_model_spec(spec::Dict)
     doses_raw = get(spec, "doses", [])
 
     # Support both bolus and infusion doses - duration is optional (0.0 = bolus)
-    doses = [NeoPKPDCore.DoseEvent(
+    doses = [NeoPKPD.DoseEvent(
         Float64(d["time"]),
         Float64(d["amount"]),
         Float64(get(d, "duration", 0.0))
     ) for d in doses_raw]
 
     if kind_str == "OneCompIVBolus"
-        params = NeoPKPDCore.OneCompIVBolusParams(
+        params = NeoPKPD.OneCompIVBolusParams(
             Float64(params_dict["CL"]),
             Float64(params_dict["V"]),
         )
-        return NeoPKPDCore.ModelSpec(NeoPKPDCore.OneCompIVBolus(), name, params, doses)
+        return NeoPKPD.ModelSpec(NeoPKPD.OneCompIVBolus(), name, params, doses)
 
     elseif kind_str == "OneCompOralFirstOrder"
-        params = NeoPKPDCore.OneCompOralFirstOrderParams(
+        params = NeoPKPD.OneCompOralFirstOrderParams(
             Float64(params_dict["Ka"]),
             Float64(params_dict["CL"]),
             Float64(params_dict["V"]),
         )
-        return NeoPKPDCore.ModelSpec(NeoPKPDCore.OneCompOralFirstOrder(), name, params, doses)
+        return NeoPKPD.ModelSpec(NeoPKPD.OneCompOralFirstOrder(), name, params, doses)
 
     elseif kind_str == "TwoCompIVBolus"
-        params = NeoPKPDCore.TwoCompIVBolusParams(
+        params = NeoPKPD.TwoCompIVBolusParams(
             Float64(params_dict["CL"]),
             Float64(params_dict["V1"]),
             Float64(params_dict["Q"]),
             Float64(params_dict["V2"]),
         )
-        return NeoPKPDCore.ModelSpec(NeoPKPDCore.TwoCompIVBolus(), name, params, doses)
+        return NeoPKPD.ModelSpec(NeoPKPD.TwoCompIVBolus(), name, params, doses)
 
     elseif kind_str == "TwoCompOral"
-        params = NeoPKPDCore.TwoCompOralParams(
+        params = NeoPKPD.TwoCompOralParams(
             Float64(params_dict["Ka"]),
             Float64(params_dict["CL"]),
             Float64(params_dict["V1"]),
             Float64(params_dict["Q"]),
             Float64(params_dict["V2"]),
         )
-        return NeoPKPDCore.ModelSpec(NeoPKPDCore.TwoCompOral(), name, params, doses)
+        return NeoPKPD.ModelSpec(NeoPKPD.TwoCompOral(), name, params, doses)
 
     elseif kind_str == "ThreeCompIVBolus"
-        params = NeoPKPDCore.ThreeCompIVBolusParams(
+        params = NeoPKPD.ThreeCompIVBolusParams(
             Float64(params_dict["CL"]),
             Float64(params_dict["V1"]),
             Float64(params_dict["Q2"]),
@@ -291,25 +291,25 @@ function _parse_model_spec(spec::Dict)
             Float64(params_dict["Q3"]),
             Float64(params_dict["V3"]),
         )
-        return NeoPKPDCore.ModelSpec(NeoPKPDCore.ThreeCompIVBolus(), name, params, doses)
+        return NeoPKPD.ModelSpec(NeoPKPD.ThreeCompIVBolus(), name, params, doses)
 
     elseif kind_str == "TransitAbsorption"
-        params = NeoPKPDCore.TransitAbsorptionParams(
+        params = NeoPKPD.TransitAbsorptionParams(
             Int(params_dict["N"]),
             Float64(params_dict["Ktr"]),
             Float64(params_dict["Ka"]),
             Float64(params_dict["CL"]),
             Float64(params_dict["V"]),
         )
-        return NeoPKPDCore.ModelSpec(NeoPKPDCore.TransitAbsorption(), name, params, doses)
+        return NeoPKPD.ModelSpec(NeoPKPD.TransitAbsorption(), name, params, doses)
 
     elseif kind_str == "MichaelisMentenElimination"
-        params = NeoPKPDCore.MichaelisMentenEliminationParams(
+        params = NeoPKPD.MichaelisMentenEliminationParams(
             Float64(params_dict["Vmax"]),
             Float64(params_dict["Km"]),
             Float64(params_dict["V"]),
         )
-        return NeoPKPDCore.ModelSpec(NeoPKPDCore.MichaelisMentenElimination(), name, params, doses)
+        return NeoPKPD.ModelSpec(NeoPKPD.MichaelisMentenElimination(), name, params, doses)
 
     else
         _die("Unsupported model kind: $kind_str. Supported: OneCompIVBolus, OneCompOralFirstOrder, TwoCompIVBolus, TwoCompOral, ThreeCompIVBolus, TransitAbsorption, MichaelisMentenElimination")
@@ -324,40 +324,40 @@ function _parse_pd_spec(spec::Dict)
     output_obs = Symbol(get(spec, "output_observation", "effect"))
 
     if kind_str == "DirectEmax"
-        params = NeoPKPDCore.DirectEmaxParams(
+        params = NeoPKPD.DirectEmaxParams(
             Float64(params_dict["E0"]),
             Float64(params_dict["Emax"]),
             Float64(params_dict["EC50"]),
         )
-        return NeoPKPDCore.PDSpec(NeoPKPDCore.DirectEmax(), name, params, input_obs, output_obs)
+        return NeoPKPD.PDSpec(NeoPKPD.DirectEmax(), name, params, input_obs, output_obs)
 
     elseif kind_str == "SigmoidEmax"
-        params = NeoPKPDCore.SigmoidEmaxParams(
+        params = NeoPKPD.SigmoidEmaxParams(
             Float64(params_dict["E0"]),
             Float64(params_dict["Emax"]),
             Float64(params_dict["EC50"]),
             Float64(params_dict["gamma"]),
         )
-        return NeoPKPDCore.PDSpec(NeoPKPDCore.SigmoidEmax(), name, params, input_obs, output_obs)
+        return NeoPKPD.PDSpec(NeoPKPD.SigmoidEmax(), name, params, input_obs, output_obs)
 
     elseif kind_str == "IndirectResponseTurnover"
-        params = NeoPKPDCore.IndirectResponseTurnoverParams(
+        params = NeoPKPD.IndirectResponseTurnoverParams(
             Float64(params_dict["Kin"]),
             Float64(params_dict["Kout"]),
             Float64(params_dict["R0"]),
             Float64(params_dict["Imax"]),
             Float64(params_dict["IC50"]),
         )
-        return NeoPKPDCore.PDSpec(NeoPKPDCore.IndirectResponseTurnover(), name, params, input_obs, output_obs)
+        return NeoPKPD.PDSpec(NeoPKPD.IndirectResponseTurnover(), name, params, input_obs, output_obs)
 
     elseif kind_str == "BiophaseEquilibration"
-        params = NeoPKPDCore.BiophaseEquilibrationParams(
+        params = NeoPKPD.BiophaseEquilibrationParams(
             Float64(params_dict["ke0"]),
             Float64(params_dict["E0"]),
             Float64(params_dict["Emax"]),
             Float64(params_dict["EC50"]),
         )
-        return NeoPKPDCore.PDSpec(NeoPKPDCore.BiophaseEquilibration(), name, params, input_obs, output_obs)
+        return NeoPKPD.PDSpec(NeoPKPD.BiophaseEquilibration(), name, params, input_obs, output_obs)
 
     else
         _die("Unsupported PD kind: $kind_str. Supported: DirectEmax, SigmoidEmax, IndirectResponseTurnover, BiophaseEquilibration")
@@ -365,7 +365,7 @@ function _parse_pd_spec(spec::Dict)
 end
 
 function _parse_grid(spec::Dict)
-    return NeoPKPDCore.SimGrid(
+    return NeoPKPD.SimGrid(
         Float64(spec["t0"]),
         Float64(spec["t1"]),
         [Float64(x) for x in spec["saveat"]],
@@ -373,7 +373,7 @@ function _parse_grid(spec::Dict)
 end
 
 function _parse_solver(spec::Dict)
-    return NeoPKPDCore.SolverSpec(
+    return NeoPKPD.SolverSpec(
         Symbol(get(spec, "alg", "Tsit5")),
         Float64(get(spec, "reltol", 1e-10)),
         Float64(get(spec, "abstol", 1e-12)),
@@ -381,7 +381,7 @@ function _parse_solver(spec::Dict)
     )
 end
 
-function _simresult_to_dict(res::NeoPKPDCore.SimResult)
+function _simresult_to_dict(res::NeoPKPD.SimResult)
     return Dict(
         "t" => res.t,
         "states" => Dict(string(k) => v for (k, v) in res.states),
@@ -403,34 +403,34 @@ function cmd_simulate(args)
 
     model_spec = _parse_model_spec(spec["model"])
     grid = _parse_grid(spec["grid"])
-    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPDCore.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPD.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
 
     pd_spec = haskey(spec, "pd") ? _parse_pd_spec(spec["pd"]) : nothing
 
     if pd_spec !== nothing
         pd_kind = pd_spec.kind
         # Determine if this is a direct (pk_then_pd) or coupled PD model
-        if pd_kind isa NeoPKPDCore.DirectEmax || pd_kind isa NeoPKPDCore.SigmoidEmax || pd_kind isa NeoPKPDCore.BiophaseEquilibration
+        if pd_kind isa NeoPKPD.DirectEmax || pd_kind isa NeoPKPD.SigmoidEmax || pd_kind isa NeoPKPD.BiophaseEquilibration
             # Direct PD models - use simulate_pkpd (pk_then_pd mode)
-            result = NeoPKPDCore.simulate_pkpd(model_spec, pd_spec, grid, solver)
+            result = NeoPKPD.simulate_pkpd(model_spec, pd_spec, grid, solver)
             _info("Simulated PK then PD: $(length(result.t)) time points")
-        elseif pd_kind isa NeoPKPDCore.IndirectResponseTurnover
+        elseif pd_kind isa NeoPKPD.IndirectResponseTurnover
             # Coupled ODE PD models - use simulate_pkpd_coupled
-            result = NeoPKPDCore.simulate_pkpd_coupled(model_spec, pd_spec, grid, solver)
+            result = NeoPKPD.simulate_pkpd_coupled(model_spec, pd_spec, grid, solver)
             _info("Simulated coupled PKPD: $(length(result.t)) time points")
         else
             _die("Unsupported PD model type for simulation")
         end
     else
         # PK only
-        result = NeoPKPDCore.simulate(model_spec, grid, solver)
+        result = NeoPKPD.simulate(model_spec, grid, solver)
         _info("Simulated PK: $(length(result.t)) time points")
     end
 
     if format == "simple"
         _write_json(out_path, _simresult_to_dict(result))
     else
-        NeoPKPDCore.write_execution_json(
+        NeoPKPD.write_execution_json(
             out_path;
             model_spec = model_spec,
             grid = grid,
@@ -490,8 +490,8 @@ Examples:
 
 function _parse_iiv_spec(spec::Dict)
     omegas = Dict(Symbol(k) => Float64(v) for (k, v) in spec["omegas"])
-    return NeoPKPDCore.IIVSpec(
-        NeoPKPDCore.LogNormalIIV(),
+    return NeoPKPD.IIVSpec(
+        NeoPKPD.LogNormalIIV(),
         omegas,
         UInt64(spec["seed"]),
         Int(spec["n"]),
@@ -501,26 +501,26 @@ end
 function _parse_iov_spec(spec::Dict)
     pis = Dict(Symbol(k) => Float64(v) for (k, v) in spec["pis"])
     occasion_mode = Symbol(get(spec, "occasion_def", "dose_times"))
-    return NeoPKPDCore.IOVSpec(
-        NeoPKPDCore.LogNormalIIV(),
+    return NeoPKPD.IOVSpec(
+        NeoPKPD.LogNormalIIV(),
         pis,
         UInt64(spec["seed"]),
-        NeoPKPDCore.OccasionDefinition(occasion_mode),
+        NeoPKPD.OccasionDefinition(occasion_mode),
     )
 end
 
 function _parse_covariate_effect(spec::Dict)
     kind_str = spec["kind"]
     if kind_str == "LinearCovariate"
-        kind = NeoPKPDCore.LinearCovariate()
+        kind = NeoPKPD.LinearCovariate()
     elseif kind_str == "PowerCovariate"
-        kind = NeoPKPDCore.PowerCovariate()
+        kind = NeoPKPD.PowerCovariate()
     elseif kind_str == "ExpCovariate"
-        kind = NeoPKPDCore.ExpCovariate()
+        kind = NeoPKPD.ExpCovariate()
     else
         _die("Unsupported covariate effect kind: $kind_str")
     end
-    return NeoPKPDCore.CovariateEffect(
+    return NeoPKPD.CovariateEffect(
         kind,
         Symbol(spec["param"]),
         Symbol(spec["covariate"]),
@@ -531,12 +531,12 @@ end
 
 function _parse_covariate_model(spec::Dict)
     effects = [_parse_covariate_effect(e) for e in spec["effects"]]
-    return NeoPKPDCore.CovariateModel(spec["name"], effects)
+    return NeoPKPD.CovariateModel(spec["name"], effects)
 end
 
 function _parse_individual_covariates(specs::Vector)
     return [
-        NeoPKPDCore.IndividualCovariates(
+        NeoPKPD.IndividualCovariates(
             Dict(Symbol(k) => Float64(v) for (k, v) in get(s, "values", Dict())),
             nothing,  # time_varying not supported via CLI yet
         )
@@ -580,23 +580,23 @@ function cmd_population(args)
 
     model_spec = _parse_model_spec(spec["model"])
     grid = _parse_grid(spec["grid"])
-    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPDCore.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPD.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
 
     iiv = haskey(spec, "iiv") ? _parse_iiv_spec(spec["iiv"]) : nothing
     iov = haskey(spec, "iov") ? _parse_iov_spec(spec["iov"]) : nothing
     cov_model = haskey(spec, "covariate_model") ? _parse_covariate_model(spec["covariate_model"]) : nothing
-    covariates = haskey(spec, "covariates") ? _parse_individual_covariates(spec["covariates"]) : NeoPKPDCore.IndividualCovariates[]
+    covariates = haskey(spec, "covariates") ? _parse_individual_covariates(spec["covariates"]) : NeoPKPD.IndividualCovariates[]
 
-    pop_spec = NeoPKPDCore.PopulationSpec(model_spec, iiv, iov, cov_model, covariates)
+    pop_spec = NeoPKPD.PopulationSpec(model_spec, iiv, iov, cov_model, covariates)
 
-    result = NeoPKPDCore.simulate_population(pop_spec, grid, solver)
+    result = NeoPKPD.simulate_population(pop_spec, grid, solver)
     n = length(result.individuals)
     _info("Simulated population: $n individuals")
 
     if format == "simple"
         _write_json(out_path, _popresult_to_dict(result))
     else
-        NeoPKPDCore.write_population_json(
+        NeoPKPD.write_population_json(
             out_path;
             population_spec = pop_spec,
             grid = grid,
@@ -648,10 +648,10 @@ function cmd_sensitivity(args)
 
     model_spec = _parse_model_spec(spec["model"])
     grid = _parse_grid(spec["grid"])
-    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPDCore.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPD.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
 
     pert_spec = spec["perturbation"]
-    plan = NeoPKPDCore.PerturbationPlan(
+    plan = NeoPKPD.PerturbationPlan(
         pert_spec["name"],
         Symbol(pert_spec["param"]),
         Float64(pert_spec["delta"]),
@@ -659,14 +659,14 @@ function cmd_sensitivity(args)
 
     observation = Symbol(get(spec, "observation", "conc"))
 
-    result = NeoPKPDCore.run_sensitivity(model_spec, grid, solver, plan, observation)
+    result = NeoPKPD.run_sensitivity(model_spec, grid, solver, plan, observation)
 
     _info("Sensitivity analysis complete")
     _info("  Max absolute delta: $(result.metrics.max_abs_delta)")
     _info("  Max relative delta: $(result.metrics.max_rel_delta)")
     _info("  L2 norm delta: $(result.metrics.l2_norm_delta)")
 
-    NeoPKPDCore.write_sensitivity_json(
+    NeoPKPD.write_sensitivity_json(
         out_path;
         model_spec = model_spec,
         grid = grid,
@@ -748,25 +748,25 @@ function cmd_metrics(args)
     result = nothing
 
     if metric_name == "cmax"
-        result = NeoPKPDCore.cmax(t, y)
+        result = NeoPKPD.cmax(t, y)
         println("Cmax: $result")
     elseif metric_name == "auc"
-        result = NeoPKPDCore.auc_trapezoid(t, y)
+        result = NeoPKPD.auc_trapezoid(t, y)
         println("AUC: $result")
     elseif metric_name == "emin"
-        result = NeoPKPDCore.emin(t, y)
+        result = NeoPKPD.emin(t, y)
         println("Emin: $result")
     elseif metric_name == "time_below"
         if threshold === nothing
             _die("--threshold required for time_below metric")
         end
-        result = NeoPKPDCore.time_below(t, y, threshold)
+        result = NeoPKPD.time_below(t, y, threshold)
         println("Time below $threshold: $result")
     elseif metric_name == "auc_above_baseline"
         if threshold === nothing
             _die("--threshold required for auc_above_baseline metric")
         end
-        result = NeoPKPDCore.auc_above_baseline(t, y, threshold)
+        result = NeoPKPD.auc_above_baseline(t, y, threshold)
         println("AUC above baseline $threshold: $result")
     else
         _die("Unknown metric: $metric_name. Supported: cmax, auc, emin, time_below, auc_above_baseline")
@@ -813,12 +813,12 @@ function cmd_import(args)
     end
 
     if format == "nonmem"
-        result = NeoPKPDCore.parse_nonmem_control(filepath)
-        model_spec, pop_spec, metadata = NeoPKPDCore.convert_nonmem_to_neopkpd(result)
+        result = NeoPKPD.parse_nonmem_control(filepath)
+        model_spec, pop_spec, metadata = NeoPKPD.convert_nonmem_to_neopkpd(result)
         _info("Parsed NONMEM control file: $(result.problem)")
     elseif format == "monolix"
-        result = NeoPKPDCore.parse_monolix_project(filepath)
-        model_spec, pop_spec, metadata = NeoPKPDCore.convert_monolix_to_neopkpd(result)
+        result = NeoPKPD.parse_monolix_project(filepath)
+        model_spec, pop_spec, metadata = NeoPKPD.convert_monolix_to_neopkpd(result)
         _info("Parsed Monolix project")
     else
         _die("Unknown format: $format. Use 'nonmem' or 'monolix'")
@@ -912,17 +912,17 @@ function cmd_nca(args)
 
     # Set up NCA method
     method = if method_str == "linear"
-        NeoPKPDCore.LinearMethod()
+        NeoPKPD.LinearMethod()
     elseif method_str == "log_linear"
-        NeoPKPDCore.LogLinearMethod()
+        NeoPKPD.LogLinearMethod()
     else
-        NeoPKPDCore.LinearUpLogDownMethod()
+        NeoPKPD.LinearUpLogDownMethod()
     end
 
     # Run NCA
     tau = tau_str !== nothing ? parse(Float64, tau_str) : nothing
 
-    nca_result = NeoPKPDCore.run_nca(times, concs, dose; method=method, tau=tau)
+    nca_result = NeoPKPD.run_nca(times, concs, dose; method=method, tau=tau)
 
     # Build output
     output = Dict(
@@ -966,14 +966,14 @@ end
 function _parse_population_spec(spec::Dict)
     model_spec = _parse_model_spec(spec["model"])
     grid = _parse_grid(spec["grid"])
-    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPDCore.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPD.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
 
     iiv = haskey(spec, "iiv") ? _parse_iiv_spec(spec["iiv"]) : nothing
     iov = haskey(spec, "iov") ? _parse_iov_spec(spec["iov"]) : nothing
     cov_model = haskey(spec, "covariate_model") ? _parse_covariate_model(spec["covariate_model"]) : nothing
-    covariates = haskey(spec, "covariates") ? _parse_individual_covariates(spec["covariates"]) : NeoPKPDCore.IndividualCovariates[]
+    covariates = haskey(spec, "covariates") ? _parse_individual_covariates(spec["covariates"]) : NeoPKPD.IndividualCovariates[]
 
-    pop_spec = NeoPKPDCore.PopulationSpec(model_spec, iiv, iov, cov_model, covariates)
+    pop_spec = NeoPKPD.PopulationSpec(model_spec, iiv, iov, cov_model, covariates)
 
     return pop_spec, grid, solver
 end
@@ -981,7 +981,7 @@ end
 function _parse_estimation_model_spec(spec::Dict)
     model_spec = _parse_model_spec(spec["model"])
     grid = _parse_grid(spec["grid"])
-    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPDCore.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
+    solver = haskey(spec, "solver") ? _parse_solver(spec["solver"]) : NeoPKPD.SolverSpec(:Tsit5, 1e-10, 1e-12, 10^7)
     return model_spec, grid, solver
 end
 
@@ -1033,9 +1033,9 @@ function cmd_vpc(args)
     pop_spec, grid, solver = _parse_population_spec(pop_spec_json)
 
     # VPC config
-    config = NeoPKPDCore.VPCConfig(
+    config = NeoPKPD.VPCConfig(
         pi_levels = pi_levels,
-        binning = NeoPKPDCore.QuantileBinning(n_bins),
+        binning = NeoPKPD.QuantileBinning(n_bins),
         n_simulations = n_sim,
         n_bootstrap = 500,
         prediction_corrected = pcvpc,
@@ -1044,9 +1044,9 @@ function cmd_vpc(args)
 
     # Run VPC
     vpc_result = if pcvpc
-        NeoPKPDCore.compute_pcvpc(observed, pop_spec, grid, solver; config=config)
+        NeoPKPD.compute_pcvpc(observed, pop_spec, grid, solver; config=config)
     else
-        NeoPKPDCore.compute_vpc(observed, pop_spec, grid, solver; config=config)
+        NeoPKPD.compute_vpc(observed, pop_spec, grid, solver; config=config)
     end
 
     # Build output
@@ -1095,7 +1095,7 @@ function _read_observed_data(path::String)
 
     # Group by subject
     subjects = Dict{String, Tuple{Vector{Float64}, Vector{Float64}}}()
-    default_doses = [NeoPKPDCore.DoseEvent(0.0, 100.0)]
+    default_doses = [NeoPKPD.DoseEvent(0.0, 100.0)]
 
     for line in lines[2:end]
         parts = split(line, ",")
@@ -1116,11 +1116,11 @@ function _read_observed_data(path::String)
 
     # Convert to ObservedData
     subject_data = [
-        NeoPKPDCore.SubjectData(id, times, obs, default_doses)
+        NeoPKPD.SubjectData(id, times, obs, default_doses)
         for (id, (times, obs)) in subjects
     ]
 
-    return NeoPKPDCore.ObservedData(subject_data)
+    return NeoPKPD.ObservedData(subject_data)
 end
 
 # ============================================================================
@@ -1181,23 +1181,23 @@ function cmd_estimate(args)
 
     # Set up estimation method
     method = if method_str == "laplacian"
-        NeoPKPDCore.LaplacianMethod()
+        NeoPKPD.LaplacianMethod()
     elseif method_str == "saem"
-        NeoPKPDCore.SAEMMethod(n_burn=100, n_iter=100)
+        NeoPKPD.SAEMMethod(n_burn=100, n_iter=100)
     else
-        NeoPKPDCore.FOCEIMethod()
+        NeoPKPD.FOCEIMethod()
     end
 
     # Set up sigma
-    sigma_init = NeoPKPDCore.ResidualErrorSpec(
-        NeoPKPDCore.ProportionalError(),
-        NeoPKPDCore.ProportionalErrorParams(0.1),
+    sigma_init = NeoPKPD.ResidualErrorSpec(
+        NeoPKPD.ProportionalError(),
+        NeoPKPD.ProportionalErrorParams(0.1),
         :conc,
         UInt64(1)
     )
 
     # Estimation config
-    config = NeoPKPDCore.EstimationConfig(
+    config = NeoPKPD.EstimationConfig(
         method;
         theta_init = theta_init,
         omega_init = omega_init,
@@ -1208,7 +1208,7 @@ function cmd_estimate(args)
     )
 
     _info("Running estimation with $(typeof(method))...")
-    result = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+    result = NeoPKPD.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
     # Build output
     output = Dict(
@@ -1303,14 +1303,14 @@ function cmd_trial(args)
     arms = [_parse_treatment_arm(a) for a in spec_dict["arms"]]
     endpoints = haskey(spec_dict, "endpoints") ?
         [_parse_endpoint(e) for e in spec_dict["endpoints"]] :
-        NeoPKPDCore.EndpointSpec[]
+        NeoPKPD.EndpointSpec[]
 
     duration_days = Float64(get(spec_dict, "duration_days", 28.0))
     pk_sampling = haskey(spec_dict, "pk_sampling_times") ?
         [Float64(t) for t in spec_dict["pk_sampling_times"]] :
         [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]
 
-    trial_spec = NeoPKPDCore.TrialSpec(
+    trial_spec = NeoPKPD.TrialSpec(
         get(spec_dict, "name", "CLI Trial"),
         design,
         arms;
@@ -1324,9 +1324,9 @@ function cmd_trial(args)
     # Run trial simulation
     if n_replicates > 1
         _info("Running power simulation with $n_replicates replicates...")
-        result = NeoPKPDCore.run_power_simulation(trial_spec)
+        result = NeoPKPD.run_power_simulation(trial_spec)
     else
-        result = NeoPKPDCore.simulate_trial(trial_spec)
+        result = NeoPKPD.simulate_trial(trial_spec)
     end
 
     # Build output
@@ -1372,17 +1372,17 @@ function _parse_trial_design(design_dict)
 
     if design_type == "parallel"
         n_arms = get(design_dict, "n_arms", 2)
-        return NeoPKPDCore.ParallelDesign(n_arms)
+        return NeoPKPD.ParallelDesign(n_arms)
     elseif design_type == "crossover"
         n_periods = get(design_dict, "n_periods", 2)
         n_sequences = get(design_dict, "n_sequences", 2)
         washout = Float64(get(design_dict, "washout_duration", 7.0))
-        return NeoPKPDCore.CrossoverDesign(n_periods, n_sequences; washout_duration=washout)
+        return NeoPKPD.CrossoverDesign(n_periods, n_sequences; washout_duration=washout)
     elseif design_type == "dose_escalation"
         dose_levels = [Float64(d) for d in design_dict["dose_levels"]]
-        return NeoPKPDCore.DoseEscalationDesign(dose_levels)
+        return NeoPKPD.DoseEscalationDesign(dose_levels)
     elseif design_type == "bioequivalence"
-        return NeoPKPDCore.BioequivalenceDesign()
+        return NeoPKPD.BioequivalenceDesign()
     else
         error("Unknown design type: $design_type")
     end
@@ -1394,13 +1394,13 @@ function _parse_treatment_arm(arm_dict)
     n_subjects = get(arm_dict, "n_subjects", 50)
 
     # Create a simple model spec for the arm
-    params = NeoPKPDCore.OneCompIVBolusParams(10.0, 100.0)  # Default CL, V
-    doses = [NeoPKPDCore.DoseEvent(0.0, dose)]
-    model_spec = NeoPKPDCore.ModelSpec(NeoPKPDCore.OneCompIVBolus(), name, params, doses)
+    params = NeoPKPD.OneCompIVBolusParams(10.0, 100.0)  # Default CL, V
+    doses = [NeoPKPD.DoseEvent(0.0, dose)]
+    model_spec = NeoPKPD.ModelSpec(NeoPKPD.OneCompIVBolus(), name, params, doses)
 
-    regimen = NeoPKPDCore.DosingRegimen(NeoPKPDCore.QD(), dose, 28)
+    regimen = NeoPKPD.DosingRegimen(NeoPKPD.QD(), dose, 28)
 
-    return NeoPKPDCore.TreatmentArm(name, model_spec, regimen; n_subjects=n_subjects)
+    return NeoPKPD.TreatmentArm(name, model_spec, regimen; n_subjects=n_subjects)
 end
 
 function _parse_endpoint(endpoint_dict)
@@ -1409,14 +1409,14 @@ function _parse_endpoint(endpoint_dict)
 
     if endpoint_type == "pk"
         metric = Symbol(get(endpoint_dict, "metric", "auc_0_inf"))
-        return NeoPKPDCore.PKEndpoint(name; metric=metric)
+        return NeoPKPD.PKEndpoint(name; metric=metric)
     elseif endpoint_type == "pd"
         metric = Symbol(get(endpoint_dict, "metric", "change_from_baseline"))
-        return NeoPKPDCore.PDEndpoint(name; metric=metric)
+        return NeoPKPD.PDEndpoint(name; metric=metric)
     elseif endpoint_type == "safety"
-        return NeoPKPDCore.SafetyEndpoint(name)
+        return NeoPKPD.SafetyEndpoint(name)
     else
-        return NeoPKPDCore.PKEndpoint(name)
+        return NeoPKPD.PKEndpoint(name)
     end
 end
 
@@ -1451,19 +1451,19 @@ function cmd_read_cdisc(args)
     _info("Reading CDISC data...")
 
     # Read PC domain
-    pc_data = NeoPKPDCore.read_cdisc_pc(pc_path)
+    pc_data = NeoPKPD.read_cdisc_pc(pc_path)
 
     # Read optional domains
-    ex_data = ex_path !== nothing && isfile(ex_path) ? NeoPKPDCore.read_cdisc_ex(ex_path) : nothing
-    dm_data = dm_path !== nothing && isfile(dm_path) ? NeoPKPDCore.read_cdisc_dm(dm_path) : nothing
+    ex_data = ex_path !== nothing && isfile(ex_path) ? NeoPKPD.read_cdisc_ex(ex_path) : nothing
+    dm_data = dm_path !== nothing && isfile(dm_path) ? NeoPKPD.read_cdisc_dm(dm_path) : nothing
 
     # Convert to observed data format
-    observed = NeoPKPDCore.cdisc_to_observed_data(pc_data, ex_data, dm_data)
+    observed = NeoPKPD.cdisc_to_observed_data(pc_data, ex_data, dm_data)
 
     # Build output
     output = Dict(
-        "n_subjects" => NeoPKPDCore.n_subjects(observed),
-        "n_observations" => NeoPKPDCore.n_observations(observed),
+        "n_subjects" => NeoPKPD.n_subjects(observed),
+        "n_observations" => NeoPKPD.n_observations(observed),
         "subjects" => [
             Dict(
                 "subject_id" => s.subject_id,
@@ -1479,7 +1479,7 @@ function cmd_read_cdisc(args)
 
     _write_json(out, output)
     _info("CDISC data converted and written to: $out")
-    _info("Subjects: $(NeoPKPDCore.n_subjects(observed)), Observations: $(NeoPKPDCore.n_observations(observed))")
+    _info("Subjects: $(NeoPKPD.n_subjects(observed)), Observations: $(NeoPKPD.n_observations(observed))")
 end
 
 # ============================================================================

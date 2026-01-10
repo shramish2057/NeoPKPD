@@ -57,7 +57,7 @@ NeoPKPD provides native implementations in both **Julia** (high-performance core
 === "Julia"
 
     ```julia
-    using NeoPKPDCore
+    using NeoPKPD
 
     params = OneCompOralParams(1.5, 5.0, 50.0)  # Ka, CL, V
     doses = [DoseEvent(0.0, 100.0)]
@@ -125,7 +125,7 @@ Every simulation produces deterministic, versioned artifacts:
 
     ```julia
     using Pkg
-    Pkg.add("NeoPKPDCore")
+    Pkg.add("NeoPKPD")
     ```
 
 === "CLI"
@@ -173,7 +173,7 @@ Every simulation produces deterministic, versioned artifacts:
 === "Julia"
 
     ```julia
-    using NeoPKPDCore
+    using NeoPKPD
 
     # Define model parameters
     params = OneCompOralParams(
@@ -442,7 +442,7 @@ graph TB
     end
 
     subgraph "Core Engine"
-        CORE[NeoPKPDCore.jl]
+        CORE[NeoPKPD.jl]
         MODELS[Model Library]
         SOLVERS[ODE Solvers]
         POP[Population Engine]

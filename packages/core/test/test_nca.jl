@@ -2,7 +2,7 @@
 # Tests for FDA/EMA compliant NCA metrics
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 
 # =============================================================================
 # Test Data Setup
@@ -484,27 +484,27 @@ end
         # t_0.95 (upper 5%) for various df
 
         # df=10: t_0.95 = 1.812
-        t_crit_10 = NeoPKPDCore._t_critical(10, 0.10)
+        t_crit_10 = NeoPKPD._t_critical(10, 0.10)
         @test t_crit_10 ≈ 1.812 atol=0.01
 
         # df=20: t_0.95 = 1.725
-        t_crit_20 = NeoPKPDCore._t_critical(20, 0.10)
+        t_crit_20 = NeoPKPD._t_critical(20, 0.10)
         @test t_crit_20 ≈ 1.725 atol=0.01
 
         # df=24: t_0.95 = 1.711 (typical BE study with 26 subjects)
-        t_crit_24 = NeoPKPDCore._t_critical(24, 0.10)
+        t_crit_24 = NeoPKPD._t_critical(24, 0.10)
         @test t_crit_24 ≈ 1.711 atol=0.01
 
         # df=30: t_0.95 = 1.697
-        t_crit_30 = NeoPKPDCore._t_critical(30, 0.10)
+        t_crit_30 = NeoPKPD._t_critical(30, 0.10)
         @test t_crit_30 ≈ 1.697 atol=0.01
 
         # df=60: t_0.95 = 1.671 (larger study)
-        t_crit_60 = NeoPKPDCore._t_critical(60, 0.10)
+        t_crit_60 = NeoPKPD._t_critical(60, 0.10)
         @test t_crit_60 ≈ 1.671 atol=0.01
 
         # df=120: t_0.95 = 1.658 (approaches z=1.645)
-        t_crit_120 = NeoPKPDCore._t_critical(120, 0.10)
+        t_crit_120 = NeoPKPD._t_critical(120, 0.10)
         @test t_crit_120 ≈ 1.658 atol=0.01
     end
 
@@ -513,12 +513,12 @@ end
         z_crit = 1.645  # z_0.95
 
         for df in [5, 10, 15, 20, 25, 30]
-            t_crit = NeoPKPDCore._t_critical(df, 0.10)
+            t_crit = NeoPKPD._t_critical(df, 0.10)
             @test t_crit > z_crit  # t should always be larger than z for finite df
         end
 
         # For very large df, t approaches z
-        t_crit_1000 = NeoPKPDCore._t_critical(1000, 0.10)
+        t_crit_1000 = NeoPKPD._t_critical(1000, 0.10)
         @test abs(t_crit_1000 - z_crit) < 0.01
     end
 
@@ -664,18 +664,18 @@ end
 
     @testset "T-CDF and T-PDF accuracy" begin
         # Verify CDF properties
-        @test NeoPKPDCore._t_cdf(0.0, 10) ≈ 0.5 atol=1e-10  # Symmetric at 0
-        @test NeoPKPDCore._t_cdf(Inf, 10) ≈ 1.0 atol=1e-10  # Limit at infinity
-        @test NeoPKPDCore._t_cdf(-Inf, 10) ≈ 0.0 atol=1e-10  # Limit at -infinity
+        @test NeoPKPD._t_cdf(0.0, 10) ≈ 0.5 atol=1e-10  # Symmetric at 0
+        @test NeoPKPD._t_cdf(Inf, 10) ≈ 1.0 atol=1e-10  # Limit at infinity
+        @test NeoPKPD._t_cdf(-Inf, 10) ≈ 0.0 atol=1e-10  # Limit at -infinity
 
         # Verify PDF properties
-        @test NeoPKPDCore._t_pdf(0.0, 10) > 0.0  # Positive at peak
-        @test NeoPKPDCore._t_pdf(0.0, 10) > NeoPKPDCore._t_pdf(1.0, 10)  # Peak at 0
-        @test NeoPKPDCore._t_pdf(-1.0, 10) ≈ NeoPKPDCore._t_pdf(1.0, 10) atol=1e-10  # Symmetric
+        @test NeoPKPD._t_pdf(0.0, 10) > 0.0  # Positive at peak
+        @test NeoPKPD._t_pdf(0.0, 10) > NeoPKPD._t_pdf(1.0, 10)  # Peak at 0
+        @test NeoPKPD._t_pdf(-1.0, 10) ≈ NeoPKPD._t_pdf(1.0, 10) atol=1e-10  # Symmetric
 
         # Known CDF values for df=10
         # P(T <= 1.812) ≈ 0.95 for df=10
-        @test NeoPKPDCore._t_cdf(1.812, 10) ≈ 0.95 atol=0.01
+        @test NeoPKPD._t_cdf(1.812, 10) ≈ 0.95 atol=0.01
     end
 end
 

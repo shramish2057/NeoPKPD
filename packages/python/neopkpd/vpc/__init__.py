@@ -810,9 +810,9 @@ def _build_observed_data(jl, data: Dict[str, Any]):
     """Build ObservedData from Python dict."""
     from ..bridge import _to_julia_vector, _to_julia_float_vector
 
-    SubjectData = jl.NeoPKPDCore.SubjectData
-    ObservedData = jl.NeoPKPDCore.ObservedData
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    SubjectData = jl.NeoPKPD.SubjectData
+    ObservedData = jl.NeoPKPD.ObservedData
+    DoseEvent = jl.NeoPKPD.DoseEvent
 
     subjects = []
     for subj in data["subjects"]:
@@ -840,10 +840,10 @@ def _build_population_spec(jl, spec: Dict[str, Any]):
     """Build PopulationSpec from Python dict."""
     from ..bridge import _to_julia_vector
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    IIVSpec = jl.NeoPKPDCore.IIVSpec
-    LogNormalIIV = jl.NeoPKPDCore.LogNormalIIV
-    PopulationSpec = jl.NeoPKPDCore.PopulationSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    IIVSpec = jl.NeoPKPD.IIVSpec
+    LogNormalIIV = jl.NeoPKPD.LogNormalIIV
+    PopulationSpec = jl.NeoPKPD.PopulationSpec
 
     model = spec["model"]
     doses_raw = model.get("doses", [{"time": 0.0, "amount": 100.0}])
@@ -855,29 +855,29 @@ def _build_population_spec(jl, spec: Dict[str, Any]):
     params = model["params"]
 
     if kind_str == "OneCompIVBolus":
-        pk_model = jl.NeoPKPDCore.OneCompIVBolus()
-        model_params = jl.NeoPKPDCore.OneCompIVBolusParams(
+        pk_model = jl.NeoPKPD.OneCompIVBolus()
+        model_params = jl.NeoPKPD.OneCompIVBolusParams(
             float(params["CL"]),
             float(params["V"])
         )
     elif kind_str in ["OneCompOral", "OneCompOralFirstOrder"]:
-        pk_model = jl.NeoPKPDCore.OneCompOralFirstOrder()
-        model_params = jl.NeoPKPDCore.OneCompOralFirstOrderParams(
+        pk_model = jl.NeoPKPD.OneCompOralFirstOrder()
+        model_params = jl.NeoPKPD.OneCompOralFirstOrderParams(
             float(params.get("Ka", 1.0)),
             float(params["CL"]),
             float(params["V"])
         )
     elif kind_str == "TwoCompIVBolus":
-        pk_model = jl.NeoPKPDCore.TwoCompIVBolus()
-        model_params = jl.NeoPKPDCore.TwoCompIVBolusParams(
+        pk_model = jl.NeoPKPD.TwoCompIVBolus()
+        model_params = jl.NeoPKPD.TwoCompIVBolusParams(
             float(params["CL"]),
             float(params["V1"]),
             float(params["Q"]),
             float(params["V2"])
         )
     elif kind_str == "TwoCompOral":
-        pk_model = jl.NeoPKPDCore.TwoCompOral()
-        model_params = jl.NeoPKPDCore.TwoCompOralParams(
+        pk_model = jl.NeoPKPD.TwoCompOral()
+        model_params = jl.NeoPKPD.TwoCompOralParams(
             float(params.get("Ka", 1.0)),
             float(params["CL"]),
             float(params["V1"]),
@@ -888,7 +888,7 @@ def _build_population_spec(jl, spec: Dict[str, Any]):
         raise ValueError(f"Unsupported model kind: {kind_str}")
 
     # Build ModelSpec (kind, name, params, doses)
-    model_spec = jl.NeoPKPDCore.ModelSpec(
+    model_spec = jl.NeoPKPD.ModelSpec(
         pk_model,
         model.get("name", "vpc_model"),
         model_params,
@@ -908,12 +908,12 @@ def _build_population_spec(jl, spec: Dict[str, Any]):
 
     # Build IIVSpec using Julia constructor directly via seval
     # This avoids Python-to-Julia type conversion issues
-    jl.NeoPKPDCore.seval("global _temp_omegas")
-    jl.NeoPKPDCore._temp_omegas = omegas
-    iiv = jl.seval(f"NeoPKPDCore.IIVSpec(NeoPKPDCore.LogNormalIIV(), NeoPKPDCore._temp_omegas, UInt64({seed}), {n})")
+    jl.NeoPKPD.seval("global _temp_omegas")
+    jl.NeoPKPD._temp_omegas = omegas
+    iiv = jl.seval(f"NeoPKPD.IIVSpec(NeoPKPD.LogNormalIIV(), NeoPKPD._temp_omegas, UInt64({seed}), {n})")
 
     # Build empty covariates vector
-    IndividualCovariates = jl.NeoPKPDCore.IndividualCovariates
+    IndividualCovariates = jl.NeoPKPD.IndividualCovariates
     empty_covs = jl.Vector[IndividualCovariates](jl.undef, 0)
 
     return PopulationSpec(model_spec, iiv, jl.nothing, jl.nothing, empty_covs)
@@ -925,22 +925,22 @@ def _build_error_spec(jl, spec: Dict[str, Any]):
     sigma = spec.get("sigma", 0.1)
 
     if error_type == "additive":
-        kind = jl.NeoPKPDCore.AdditiveError()
-        params = jl.NeoPKPDCore.AdditiveErrorParams(float(sigma))
+        kind = jl.NeoPKPD.AdditiveError()
+        params = jl.NeoPKPD.AdditiveErrorParams(float(sigma))
     elif error_type == "proportional":
-        kind = jl.NeoPKPDCore.ProportionalError()
-        params = jl.NeoPKPDCore.ProportionalErrorParams(float(sigma))
+        kind = jl.NeoPKPD.ProportionalError()
+        params = jl.NeoPKPD.ProportionalErrorParams(float(sigma))
     elif error_type == "combined":
-        kind = jl.NeoPKPDCore.CombinedError()
-        params = jl.NeoPKPDCore.CombinedErrorParams(
+        kind = jl.NeoPKPD.CombinedError()
+        params = jl.NeoPKPD.CombinedErrorParams(
             float(sigma),
             float(spec.get("sigma_prop", sigma))
         )
     else:
-        kind = jl.NeoPKPDCore.ProportionalError()
-        params = jl.NeoPKPDCore.ProportionalErrorParams(float(sigma))
+        kind = jl.NeoPKPD.ProportionalError()
+        params = jl.NeoPKPD.ProportionalErrorParams(float(sigma))
 
-    return jl.NeoPKPDCore.ResidualErrorSpec(kind, params, jl.Symbol("conc"), jl.UInt64(1))
+    return jl.NeoPKPD.ResidualErrorSpec(kind, params, jl.Symbol("conc"), jl.UInt64(1))
 
 
 def _convert_vpc_result(jl_result, config: VPCConfig) -> VPCResult:
@@ -1038,7 +1038,7 @@ def compute_vpc(
     for t in grid["saveat"]:
         jl.seval("push!")(saveat, float(t))
 
-    grid_jl = jl.NeoPKPDCore.SimGrid(
+    grid_jl = jl.NeoPKPD.SimGrid(
         float(grid["t0"]),
         float(grid["t1"]),
         saveat,
@@ -1046,9 +1046,9 @@ def compute_vpc(
 
     # Build solver
     if solver is None:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-10, 1e-12, 10**7)
+        solver_jl = jl.NeoPKPD.SolverSpec(jl.Symbol("Tsit5"), 1e-10, 1e-12, 10**7)
     else:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(
+        solver_jl = jl.NeoPKPD.SolverSpec(
             jl.Symbol(solver.get("alg", "Tsit5")),
             float(solver.get("reltol", 1e-10)),
             float(solver.get("abstol", 1e-12)),
@@ -1084,10 +1084,10 @@ def compute_vpc(
 
     # Build VPCConfig entirely in Julia to preserve UInt64 type
     vpc_config_code = f"""
-    NeoPKPDCore.VPCConfig(
+    NeoPKPD.VPCConfig(
         pi_levels = Float64{pi_levels_str},
         ci_level = {float(config.ci_level)},
-        binning = NeoPKPDCore.{binning_type}({n_bins}),
+        binning = NeoPKPD.{binning_type}({n_bins}),
         n_simulations = {config.n_simulations},
         n_bootstrap = {config.n_bootstrap},
         prediction_corrected = {str(config.prediction_corrected).lower()},
@@ -1106,12 +1106,12 @@ def compute_vpc(
 
     # Run VPC
     if config.prediction_corrected:
-        result = jl.NeoPKPDCore.compute_pcvpc(
+        result = jl.NeoPKPD.compute_pcvpc(
             obs, pop_spec, grid_jl, solver_jl,
             config=vpc_config, error_spec=error_jl
         )
     else:
-        result = jl.NeoPKPDCore.compute_vpc(
+        result = jl.NeoPKPD.compute_vpc(
             obs, pop_spec, grid_jl, solver_jl,
             config=vpc_config, error_spec=error_jl
         )

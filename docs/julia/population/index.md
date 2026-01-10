@@ -71,7 +71,7 @@ graph LR
 ### Basic Population Simulation
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Typical parameters
 typical_params = OneCompIVBolusParams(5.0, 50.0)  # CL=5, V=50

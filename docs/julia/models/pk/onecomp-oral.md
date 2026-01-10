@@ -118,7 +118,7 @@ end
 ### Basic Simulation
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define parameters
 # Ka = 1.5/h (absorption t½ ≈ 0.46 h)

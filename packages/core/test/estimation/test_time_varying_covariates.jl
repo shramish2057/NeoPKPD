@@ -1,5 +1,5 @@
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 
 @testset "Time-Varying Covariates" begin
@@ -170,26 +170,26 @@ using LinearAlgebra
 
     @testset "Transform Application" begin
         @testset "NoTransform" begin
-            @test NeoPKPDCore.apply_transform(70.0, NoTransform()) == 70.0
+            @test NeoPKPD.apply_transform(70.0, NoTransform()) == 70.0
         end
 
         @testset "LogTransform" begin
             transform = LogTransform(70.0)
-            @test isapprox(NeoPKPDCore.apply_transform(70.0, transform), 0.0, atol=1e-10)
-            @test isapprox(NeoPKPDCore.apply_transform(140.0, transform), log(2.0), atol=1e-10)
+            @test isapprox(NeoPKPD.apply_transform(70.0, transform), 0.0, atol=1e-10)
+            @test isapprox(NeoPKPD.apply_transform(140.0, transform), log(2.0), atol=1e-10)
         end
 
         @testset "PowerTransform" begin
             transform = PowerTransform(70.0, 0.75)
-            @test isapprox(NeoPKPDCore.apply_transform(70.0, transform), 1.0, atol=1e-10)
-            @test isapprox(NeoPKPDCore.apply_transform(140.0, transform), 2.0^0.75, atol=1e-10)
+            @test isapprox(NeoPKPD.apply_transform(70.0, transform), 1.0, atol=1e-10)
+            @test isapprox(NeoPKPD.apply_transform(140.0, transform), 2.0^0.75, atol=1e-10)
         end
 
         @testset "NormalizedTransform" begin
             transform = NormalizedTransform(100.0, 50.0)
-            @test isapprox(NeoPKPDCore.apply_transform(100.0, transform), 0.0, atol=1e-10)
-            @test isapprox(NeoPKPDCore.apply_transform(150.0, transform), 1.0, atol=1e-10)
-            @test isapprox(NeoPKPDCore.apply_transform(50.0, transform), -1.0, atol=1e-10)
+            @test isapprox(NeoPKPD.apply_transform(100.0, transform), 0.0, atol=1e-10)
+            @test isapprox(NeoPKPD.apply_transform(150.0, transform), 1.0, atol=1e-10)
+            @test isapprox(NeoPKPD.apply_transform(50.0, transform), -1.0, atol=1e-10)
         end
     end
 

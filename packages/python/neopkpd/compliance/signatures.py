@@ -159,12 +159,12 @@ def generate_keypair(
 
     # Map enum to Julia enum
     jl_algorithm = (
-        jl.NeoPKPDCore.ECDSA_P256
+        jl.NeoPKPD.ECDSA_P256
         if algorithm == SignatureAlgorithm.ECDSA_P256
-        else jl.NeoPKPDCore.RSA_2048
+        else jl.NeoPKPD.RSA_2048
     )
 
-    keypair = jl.NeoPKPDCore.generate_keypair(algorithm=jl_algorithm, owner=owner)
+    keypair = jl.NeoPKPD.generate_keypair(algorithm=jl_algorithm, owner=owner)
 
     signing_key = SigningKey(
         algorithm=algorithm,
@@ -223,12 +223,12 @@ def sign_artifact(
 
     # Map Python SigningKey to Julia SigningKey
     jl_algorithm = (
-        jl.NeoPKPDCore.ECDSA_P256
+        jl.NeoPKPD.ECDSA_P256
         if signing_key.algorithm == SignatureAlgorithm.ECDSA_P256
-        else jl.NeoPKPDCore.RSA_2048
+        else jl.NeoPKPD.RSA_2048
     )
 
-    jl_signing_key = jl.NeoPKPDCore.SigningKey(
+    jl_signing_key = jl.NeoPKPD.SigningKey(
         jl_algorithm,
         signing_key.key_id,
         jl.hex2bytes(signing_key.key_data_hex),
@@ -238,16 +238,16 @@ def sign_artifact(
 
     # Map purpose
     purpose_map = {
-        SignaturePurpose.AUTHORSHIP: jl.NeoPKPDCore.SIGNATURE_AUTHORSHIP,
-        SignaturePurpose.APPROVAL: jl.NeoPKPDCore.SIGNATURE_APPROVAL,
-        SignaturePurpose.REVIEW: jl.NeoPKPDCore.SIGNATURE_REVIEW,
-        SignaturePurpose.VERIFICATION: jl.NeoPKPDCore.SIGNATURE_VERIFICATION,
-        SignaturePurpose.RESPONSIBILITY: jl.NeoPKPDCore.SIGNATURE_RESPONSIBILITY,
+        SignaturePurpose.AUTHORSHIP: jl.NeoPKPD.SIGNATURE_AUTHORSHIP,
+        SignaturePurpose.APPROVAL: jl.NeoPKPD.SIGNATURE_APPROVAL,
+        SignaturePurpose.REVIEW: jl.NeoPKPD.SIGNATURE_REVIEW,
+        SignaturePurpose.VERIFICATION: jl.NeoPKPD.SIGNATURE_VERIFICATION,
+        SignaturePurpose.RESPONSIBILITY: jl.NeoPKPD.SIGNATURE_RESPONSIBILITY,
     }
 
     julia_artifact = jl.Dict(artifact)
 
-    sig = jl.NeoPKPDCore.sign_artifact(
+    sig = jl.NeoPKPD.sign_artifact(
         julia_artifact,
         jl_signing_key,
         purpose=purpose_map[purpose],
@@ -297,12 +297,12 @@ def verify_signature(
 
     # Map Python VerificationKey to Julia VerificationKey
     jl_algorithm = (
-        jl.NeoPKPDCore.ECDSA_P256
+        jl.NeoPKPD.ECDSA_P256
         if verification_key.algorithm == SignatureAlgorithm.ECDSA_P256
-        else jl.NeoPKPDCore.RSA_2048
+        else jl.NeoPKPD.RSA_2048
     )
 
-    jl_verification_key = jl.NeoPKPDCore.VerificationKey(
+    jl_verification_key = jl.NeoPKPD.VerificationKey(
         jl_algorithm,
         verification_key.key_id,
         jl.hex2bytes(verification_key.key_data_hex),
@@ -312,15 +312,15 @@ def verify_signature(
 
     # Map purpose
     purpose_map = {
-        SignaturePurpose.AUTHORSHIP: jl.NeoPKPDCore.SIGNATURE_AUTHORSHIP,
-        SignaturePurpose.APPROVAL: jl.NeoPKPDCore.SIGNATURE_APPROVAL,
-        SignaturePurpose.REVIEW: jl.NeoPKPDCore.SIGNATURE_REVIEW,
-        SignaturePurpose.VERIFICATION: jl.NeoPKPDCore.SIGNATURE_VERIFICATION,
-        SignaturePurpose.RESPONSIBILITY: jl.NeoPKPDCore.SIGNATURE_RESPONSIBILITY,
+        SignaturePurpose.AUTHORSHIP: jl.NeoPKPD.SIGNATURE_AUTHORSHIP,
+        SignaturePurpose.APPROVAL: jl.NeoPKPD.SIGNATURE_APPROVAL,
+        SignaturePurpose.REVIEW: jl.NeoPKPD.SIGNATURE_REVIEW,
+        SignaturePurpose.VERIFICATION: jl.NeoPKPD.SIGNATURE_VERIFICATION,
+        SignaturePurpose.RESPONSIBILITY: jl.NeoPKPD.SIGNATURE_RESPONSIBILITY,
     }
 
     # Map Python ArtifactSignature to Julia ArtifactSignature
-    jl_signature = jl.NeoPKPDCore.ArtifactSignature(
+    jl_signature = jl.NeoPKPD.ArtifactSignature(
         signature.signature_id,
         signature.key_id,
         jl_algorithm,
@@ -337,7 +337,7 @@ def verify_signature(
     julia_artifact = jl.Dict(artifact)
 
     return bool(
-        jl.NeoPKPDCore.verify_signature(
+        jl.NeoPKPD.verify_signature(
             julia_artifact, jl_signature, jl_verification_key
         )
     )

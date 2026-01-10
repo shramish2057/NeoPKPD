@@ -42,7 +42,7 @@ def get_compliance_config() -> ComplianceConfig:
         ComplianceLevel.STANDARD
     """
     jl = get_julia()
-    config = jl.NeoPKPDCore.get_compliance_config()
+    config = jl.NeoPKPD.get_compliance_config()
 
     # Map Julia enum to Python enum
     level_value = int(jl.Int(config.level))
@@ -75,13 +75,13 @@ def set_compliance_config(level: ComplianceLevel) -> ComplianceConfig:
 
     # Map Python enum to Julia enum
     julia_levels = {
-        ComplianceLevel.DISABLED: jl.NeoPKPDCore.COMPLIANCE_DISABLED,
-        ComplianceLevel.MINIMAL: jl.NeoPKPDCore.COMPLIANCE_MINIMAL,
-        ComplianceLevel.STANDARD: jl.NeoPKPDCore.COMPLIANCE_STANDARD,
-        ComplianceLevel.STRICT: jl.NeoPKPDCore.COMPLIANCE_STRICT,
+        ComplianceLevel.DISABLED: jl.NeoPKPD.COMPLIANCE_DISABLED,
+        ComplianceLevel.MINIMAL: jl.NeoPKPD.COMPLIANCE_MINIMAL,
+        ComplianceLevel.STANDARD: jl.NeoPKPD.COMPLIANCE_STANDARD,
+        ComplianceLevel.STRICT: jl.NeoPKPD.COMPLIANCE_STRICT,
     }
 
     julia_level = julia_levels[level]
-    jl.NeoPKPDCore.set_compliance_config_b(julia_level)
+    jl.NeoPKPD.set_compliance_config_b(julia_level)
 
     return get_compliance_config()

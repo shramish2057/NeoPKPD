@@ -2,7 +2,7 @@ using Pkg
 Pkg.activate("packages/core")
 Pkg.instantiate()
 
-using NeoPKPDCore
+using NeoPKPD
 
 function _load_json(path::String)
     return read_execution_json(path)

@@ -1,5 +1,5 @@
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using Optim
 using LinearAlgebra
 
@@ -30,7 +30,7 @@ using LinearAlgebra
 
         @testset "No fallback configuration" begin
             config = OptimizerConfig(
-                fallback_chain=NeoPKPDCore.OptimizerType[]
+                fallback_chain=NeoPKPD.OptimizerType[]
             )
             @test isempty(config.fallback_chain)
         end

@@ -60,7 +60,7 @@ cd neopkpd
 julia --project=packages/core -e 'using Pkg; Pkg.instantiate()'
 
 # Verify installation
-julia --project=packages/core -e 'using NeoPKPDCore; println("v", NEOPKPD_VERSION)'
+julia --project=packages/core -e 'using NeoPKPD; println("v", NEOPKPD_VERSION)'
 ```
 
 ### Python (Optional)
@@ -83,7 +83,7 @@ pip install -e .
 ### Julia
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define model
 spec = ModelSpec(
@@ -150,7 +150,7 @@ print(result["observations"]["conc"])
 ```
 neopkpd/
 ├── packages/
-│   ├── core/                 # Julia simulation engine (NeoPKPDCore)
+│   ├── core/                 # Julia simulation engine (NeoPKPD)
 │   │   ├── src/
 │   │   │   ├── pk/           # PK model definitions (1/2/3-comp, transit, MM)
 │   │   │   ├── pd/           # PD models (Emax, indirect response, etc.)

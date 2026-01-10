@@ -102,7 +102,7 @@ end
 ### Basic Simulation
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define parameters
 # Vmax = 500 mg/h, Km = 10 mg/L, V = 50 L

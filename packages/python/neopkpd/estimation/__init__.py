@@ -437,9 +437,9 @@ def estimate(
     jl = _require_julia()
 
     # Build observed data structure
-    SubjectData = jl.NeoPKPDCore.SubjectData
-    ObservedData = jl.NeoPKPDCore.ObservedData
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    SubjectData = jl.NeoPKPD.SubjectData
+    ObservedData = jl.NeoPKPD.ObservedData
+    DoseEvent = jl.NeoPKPD.DoseEvent
 
     # Create Julia vector to hold subjects
     subjects_vec = jl.seval("SubjectData[]")
@@ -474,7 +474,7 @@ def estimate(
 
     # Build estimation method
     if config.method == "foce":
-        method = jl.NeoPKPDCore.FOCEIMethod(
+        method = jl.NeoPKPD.FOCEIMethod(
             max_inner_iter=config.foce_max_inner_iter,
             inner_tol=config.foce_inner_tol,
             centered=config.foce_centered,
@@ -483,7 +483,7 @@ def estimate(
     elif config.method == "saem":
         # CRITICAL: parallel_chains=false prevents Bus error in Python-Julia bridge
         # Julia's @threads with closures conflicts with Python's GIL via JuliaCall
-        method = jl.NeoPKPDCore.SAEMMethod(
+        method = jl.NeoPKPD.SAEMMethod(
             n_burn=config.saem_n_burn,
             n_iter=config.saem_n_iter,
             n_chains=config.saem_n_chains,
@@ -491,7 +491,7 @@ def estimate(
             parallel_chains=False
         )
     elif config.method == "laplacian":
-        method = jl.NeoPKPDCore.LaplacianMethod()
+        method = jl.NeoPKPD.LaplacianMethod()
     else:
         raise ValueError(f"Unknown estimation method: {config.method}")
 
@@ -508,22 +508,22 @@ def estimate(
 
     # Build omega structure
     if config.omega_structure == OmegaStructure.DIAGONAL:
-        omega_structure = jl.NeoPKPDCore.DiagonalOmega()
+        omega_structure = jl.NeoPKPD.DiagonalOmega()
     elif config.omega_structure == OmegaStructure.FULL:
-        omega_structure = jl.NeoPKPDCore.FullOmega()
+        omega_structure = jl.NeoPKPD.FullOmega()
     else:
-        omega_structure = jl.NeoPKPDCore.DiagonalOmega()
+        omega_structure = jl.NeoPKPD.DiagonalOmega()
 
     # Build BLQ config if provided
     blq_config_jl = None
     if config.blq_config is not None:
         blq_method_map = {
-            BLQMethod.M1_DISCARD: jl.NeoPKPDCore.BLQ_M1_DISCARD,
-            BLQMethod.M2_IMPUTE_HALF: jl.NeoPKPDCore.BLQ_M2_IMPUTE_HALF,
-            BLQMethod.M2_IMPUTE_ZERO: jl.NeoPKPDCore.BLQ_M2_IMPUTE_ZERO,
-            BLQMethod.M3_LIKELIHOOD: jl.NeoPKPDCore.BLQ_M3_LIKELIHOOD,
+            BLQMethod.M1_DISCARD: jl.NeoPKPD.BLQ_M1_DISCARD,
+            BLQMethod.M2_IMPUTE_HALF: jl.NeoPKPD.BLQ_M2_IMPUTE_HALF,
+            BLQMethod.M2_IMPUTE_ZERO: jl.NeoPKPD.BLQ_M2_IMPUTE_ZERO,
+            BLQMethod.M3_LIKELIHOOD: jl.NeoPKPD.BLQ_M3_LIKELIHOOD,
         }
-        blq_config_jl = jl.NeoPKPDCore.BLQConfig(
+        blq_config_jl = jl.NeoPKPD.BLQConfig(
             blq_method_map[config.blq_config.method],
             float(config.blq_config.lloq),
             max_consecutive_blq=config.blq_config.max_consecutive_blq
@@ -557,11 +557,11 @@ def estimate(
     if blq_config_jl is not None:
         est_kwargs["blq_config"] = blq_config_jl
 
-    est_config = jl.NeoPKPDCore.EstimationConfig(method, **est_kwargs)
+    est_config = jl.NeoPKPD.EstimationConfig(method, **est_kwargs)
 
     # Build grid
     saveat_jl = _to_julia_float_vec(jl, [float(x) for x in grid["saveat"]])
-    grid_jl = jl.NeoPKPDCore.SimGrid(
+    grid_jl = jl.NeoPKPD.SimGrid(
         float(grid["t0"]),
         float(grid["t1"]),
         saveat_jl,
@@ -569,9 +569,9 @@ def estimate(
 
     # Build solver
     if solver is None:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-10, 1e-12, 10**7)
+        solver_jl = jl.NeoPKPD.SolverSpec(jl.Symbol("Tsit5"), 1e-10, 1e-12, 10**7)
     else:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(
+        solver_jl = jl.NeoPKPD.SolverSpec(
             jl.Symbol(solver.get("alg", "Tsit5")),
             float(solver.get("reltol", 1e-10)),
             float(solver.get("abstol", 1e-12)),
@@ -579,7 +579,7 @@ def estimate(
         )
 
     # Run estimation
-    result = jl.NeoPKPDCore.estimate(obs, model_spec, est_config, grid=grid_jl, solver=solver_jl)
+    result = jl.NeoPKPD.estimate(obs, model_spec, est_config, grid=grid_jl, solver=solver_jl)
 
     # Convert result to Python
     return _convert_estimation_result(result, config.method)
@@ -621,9 +621,9 @@ def run_bootstrap(
     jl = _require_julia()
 
     # Build observed data
-    SubjectData = jl.NeoPKPDCore.SubjectData
-    ObservedData = jl.NeoPKPDCore.ObservedData
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    SubjectData = jl.NeoPKPD.SubjectData
+    ObservedData = jl.NeoPKPD.ObservedData
+    DoseEvent = jl.NeoPKPD.DoseEvent
 
     # Create Julia vector to hold subjects
     subjects_vec = jl.seval("SubjectData[]")
@@ -658,12 +658,12 @@ def run_bootstrap(
 
     # Build estimation method
     if estimation_config.method == "foce":
-        method = jl.NeoPKPDCore.FOCEIMethod()
+        method = jl.NeoPKPD.FOCEIMethod()
     elif estimation_config.method == "saem":
         # parallel_chains=False prevents Bus error in Python-Julia bridge
-        method = jl.NeoPKPDCore.SAEMMethod(n_burn=100, n_iter=100, parallel_chains=False)
+        method = jl.NeoPKPD.SAEMMethod(n_burn=100, n_iter=100, parallel_chains=False)
     else:
-        method = jl.NeoPKPDCore.LaplacianMethod()
+        method = jl.NeoPKPD.LaplacianMethod()
 
     sigma_spec = _build_sigma_spec(jl, estimation_config.sigma_type, estimation_config.sigma_init)
     omega_init = np.array(estimation_config.omega_init) if estimation_config.omega_init else np.eye(len(estimation_config.theta_init)) * 0.09
@@ -677,7 +677,7 @@ def run_bootstrap(
     omega_init_jl = _to_julia_matrix(jl, omega_init.tolist())
     omega_names_jl = _to_julia_symbol_vec(jl, estimation_config.omega_names or [f"eta_{i}" for i in range(omega_init.shape[0])])
 
-    est_config = jl.NeoPKPDCore.EstimationConfig(
+    est_config = jl.NeoPKPD.EstimationConfig(
         method,
         theta_init=theta_init_jl,
         theta_lower=theta_lower_jl,
@@ -685,7 +685,7 @@ def run_bootstrap(
         theta_names=theta_names_jl,
         omega_init=omega_init_jl,
         omega_names=omega_names_jl,
-        omega_structure=jl.NeoPKPDCore.DiagonalOmega(),
+        omega_structure=jl.NeoPKPD.DiagonalOmega(),
         sigma_init=sigma_spec,
         max_iter=200,  # Reduced for bootstrap
         tol=1e-4,
@@ -698,16 +698,16 @@ def run_bootstrap(
 
     # Build grid and solver
     saveat_jl = _to_julia_float_vec(jl, [float(x) for x in grid["saveat"]])
-    grid_jl = jl.NeoPKPDCore.SimGrid(
+    grid_jl = jl.NeoPKPD.SimGrid(
         float(grid["t0"]),
         float(grid["t1"]),
         saveat_jl,
     )
 
     if solver is None:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
+        solver_jl = jl.NeoPKPD.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
     else:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(
+        solver_jl = jl.NeoPKPD.SolverSpec(
             jl.Symbol(solver.get("alg", "Tsit5")),
             float(solver.get("reltol", 1e-8)),
             float(solver.get("abstol", 1e-10)),
@@ -716,12 +716,12 @@ def run_bootstrap(
 
     # Build bootstrap spec
     ci_method_map = {
-        BootstrapCIMethod.PERCENTILE: jl.NeoPKPDCore.PercentileCI(),
-        BootstrapCIMethod.BCA: jl.NeoPKPDCore.BCCI(),
-        BootstrapCIMethod.BASIC: jl.NeoPKPDCore.BasicCI(),
+        BootstrapCIMethod.PERCENTILE: jl.NeoPKPD.PercentileCI(),
+        BootstrapCIMethod.BCA: jl.NeoPKPD.BCCI(),
+        BootstrapCIMethod.BASIC: jl.NeoPKPD.BasicCI(),
     }
 
-    boot_spec = jl.NeoPKPDCore.BootstrapSpec(
+    boot_spec = jl.NeoPKPD.BootstrapSpec(
         n_bootstrap=bootstrap_config.n_bootstrap,
         # Note: seed not passed - Julia uses default UInt64(12345) to avoid Python->Julia Int64/UInt64 issues
         parallel=False,  # Disable parallel to avoid threading issues with JuliaCall
@@ -732,7 +732,7 @@ def run_bootstrap(
 
     # Use run_bootstrap_native which doesn't require a callback
     # This avoids Python-Julia callback interop issues that cause crashes
-    result = jl.NeoPKPDCore.run_bootstrap_native(
+    result = jl.NeoPKPD.run_bootstrap_native(
         obs,
         model_spec,
         est_config,
@@ -996,9 +996,9 @@ def compute_npde(
     jl = _require_julia()
 
     # Build observed data
-    SubjectData = jl.NeoPKPDCore.SubjectData
-    ObservedData = jl.NeoPKPDCore.ObservedData
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    SubjectData = jl.NeoPKPD.SubjectData
+    ObservedData = jl.NeoPKPD.ObservedData
+    DoseEvent = jl.NeoPKPD.DoseEvent
 
     subjects_vec = jl.seval("SubjectData[]")
     for subj in observed_data["subjects"]:
@@ -1033,23 +1033,23 @@ def compute_npde(
     omega_jl = _to_julia_matrix(jl, result.omega)
 
     # Build sigma spec from result
-    sigma_jl = jl.NeoPKPDCore.ResidualErrorSpec(
-        jl.NeoPKPDCore.ProportionalError(),
-        jl.NeoPKPDCore.ProportionalErrorParams(float(result.sigma))
+    sigma_jl = jl.NeoPKPD.ResidualErrorSpec(
+        jl.NeoPKPD.ProportionalError(),
+        jl.NeoPKPD.ProportionalErrorParams(float(result.sigma))
     )
 
     # Build grid and solver
     saveat_jl = _to_julia_float_vec(jl, [float(x) for x in grid["saveat"]])
-    grid_jl = jl.NeoPKPDCore.SimGrid(
+    grid_jl = jl.NeoPKPD.SimGrid(
         float(grid["t0"]),
         float(grid["t1"]),
         saveat_jl,
     )
 
     if solver is None:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
+        solver_jl = jl.NeoPKPD.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
     else:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(
+        solver_jl = jl.NeoPKPD.SolverSpec(
             jl.Symbol(solver.get("alg", "Tsit5")),
             float(solver.get("reltol", 1e-8)),
             float(solver.get("abstol", 1e-10)),
@@ -1057,7 +1057,7 @@ def compute_npde(
         )
 
     # Call Julia NPDE function
-    npde_jl = jl.NeoPKPDCore.compute_npde_monte_carlo(
+    npde_jl = jl.NeoPKPD.compute_npde_monte_carlo(
         obs, model_spec, theta_jl, omega_jl, sigma_jl, grid_jl, solver_jl,
         n_sim=n_sim, seed=jl.UInt64(seed)
     )
@@ -1127,8 +1127,8 @@ def _to_julia_matrix(jl, py_matrix: List[List[float]]):
 
 def _build_base_model_spec(jl, model_kind: str, theta_init: List[float]):
     """Build a model spec for the specified model kind."""
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    DoseEvent = jl.NeoPKPD.DoseEvent
 
     # Create Julia dose vector
     doses = jl.seval("DoseEvent[]")
@@ -1136,20 +1136,20 @@ def _build_base_model_spec(jl, model_kind: str, theta_init: List[float]):
     jl.seval("push!")(doses, dose)
 
     if model_kind == "OneCompIVBolus":
-        Kind = jl.NeoPKPDCore.OneCompIVBolus
-        Params = jl.NeoPKPDCore.OneCompIVBolusParams
+        Kind = jl.NeoPKPD.OneCompIVBolus
+        Params = jl.NeoPKPD.OneCompIVBolusParams
         params = Params(float(theta_init[0]), float(theta_init[1]))
     elif model_kind == "OneCompOralFirstOrder":
-        Kind = jl.NeoPKPDCore.OneCompOralFirstOrder
-        Params = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        Kind = jl.NeoPKPD.OneCompOralFirstOrder
+        Params = jl.NeoPKPD.OneCompOralFirstOrderParams
         params = Params(float(theta_init[0]), float(theta_init[1]), float(theta_init[2]))
     elif model_kind == "TwoCompIVBolus":
-        Kind = jl.NeoPKPDCore.TwoCompIVBolus
-        Params = jl.NeoPKPDCore.TwoCompIVBolusParams
+        Kind = jl.NeoPKPD.TwoCompIVBolus
+        Params = jl.NeoPKPD.TwoCompIVBolusParams
         params = Params(float(theta_init[0]), float(theta_init[1]), float(theta_init[2]), float(theta_init[3]))
     elif model_kind == "TwoCompOral":
-        Kind = jl.NeoPKPDCore.TwoCompOral
-        Params = jl.NeoPKPDCore.TwoCompOralParams
+        Kind = jl.NeoPKPD.TwoCompOral
+        Params = jl.NeoPKPD.TwoCompOralParams
         params = Params(*[float(x) for x in theta_init[:5]])
     else:
         raise ValueError(f"Unsupported model kind: {model_kind}")
@@ -1160,21 +1160,21 @@ def _build_base_model_spec(jl, model_kind: str, theta_init: List[float]):
 def _build_sigma_spec(jl, sigma_type: str, sigma_init: float):
     """Build residual error specification."""
     if sigma_type == "additive":
-        kind = jl.NeoPKPDCore.AdditiveError()
-        params = jl.NeoPKPDCore.AdditiveErrorParams(float(sigma_init))
+        kind = jl.NeoPKPD.AdditiveError()
+        params = jl.NeoPKPD.AdditiveErrorParams(float(sigma_init))
     elif sigma_type == "proportional":
-        kind = jl.NeoPKPDCore.ProportionalError()
-        params = jl.NeoPKPDCore.ProportionalErrorParams(float(sigma_init))
+        kind = jl.NeoPKPD.ProportionalError()
+        params = jl.NeoPKPD.ProportionalErrorParams(float(sigma_init))
     elif sigma_type == "combined":
-        kind = jl.NeoPKPDCore.CombinedError()
-        params = jl.NeoPKPDCore.CombinedErrorParams(float(sigma_init), float(sigma_init))
+        kind = jl.NeoPKPD.CombinedError()
+        params = jl.NeoPKPD.CombinedErrorParams(float(sigma_init), float(sigma_init))
     elif sigma_type == "exponential":
-        kind = jl.NeoPKPDCore.ExponentialError()
-        params = jl.NeoPKPDCore.ExponentialErrorParams(float(sigma_init))
+        kind = jl.NeoPKPD.ExponentialError()
+        params = jl.NeoPKPD.ExponentialErrorParams(float(sigma_init))
     else:
         raise ValueError(f"Unknown sigma type: {sigma_type}")
 
-    return jl.NeoPKPDCore.ResidualErrorSpec(kind, params, jl.Symbol("conc"), jl.UInt64(1))
+    return jl.NeoPKPD.ResidualErrorSpec(kind, params, jl.Symbol("conc"), jl.UInt64(1))
 
 
 def _convert_estimation_result(result, method: str) -> EstimationResult:
@@ -1436,9 +1436,9 @@ def run_scm(
     jl = _require_julia()
 
     # Build observed data with covariates
-    SubjectData = jl.NeoPKPDCore.SubjectData
-    ObservedData = jl.NeoPKPDCore.ObservedData
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    SubjectData = jl.NeoPKPD.SubjectData
+    ObservedData = jl.NeoPKPD.ObservedData
+    DoseEvent = jl.NeoPKPD.DoseEvent
 
     # Create Julia vector to hold subjects
     subjects_vec = jl.seval("SubjectData[]")
@@ -1482,11 +1482,11 @@ def run_scm(
     omega_init = np.array(estimation_config.omega_init) if estimation_config.omega_init else np.eye(n_theta) * 0.09
 
     if estimation_config.method == "foce":
-        method = jl.NeoPKPDCore.FOCEIMethod()
+        method = jl.NeoPKPD.FOCEIMethod()
     elif estimation_config.method == "saem":
-        method = jl.NeoPKPDCore.SAEMMethod(n_burn=100, n_iter=100, parallel_chains=False)
+        method = jl.NeoPKPD.SAEMMethod(n_burn=100, n_iter=100, parallel_chains=False)
     else:
-        method = jl.NeoPKPDCore.LaplacianMethod()
+        method = jl.NeoPKPD.LaplacianMethod()
 
     sigma_spec = _build_sigma_spec(jl, estimation_config.sigma_type, estimation_config.sigma_init)
 
@@ -1497,7 +1497,7 @@ def run_scm(
     omega_init_jl = _to_julia_matrix(jl, omega_init.tolist())
     omega_names_jl = _to_julia_symbol_vec(jl, estimation_config.omega_names or [f"eta_{i}" for i in range(omega_init.shape[0])])
 
-    est_config = jl.NeoPKPDCore.EstimationConfig(
+    est_config = jl.NeoPKPD.EstimationConfig(
         method,
         theta_init=theta_init_jl,
         theta_lower=theta_lower_jl,
@@ -1505,7 +1505,7 @@ def run_scm(
         theta_names=theta_names_jl,
         omega_init=omega_init_jl,
         omega_names=omega_names_jl,
-        omega_structure=jl.NeoPKPDCore.DiagonalOmega(),
+        omega_structure=jl.NeoPKPD.DiagonalOmega(),
         sigma_init=sigma_spec,
         max_iter=estimation_config.max_iter,
         tol=estimation_config.tol,
@@ -1516,16 +1516,16 @@ def run_scm(
 
     # Build grid and solver
     saveat_jl = _to_julia_float_vec(jl, [float(x) for x in grid["saveat"]])
-    grid_jl = jl.NeoPKPDCore.SimGrid(
+    grid_jl = jl.NeoPKPD.SimGrid(
         float(grid["t0"]),
         float(grid["t1"]),
         saveat_jl,
     )
 
     if solver is None:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
+        solver_jl = jl.NeoPKPD.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
     else:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(
+        solver_jl = jl.NeoPKPD.SolverSpec(
             jl.Symbol(solver.get("alg", "Tsit5")),
             float(solver.get("reltol", 1e-8)),
             float(solver.get("abstol", 1e-10)),
@@ -1535,7 +1535,7 @@ def run_scm(
     # Build covariate relationships
     relationships_vec = jl.seval("CovariateRelationship[]")
     for rel in scm_config.relationships:
-        jl_rel = jl.NeoPKPDCore.CovariateRelationship(
+        jl_rel = jl.NeoPKPD.CovariateRelationship(
             jl.Symbol(rel.param),
             jl.Symbol(rel.covariate),
             relationship=jl.Symbol(rel.relationship.value),
@@ -1544,7 +1544,7 @@ def run_scm(
         jl.seval("push!")(relationships_vec, jl_rel)
 
     # Build SCM spec
-    scm_spec = jl.NeoPKPDCore.SCMSpec(
+    scm_spec = jl.NeoPKPD.SCMSpec(
         relationships_vec,
         forward_p_value=scm_config.forward_p_value,
         backward_p_value=scm_config.backward_p_value,
@@ -1552,7 +1552,7 @@ def run_scm(
     )
 
     # Run SCM
-    result = jl.NeoPKPDCore.run_scm_native(
+    result = jl.NeoPKPD.run_scm_native(
         obs,
         model_spec,
         est_config,
@@ -1665,9 +1665,9 @@ def estimate_mixture(
     jl = _require_julia()
 
     # Build observed data structure
-    SubjectData = jl.NeoPKPDCore.SubjectData
-    ObservedData = jl.NeoPKPDCore.ObservedData
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    SubjectData = jl.NeoPKPD.SubjectData
+    ObservedData = jl.NeoPKPD.ObservedData
+    DoseEvent = jl.NeoPKPD.DoseEvent
 
     # Create Julia vector to hold subjects
     subjects_vec = jl.seval("SubjectData[]")
@@ -1699,7 +1699,7 @@ def estimate_mixture(
     model_spec = _build_base_model_spec(jl, model_kind, config.base_theta)
 
     # Build mixture components
-    MixtureComponent_jl = jl.NeoPKPDCore.MixtureComponent
+    MixtureComponent_jl = jl.NeoPKPD.MixtureComponent
     components_vec = jl.seval("MixtureComponent[]")
 
     for comp in config.components:
@@ -1737,14 +1737,14 @@ def estimate_mixture(
 
     # Build parameterization type
     if config.parameterization == MixtureParameterization.FULL:
-        param_type = jl.NeoPKPDCore.FullMixture()
+        param_type = jl.NeoPKPD.FullMixture()
     elif config.parameterization == MixtureParameterization.THETA_ONLY:
-        param_type = jl.NeoPKPDCore.ThetaOnlyMixture()
+        param_type = jl.NeoPKPD.ThetaOnlyMixture()
     else:
-        param_type = jl.NeoPKPDCore.OmegaOnlyMixture()
+        param_type = jl.NeoPKPD.OmegaOnlyMixture()
 
     # Build mixture spec
-    MixtureSpec = jl.NeoPKPDCore.MixtureSpec
+    MixtureSpec = jl.NeoPKPD.MixtureSpec
     mixture_spec = MixtureSpec(
         n_components=config.n_components,
         components=components_vec,
@@ -1755,8 +1755,8 @@ def estimate_mixture(
     )
 
     # Build EM method
-    MixtureEM = jl.NeoPKPDCore.MixtureEM
-    FOCEIMethod = jl.NeoPKPDCore.FOCEIMethod
+    MixtureEM = jl.NeoPKPD.MixtureEM
+    FOCEIMethod = jl.NeoPKPD.FOCEIMethod
     em_method = MixtureEM(
         max_iter=config.max_iter,
         tol=config.tol,
@@ -1789,7 +1789,7 @@ def estimate_mixture(
         jl.seval("push!")(theta_upper_jl, float(v))
 
     # Build mixture config
-    MixtureConfig_jl = jl.NeoPKPDCore.MixtureConfig
+    MixtureConfig_jl = jl.NeoPKPD.MixtureConfig
     mix_config = MixtureConfig_jl(
         mixture_spec,
         em_method,
@@ -1804,8 +1804,8 @@ def estimate_mixture(
     )
 
     # Build grid and solver
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     saveat_jl = jl.seval("Float64[]")
     for t in grid.get("saveat", []):
@@ -1826,7 +1826,7 @@ def estimate_mixture(
     )
 
     # Run mixture estimation
-    result = jl.NeoPKPDCore.mixture_estimate(
+    result = jl.NeoPKPD.mixture_estimate(
         obs, model_spec, mix_config,
         grid=grid_jl, solver=solver_jl
     )

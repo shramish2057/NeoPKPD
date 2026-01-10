@@ -4,7 +4,7 @@ set -euo pipefail
 # First instantiate the core package
 julia -e 'using Pkg; Pkg.activate("packages/core"); Pkg.instantiate()'
 
-# Develop the local NeoPKPDCore package and instantiate CLI dependencies
+# Develop the local NeoPKPD package and instantiate CLI dependencies
 julia -e '
 using Pkg
 Pkg.activate("packages/cli")

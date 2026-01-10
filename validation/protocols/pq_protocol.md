@@ -49,7 +49,7 @@ This protocol covers:
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define population
 iiv = IIV([
@@ -92,7 +92,7 @@ result = simulate_population(pop_spec, grid, solver)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Run Sobol'
 bounds = ParameterBounds(Dict(
@@ -163,7 +163,7 @@ morris_ranking = rank_parameters(morris_result; by=:mu_star)
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Initial execution
 result1 = simulate(spec, grid, solver)
@@ -249,7 +249,7 @@ add_compliance_metadata!(artifact2,
 
 **Procedure:**
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Run IQ tests
 include("validation/scripts/run_iq.jl")

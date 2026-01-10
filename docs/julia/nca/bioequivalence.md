@@ -13,7 +13,7 @@ Bioequivalence analysis determines whether two drug formulations have comparable
 ## Quick Start
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Test vs Reference NCA results
 test_auc = [45.2, 52.1, 38.7, 61.3, 49.8]
@@ -395,7 +395,7 @@ config = BEConfig(
 ## Example: Complete BE Analysis
 
 ```julia
-using NeoPKPDCore, DataFrames
+using NeoPKPD, DataFrames
 
 # Crossover study data
 data = DataFrame(

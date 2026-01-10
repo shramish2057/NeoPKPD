@@ -7,7 +7,7 @@ PD model with a chain of transit compartments to model delayed drug effects and 
 ## Usage
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Create PK model
 pk_model = OneCompIVBolus()
@@ -72,7 +72,7 @@ $$Effect = A_N$$
 ## Basic Example
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # PK setup
 pk_model = OneCompIVBolus()
@@ -106,7 +106,7 @@ println("Nadir: $nadir at t = $(t[idx]) h")
 ## Clinical Example: Myelosuppression
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Neutropenia model (MTT ~5 days)
 mtt_days = 5.0

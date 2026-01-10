@@ -153,7 +153,7 @@ $$\frac{dR}{dt} = K_{in} \cdot \left(1 - \frac{I_{max} \cdot C}{IC_{50} + C}\rig
 ### Clinical Example: Corticosteroid Effect on Cortisol
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Cortisol dynamics
 # Baseline cortisol: 15 mcg/dL
@@ -213,7 +213,7 @@ $$\frac{dR}{dt} = K_{in} \cdot \left(1 + \frac{S_{max} \cdot C}{SC_{50} + C}\rig
 ### Clinical Example: EPO on Red Blood Cells
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # RBC dynamics
 # Baseline RBC: 5 million/mcL
@@ -251,7 +251,7 @@ $$\frac{dR}{dt} = K_{in} - K_{out} \cdot \left(1 - \frac{I_{max} \cdot C}{IC_{50
 ### Clinical Example: Warfarin Effect on Clotting Factors
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Clotting factor dynamics
 # Baseline: 100% of normal
@@ -293,7 +293,7 @@ $$\frac{dR}{dt} = K_{in} - K_{out} \cdot \left(1 + \frac{S_{max} \cdot C}{SC_{50
 ### Clinical Example: Laxative Effect
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Bowel content dynamics
 Kout = log(2) / 12.0  # ~12 hour transit
@@ -321,7 +321,7 @@ println("Minimum response: $(round(R0 / (1 + pd_params.Smax), digits=1)) units")
 ## Comparing IRM Types
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Same baseline and turnover for all
 Kout = 0.1  # 1/h
@@ -378,7 +378,7 @@ $$t_{90\%\ recovery} \approx \frac{2.3}{K_{out}}$$
 ## Population Simulation
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Typical IRM-I parameters
 typical_params = IndirectResponseIRM1Params(10.0, 0.1, 100.0, 0.8, 2.0)

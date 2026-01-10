@@ -108,7 +108,7 @@ NeoPKPD is organized as a monorepo with three main packages:
 
 ```
 neopkpd/
-├── core/           # Julia core library (NeoPKPDCore.jl)
+├── core/           # Julia core library (NeoPKPD.jl)
 ├── packages/
 │   ├── python/     # Python bindings (neopkpd)
 │   └── cli/        # Command-line interface

@@ -2,7 +2,7 @@
 # Tests thread-parallel MCMC sampling for SAEM estimation
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using StableRNGs
 using Statistics
@@ -13,7 +13,7 @@ using Base.Threads: nthreads
     @testset "Chain RNG Creation" begin
         # Test that create_chain_rngs produces independent RNG streams
         base_rng = StableRNG(12345)
-        chain_rngs = NeoPKPDCore.create_chain_rngs(base_rng, 4)
+        chain_rngs = NeoPKPD.create_chain_rngs(base_rng, 4)
 
         @test length(chain_rngs) == 4
         @test all(r isa StableRNG for r in chain_rngs)
@@ -31,7 +31,7 @@ using Base.Threads: nthreads
 
         # Verify reproducibility with same base seed
         base_rng2 = StableRNG(12345)
-        chain_rngs2 = NeoPKPDCore.create_chain_rngs(base_rng2, 4)
+        chain_rngs2 = NeoPKPD.create_chain_rngs(base_rng2, 4)
         samples1_repeat = rand(chain_rngs2[1], 100)
         @test samples1 == samples1_repeat  # Same seed should reproduce
     end
@@ -49,7 +49,7 @@ using Base.Threads: nthreads
 
         log_posterior = eta -> -0.5 * dot(eta, omega_inv * eta)
 
-        eta_final, n_accepts = NeoPKPDCore.mcmc_run_single_chain(
+        eta_final, n_accepts = NeoPKPD.mcmc_run_single_chain(
             1, eta_init, log_posterior, proposal_sd, n_steps, chain_rng
         )
 
@@ -98,7 +98,7 @@ using Base.Threads: nthreads
 
         # Run sequential version
         rng_seq = StableRNG(12345)
-        new_chains_seq, accepts_seq, n_props_seq = NeoPKPDCore.mcmc_sample_eta_adaptive(
+        new_chains_seq, accepts_seq, n_props_seq = NeoPKPD.mcmc_sample_eta_adaptive(
             theta, omega_inv, omega_chol, sigma,
             times, obs, doses, model_spec, grid, solver,
             current_chains, proposal_sd, n_steps, rng_seq
@@ -107,7 +107,7 @@ using Base.Threads: nthreads
         # Run parallel version (with fresh current_chains since RNG is consumed)
         current_chains_par = [[0.0, 0.0] for _ in 1:n_chains]
         rng_par = StableRNG(12345)
-        new_chains_par, accepts_par, n_props_par = NeoPKPDCore.mcmc_sample_eta_parallel_chains(
+        new_chains_par, accepts_par, n_props_par = NeoPKPD.mcmc_sample_eta_parallel_chains(
             theta, omega_inv, omega_chol, sigma,
             times, obs, doses, model_spec, grid, solver,
             current_chains_par, proposal_sd, n_steps, rng_par
@@ -171,13 +171,13 @@ using Base.Threads: nthreads
         proposal_sd = [0.1, 0.1]
         n_steps = 30
 
-        chains1, accepts1, _ = NeoPKPDCore.mcmc_sample_eta_parallel_chains(
+        chains1, accepts1, _ = NeoPKPD.mcmc_sample_eta_parallel_chains(
             theta, omega_inv, omega_chol, sigma,
             times, obs, doses, model_spec, grid, solver,
             current_chains1, proposal_sd, n_steps, rng1
         )
 
-        chains2, accepts2, _ = NeoPKPDCore.mcmc_sample_eta_parallel_chains(
+        chains2, accepts2, _ = NeoPKPD.mcmc_sample_eta_parallel_chains(
             theta, omega_inv, omega_chol, sigma,
             times, obs, doses, model_spec, grid, solver,
             current_chains2, proposal_sd, n_steps, rng2
@@ -253,7 +253,7 @@ using Base.Threads: nthreads
         ]
         proposal_sd = sqrt.(diag(omega))
 
-        final_chains, accepts, n_props = NeoPKPDCore.mcmc_sample_eta_parallel_chains(
+        final_chains, accepts, n_props = NeoPKPD.mcmc_sample_eta_parallel_chains(
             theta, omega_inv, omega_chol, sigma,
             times, obs, doses, model_spec, grid, solver,
             current_chains, proposal_sd, n_steps, rng

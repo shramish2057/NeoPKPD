@@ -29,7 +29,7 @@ def cmax(result: Dict[str, Any], observation: str = "conc") -> float:
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.cmax(t, y))
+    return float(jl.NeoPKPD.cmax(t, y))
 
 
 def auc_trapezoid(result: Dict[str, Any], observation: str = "conc") -> float:
@@ -50,7 +50,7 @@ def auc_trapezoid(result: Dict[str, Any], observation: str = "conc") -> float:
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.auc_trapezoid(t, y))
+    return float(jl.NeoPKPD.auc_trapezoid(t, y))
 
 
 def emin(result: Dict[str, Any], observation: str = "effect") -> float:
@@ -74,7 +74,7 @@ def emin(result: Dict[str, Any], observation: str = "effect") -> float:
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.emin(t, y))
+    return float(jl.NeoPKPD.emin(t, y))
 
 
 def time_below(result: Dict[str, Any], threshold: float, observation: str = "conc") -> float:
@@ -99,7 +99,7 @@ def time_below(result: Dict[str, Any], threshold: float, observation: str = "con
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.time_below(t, y, float(threshold)))
+    return float(jl.NeoPKPD.time_below(t, y, float(threshold)))
 
 
 def auc_above_baseline(result: Dict[str, Any], baseline: float, observation: str = "effect") -> float:
@@ -126,7 +126,7 @@ def auc_above_baseline(result: Dict[str, Any], baseline: float, observation: str
     jl = _require_julia()
     t = _to_julia_float_vector(jl, result["t"])
     y = _to_julia_float_vector(jl, result["observations"][observation])
-    return float(jl.NeoPKPDCore.auc_above_baseline(t, y, float(baseline)))
+    return float(jl.NeoPKPD.auc_above_baseline(t, y, float(baseline)))
 
 
 def tmax(result: Dict[str, Any], observation: str = "conc") -> float:

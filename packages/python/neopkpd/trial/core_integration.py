@@ -283,29 +283,29 @@ def simulate_subject_exposure(
 
     # Build Julia model spec - use correct Julia type names
     if model_kind == 'OneCompIVBolus':
-        pk_model = jl.NeoPKPDCore.OneCompIVBolus()
-        pk_params_jl = jl.NeoPKPDCore.OneCompIVBolusParams(
+        pk_model = jl.NeoPKPD.OneCompIVBolus()
+        pk_params_jl = jl.NeoPKPD.OneCompIVBolusParams(
             float(pk_params.get('CL', 10.0)),
             float(pk_params.get('V', 50.0))
         )
     elif model_kind in ['OneCompOral', 'OneCompOralFirstOrder']:
-        pk_model = jl.NeoPKPDCore.OneCompOralFirstOrder()
-        pk_params_jl = jl.NeoPKPDCore.OneCompOralFirstOrderParams(
+        pk_model = jl.NeoPKPD.OneCompOralFirstOrder()
+        pk_params_jl = jl.NeoPKPD.OneCompOralFirstOrderParams(
             float(pk_params.get('Ka', 1.0)),
             float(pk_params.get('CL', 10.0)),
             float(pk_params.get('V', 50.0))
         )
     elif model_kind == 'TwoCompIVBolus':
-        pk_model = jl.NeoPKPDCore.TwoCompIVBolus()
-        pk_params_jl = jl.NeoPKPDCore.TwoCompIVBolusParams(
+        pk_model = jl.NeoPKPD.TwoCompIVBolus()
+        pk_params_jl = jl.NeoPKPD.TwoCompIVBolusParams(
             float(pk_params.get('CL', 10.0)),
             float(pk_params.get('V1', 50.0)),
             float(pk_params.get('Q', 5.0)),
             float(pk_params.get('V2', 100.0))
         )
     elif model_kind == 'TwoCompOral':
-        pk_model = jl.NeoPKPDCore.TwoCompOral()
-        pk_params_jl = jl.NeoPKPDCore.TwoCompOralParams(
+        pk_model = jl.NeoPKPD.TwoCompOral()
+        pk_params_jl = jl.NeoPKPD.TwoCompOralParams(
             float(pk_params.get('Ka', 1.0)),
             float(pk_params.get('CL', 10.0)),
             float(pk_params.get('V1', 50.0)),
@@ -318,7 +318,7 @@ def simulate_subject_exposure(
     # Build dosing events as Julia vector
     doses_list = []
     for dose in dose_events:
-        dose_event = jl.NeoPKPDCore.DoseEvent(
+        dose_event = jl.NeoPKPD.DoseEvent(
             float(dose['time']),
             float(dose['amount']),
             float(dose.get('duration', dose.get('rate', 0.0)))  # duration for infusion
@@ -326,12 +326,12 @@ def simulate_subject_exposure(
         doses_list.append(dose_event)
 
     # Convert to Julia Vector{DoseEvent}
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    DoseEvent = jl.NeoPKPD.DoseEvent
     doses = _to_julia_vec(jl, doses_list, DoseEvent)
 
     # Build ModelSpec with doses
     subject_id = subject.get('id', '1') if subject else '1'
-    model_spec = jl.NeoPKPDCore.ModelSpec(
+    model_spec = jl.NeoPKPD.ModelSpec(
         pk_model,
         f"subject_{subject_id}",
         pk_params_jl,
@@ -344,10 +344,10 @@ def simulate_subject_exposure(
     # Build grid
     if grid is None:
         t_max = max(observation_times) if observation_times else 24.0
-        grid_jl = jl.NeoPKPDCore.SimGrid(0.0, t_max, obs_times)
+        grid_jl = jl.NeoPKPD.SimGrid(0.0, t_max, obs_times)
     else:
         saveat = _to_julia_float_vec(jl, [float(x) for x in grid.get('saveat', observation_times)])
-        grid_jl = jl.NeoPKPDCore.SimGrid(
+        grid_jl = jl.NeoPKPD.SimGrid(
             float(grid.get('t0', 0.0)),
             float(grid.get('t1', max(observation_times))),
             saveat
@@ -355,9 +355,9 @@ def simulate_subject_exposure(
 
     # Build solver
     if solver is None:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
+        solver_jl = jl.NeoPKPD.SolverSpec(jl.Symbol("Tsit5"), 1e-8, 1e-10, 10**6)
     else:
-        solver_jl = jl.NeoPKPDCore.SolverSpec(
+        solver_jl = jl.NeoPKPD.SolverSpec(
             jl.Symbol(solver.get('alg', 'Tsit5')),
             float(solver.get('reltol', 1e-8)),
             float(solver.get('abstol', 1e-10)),
@@ -365,7 +365,7 @@ def simulate_subject_exposure(
         )
 
     # Run simulation
-    result = jl.NeoPKPDCore.simulate(model_spec, grid_jl, solver_jl)
+    result = jl.NeoPKPD.simulate(model_spec, grid_jl, solver_jl)
 
     # Extract results - SimResult has t, observations, and states
     times = np.array([float(t) for t in result.t])

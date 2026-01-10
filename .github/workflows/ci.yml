@@ -108,7 +108,7 @@ jobs:
         with:
           cache-name: julia-pkgs-${{ matrix.os }}
 
-      - name: Install NeoPKPDCore
+      - name: Install NeoPKPD
         shell: bash
         run: |
           julia -e 'using Pkg; Pkg.activate("packages/core"); Pkg.instantiate()'
@@ -122,7 +122,7 @@ jobs:
         shell: bash
         run: |
           julia --project=packages/core -e '
-            using NeoPKPDCore
+            using NeoPKPD
             using Test
 
             # Test all PK models
@@ -171,7 +171,7 @@ jobs:
       - name: Test IV infusion
         run: |
           julia --project=packages/core -e '
-            using NeoPKPDCore
+            using NeoPKPD
             using Test
 
             @testset "IV Infusion" begin
@@ -220,7 +220,7 @@ jobs:
       - name: Test population simulation
         run: |
           julia --project=packages/core -e '
-            using NeoPKPDCore
+            using NeoPKPD
             using Test
 
             @testset "Population Simulation" begin
@@ -264,7 +264,7 @@ jobs:
       - name: Test sensitivity analysis
         run: |
           julia --project=packages/core -e '
-            using NeoPKPDCore
+            using NeoPKPD
             using Test
 
             @testset "Sensitivity Analysis" begin
@@ -317,7 +317,7 @@ jobs:
       - name: Verify artifact schema
         run: |
           julia --project=packages/core -e '
-            using NeoPKPDCore
+            using NeoPKPD
             using JSON3
 
             # Check all golden artifacts have correct schema version
@@ -681,7 +681,7 @@ jobs:
       - name: Check version consistency
         run: |
           julia --project=packages/core -e '
-            using NeoPKPDCore
+            using NeoPKPD
 
             println("NeoPKPD Version: ", NEOPKPD_VERSION)
             println("Event Semantics: ", EVENT_SEMANTICS_VERSION)

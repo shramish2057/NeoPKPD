@@ -11,7 +11,7 @@ graph TB
     subgraph "User Interfaces"
         CLI[CLI<br/>neopkpd]
         PY[Python<br/>neopkpd package]
-        JL[Julia<br/>NeoPKPDCore.jl]
+        JL[Julia<br/>NeoPKPD.jl]
     end
 
     subgraph "Core Engine"
@@ -47,9 +47,9 @@ graph TB
 ```
 neopkpd/
 ├── core/                          # Julia core library
-│   └── NeoPKPDCore/
+│   └── NeoPKPD/
 │       ├── src/
-│       │   ├── NeoPKPDCore.jl    # Main module
+│       │   ├── NeoPKPD.jl    # Main module
 │       │   ├── engine/            # Simulation engines
 │       │   │   ├── simulation.jl
 │       │   │   ├── population.jl

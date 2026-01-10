@@ -13,7 +13,7 @@ Ensure you have:
 - Julia dependencies installed
 
 ```bash
-julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
+julia --project=core/NeoPKPD -e 'using Pkg; Pkg.instantiate()'
 ```
 
 ---
@@ -24,9 +24,9 @@ julia --project=core/NeoPKPDCore -e 'using Pkg; Pkg.instantiate()'
 
 ```julia
 # Start Julia with the project
-# julia --project=core/NeoPKPDCore
+# julia --project=core/NeoPKPD
 
-using NeoPKPDCore
+using NeoPKPD
 ```
 
 ### One-Compartment IV Bolus

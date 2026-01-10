@@ -89,11 +89,11 @@ def simulate_pk_tmdd_custom(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    CustomODE = jl.NeoPKPDCore.target_mediated_drug_disposition()
-    CustomODEParams = jl.NeoPKPDCore.CustomODEParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    CustomODE = jl.NeoPKPD.target_mediated_drug_disposition()
+    CustomODEParams = jl.NeoPKPD.CustomODEParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     doses_vec = _create_dose_events(jl, doses)
 
@@ -112,7 +112,7 @@ def simulate_pk_tmdd_custom(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -182,11 +182,11 @@ def simulate_pk_parallel_absorption(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    CustomODE = jl.NeoPKPDCore.parallel_first_order_absorption()
-    CustomODEParams = jl.NeoPKPDCore.CustomODEParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    CustomODE = jl.NeoPKPD.parallel_first_order_absorption()
+    CustomODEParams = jl.NeoPKPD.CustomODEParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     doses_vec = _create_dose_events(jl, doses)
 
@@ -202,7 +202,7 @@ def simulate_pk_parallel_absorption(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -274,11 +274,11 @@ def simulate_pk_enterohepatic_recirculation(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    CustomODE = jl.NeoPKPDCore.enterohepatic_recirculation()
-    CustomODEParams = jl.NeoPKPDCore.CustomODEParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    CustomODE = jl.NeoPKPD.enterohepatic_recirculation()
+    CustomODEParams = jl.NeoPKPD.CustomODEParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     doses_vec = _create_dose_events(jl, doses)
 
@@ -295,7 +295,7 @@ def simulate_pk_enterohepatic_recirculation(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)
 
 
@@ -368,11 +368,11 @@ def simulate_pk_autoinduction(
     """
     jl = _require_julia()
 
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    CustomODE = jl.NeoPKPDCore.autoinduction()
-    CustomODEParams = jl.NeoPKPDCore.CustomODEParams
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    CustomODE = jl.NeoPKPD.autoinduction()
+    CustomODEParams = jl.NeoPKPD.CustomODEParams
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
 
     doses_vec = _create_dose_events(jl, doses)
 
@@ -388,5 +388,5 @@ def simulate_pk_autoinduction(
     grid = SimGrid(float(t0), float(t1), [float(x) for x in saveat])
     solver = SolverSpec(jl.Symbol(alg), float(reltol), float(abstol), int(maxiters))
 
-    res = jl.NeoPKPDCore.simulate(spec, grid, solver)
+    res = jl.NeoPKPD.simulate(spec, grid, solver)
     return _simresult_to_py(res)

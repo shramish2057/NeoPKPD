@@ -44,22 +44,22 @@ class NCAConfig:
         """Convert to Julia NCAConfig object."""
         # Select method type
         if self.method == "linear":
-            method_obj = jl.NeoPKPDCore.LinearMethod()
+            method_obj = jl.NeoPKPD.LinearMethod()
         elif self.method == "log_linear":
-            method_obj = jl.NeoPKPDCore.LogLinearMethod()
+            method_obj = jl.NeoPKPD.LogLinearMethod()
         else:
-            method_obj = jl.NeoPKPDCore.LinLogMixedMethod()
+            method_obj = jl.NeoPKPD.LinLogMixedMethod()
 
         # Select BLQ handling
         if self.blq_handling == "missing":
-            blq_obj = jl.NeoPKPDCore.BLQMissing()
+            blq_obj = jl.NeoPKPD.BLQMissing()
         elif self.blq_handling == "lloq_half":
-            blq_obj = jl.NeoPKPDCore.BLQLLOQHalf()
+            blq_obj = jl.NeoPKPD.BLQLLOQHalf()
         else:
-            blq_obj = jl.NeoPKPDCore.BLQZero()
+            blq_obj = jl.NeoPKPD.BLQZero()
 
         if self.lloq is not None:
-            return jl.NeoPKPDCore.NCAConfig(
+            return jl.NeoPKPD.NCAConfig(
                 method=method_obj,
                 lambda_z_min_points=self.lambda_z_min_points,
                 lambda_z_r2_threshold=self.lambda_z_r2_threshold,
@@ -69,7 +69,7 @@ class NCAConfig:
                 lloq=self.lloq,
             )
         else:
-            return jl.NeoPKPDCore.NCAConfig(
+            return jl.NeoPKPD.NCAConfig(
                 method=method_obj,
                 lambda_z_min_points=self.lambda_z_min_points,
                 lambda_z_r2_threshold=self.lambda_z_r2_threshold,
@@ -230,7 +230,7 @@ def run_nca(
     route_sym = jl.Symbol(route)
 
     if tau is not None:
-        result = jl.NeoPKPDCore.run_nca(
+        result = jl.NeoPKPD.run_nca(
             t, c, dose,
             config=jl_config,
             dosing_type=dosing_sym,
@@ -239,7 +239,7 @@ def run_nca(
             t_inf=t_inf,
         )
     else:
-        result = jl.NeoPKPDCore.run_nca(
+        result = jl.NeoPKPD.run_nca(
             t, c, dose,
             config=jl_config,
             dosing_type=dosing_sym,

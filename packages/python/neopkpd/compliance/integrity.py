@@ -120,7 +120,7 @@ def verify_artifact_integrity(artifact: Dict[str, Any]) -> IntegrityVerification
     # Convert Python dict to Julia Dict
     julia_artifact = jl.Dict(artifact)
 
-    result = jl.NeoPKPDCore.verify_artifact_integrity(julia_artifact)
+    result = jl.NeoPKPD.verify_artifact_integrity(julia_artifact)
 
     return IntegrityVerificationResult(
         is_valid=bool(result.is_valid),

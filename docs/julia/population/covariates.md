@@ -9,7 +9,7 @@ Comprehensive guide for incorporating patient characteristics into population PK
 Covariate models explain part of the inter-individual variability by relating parameters to measurable patient characteristics.
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Allometric scaling: CL and V based on weight
 covariate_model = CovariateModel([
@@ -427,7 +427,7 @@ cyp2d6_effect = CovariateEffect(:CLM, :CYP2D6, 1.0, PowerCovariate(), 1.0)
 ### Complete Example
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 using Random
 
 # 1. Define model and typical parameters
@@ -602,7 +602,7 @@ end
 ## Complete Example
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 using Statistics
 using Random
 

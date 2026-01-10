@@ -2,7 +2,7 @@
 # Validates SAEM estimation on simulated datasets with known parameters
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using StableRNGs
 using Statistics
@@ -54,7 +54,7 @@ using Statistics
             seed=UInt64(12345)
         )
 
-        result = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = NeoPKPD.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test length(result.theta) == 2
@@ -100,7 +100,7 @@ using Statistics
             seed=UInt64(42)
         )
 
-        result = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result = NeoPKPD.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test isfinite(result.ofv)
@@ -146,8 +146,8 @@ using Statistics
             seed=UInt64(99999)
         )
 
-        result1 = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
-        result2 = NeoPKPDCore.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result1 = NeoPKPD.estimate(observed, model_spec, config; grid=grid, solver=solver)
+        result2 = NeoPKPD.estimate(observed, model_spec, config; grid=grid, solver=solver)
 
         # Same seed should give same results
         @test result1.theta ≈ result2.theta atol=1e-10
@@ -196,8 +196,8 @@ using Statistics
             seed=UInt64(111)
         )
 
-        result_all = NeoPKPDCore.estimate(observed, model_spec, config_all; grid=grid, solver=solver)
-        result_single = NeoPKPDCore.estimate(observed, model_spec, config_single; grid=grid, solver=solver)
+        result_all = NeoPKPD.estimate(observed, model_spec, config_all; grid=grid, solver=solver)
+        result_single = NeoPKPD.estimate(observed, model_spec, config_single; grid=grid, solver=solver)
 
         # Both should produce valid results
         @test isfinite(result_all.ofv)
@@ -243,7 +243,7 @@ using Statistics
             seed=UInt64(222)
         )
 
-        result = NeoPKPDCore.estimate(observed, model_spec, config_adapt; grid=grid, solver=solver)
+        result = NeoPKPD.estimate(observed, model_spec, config_adapt; grid=grid, solver=solver)
 
         @test result isa EstimationResult
         @test isfinite(result.ofv)
@@ -289,8 +289,8 @@ using Statistics
             verbose=false
         )
 
-        result_harmonic = NeoPKPDCore.estimate(observed, model_spec, config_harmonic; grid=grid, solver=solver)
-        result_constant = NeoPKPDCore.estimate(observed, model_spec, config_constant; grid=grid, solver=solver)
+        result_harmonic = NeoPKPD.estimate(observed, model_spec, config_harmonic; grid=grid, solver=solver)
+        result_constant = NeoPKPD.estimate(observed, model_spec, config_constant; grid=grid, solver=solver)
 
         @test isfinite(result_harmonic.ofv)
         @test isfinite(result_constant.ofv)

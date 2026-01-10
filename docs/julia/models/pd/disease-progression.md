@@ -7,7 +7,7 @@ PD model for tumor growth dynamics with drug-induced cell kill, supporting multi
 ## Usage
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # PK setup
 pk_model = OneCompIVBolus()
@@ -64,7 +64,7 @@ Drug effect: $-k_{drug} \cdot C \cdot S$
 ## Basic Example
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # PK setup
 pk_model = OneCompIVBolus()
@@ -94,7 +94,7 @@ println("Day 28: $(tumor[end])")
 ## Comparing Growth Models
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 models = [
     ("Exponential", ExponentialGrowth),
@@ -130,7 +130,7 @@ end
 ## Tumor Growth Inhibition
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Reference (no treatment)
 pk_model = OneCompIVBolus()

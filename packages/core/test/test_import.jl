@@ -1,7 +1,7 @@
 # Test suite for NONMEM and Monolix Import
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 
 @testset "NONMEM Import" begin
 
@@ -560,7 +560,7 @@ Emax_pop = {value=100, method=MLE}
 EC50_pop = {value=10, method=MLE}
 """
             mlx = parse_monolix_project(mlx_text)
-            unsupported = NeoPKPDCore.check_unsupported_monolix_constructs(mlx)
+            unsupported = NeoPKPD.check_unsupported_monolix_constructs(mlx)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("PD", u.construct) || occursin("emax", lowercase(u.line)), unsupported)
@@ -577,7 +577,7 @@ kin_pop = {value=1, method=MLE}
 kout_pop = {value=0.1, method=MLE}
 """
             mlx = parse_monolix_project(mlx_text)
-            unsupported = NeoPKPDCore.check_unsupported_monolix_constructs(mlx)
+            unsupported = NeoPKPD.check_unsupported_monolix_constructs(mlx)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("Turnover", u.construct), unsupported)
@@ -593,7 +593,7 @@ file = 'lib:oral1_1cpt_transitAbs_kaVCl.txt'
 ka_pop = {value=1, method=MLE}
 """
             mlx = parse_monolix_project(mlx_text)
-            unsupported = NeoPKPDCore.check_unsupported_monolix_constructs(mlx)
+            unsupported = NeoPKPD.check_unsupported_monolix_constructs(mlx)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("Transit", u.construct), unsupported)
@@ -609,7 +609,7 @@ file = 'lib:mixture_2subpop_oral1cpt.txt'
 ka_pop = {value=1, method=MLE}
 """
             mlx = parse_monolix_project(mlx_text)
-            unsupported = NeoPKPDCore.check_unsupported_monolix_constructs(mlx)
+            unsupported = NeoPKPD.check_unsupported_monolix_constructs(mlx)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("Mixture", u.construct), unsupported)
@@ -732,7 +732,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPD.parse_pk_block(ctl.pk_code)
 
         # Should detect TV definitions
         @test haskey(pk_block.tv_definitions, :TVCL)
@@ -766,7 +766,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPD.parse_pk_block(ctl.pk_code)
 
         cl_idx = findfirst(a -> a.target == :CL, pk_block.assignments)
         @test cl_idx !== nothing
@@ -786,7 +786,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPD.parse_pk_block(ctl.pk_code)
 
         cl_idx = findfirst(a -> a.target == :CL, pk_block.assignments)
         @test cl_idx !== nothing
@@ -815,7 +815,7 @@ $OMEGA 0.04 0.09
 $SIGMA 1 FIX
 """
         ctl = parse_nonmem_control(ctl_text)
-        error_block = NeoPKPDCore.parse_error_block(ctl.error_code)
+        error_block = NeoPKPD.parse_error_block(ctl.error_code)
 
         @test error_block.error_type == :proportional
         @test 3 in error_block.theta_indices
@@ -837,7 +837,7 @@ $OMEGA 0.04 0.09
 $SIGMA 1 FIX
 """
         ctl = parse_nonmem_control(ctl_text)
-        error_block = NeoPKPDCore.parse_error_block(ctl.error_code)
+        error_block = NeoPKPD.parse_error_block(ctl.error_code)
 
         @test error_block.error_type == :additive
     end
@@ -858,7 +858,7 @@ $OMEGA 0.04 0.09
 $SIGMA 1 FIX
 """
         ctl = parse_nonmem_control(ctl_text)
-        error_block = NeoPKPDCore.parse_error_block(ctl.error_code)
+        error_block = NeoPKPD.parse_error_block(ctl.error_code)
 
         @test error_block.error_type == :combined
         @test 3 in error_block.theta_indices || 4 in error_block.theta_indices
@@ -879,7 +879,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.04
 """
         ctl = parse_nonmem_control(ctl_text)
-        error_block = NeoPKPDCore.parse_error_block(ctl.error_code)
+        error_block = NeoPKPD.parse_error_block(ctl.error_code)
 
         @test error_block.error_type == :exponential
     end
@@ -903,7 +903,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
+        unsupported = NeoPKPD.check_unsupported_constructs(ctl)
 
         @test !isempty(unsupported)
         @test any(u -> u.construct == "IF statement", unsupported)
@@ -923,7 +923,7 @@ $OMEGA 0.04 0.09 0.16
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
+        unsupported = NeoPKPD.check_unsupported_constructs(ctl)
 
         @test !isempty(unsupported)
         @test any(u -> occursin("ALAG", u.construct), unsupported)
@@ -943,7 +943,7 @@ $OMEGA 0.04 0.09 0.16
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
+        unsupported = NeoPKPD.check_unsupported_constructs(ctl)
 
         @test !isempty(unsupported)
         @test any(u -> occursin("Bioavailability", u.construct), unsupported)
@@ -962,7 +962,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
+        unsupported = NeoPKPD.check_unsupported_constructs(ctl)
 
         @test !isempty(unsupported)
         @test any(u -> occursin("MTIME", u.construct), unsupported)
@@ -976,7 +976,7 @@ $SIGMA 0.01
 \$THETA (10)
 """
             ctl = parse_nonmem_control(ctl_text)
-            unsupported = NeoPKPDCore.check_unsupported_constructs(ctl)
+            unsupported = NeoPKPD.check_unsupported_constructs(ctl)
 
             @test !isempty(unsupported)
             @test any(u -> occursin("ADVAN", u.construct), unsupported)
@@ -1023,7 +1023,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPD.parse_pk_block(ctl.pk_code)
 
         # Find the TVCL definition line and check for covariate effects
         # The covariate should be detected
@@ -1057,7 +1057,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPD.parse_pk_block(ctl.pk_code)
 
         # Check raw code captures it
         @test any(line -> occursin("AGE", line), pk_block.raw_code)
@@ -1077,7 +1077,7 @@ $OMEGA 0.04 0.09
 $SIGMA 0.01
 """
         ctl = parse_nonmem_control(ctl_text)
-        pk_block = NeoPKPDCore.parse_pk_block(ctl.pk_code)
+        pk_block = NeoPKPD.parse_pk_block(ctl.pk_code)
 
         # Check raw code captures it
         @test any(line -> occursin("CRCL", line), pk_block.raw_code)

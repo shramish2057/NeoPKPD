@@ -60,7 +60,7 @@ graph LR
 ### Standard VPC
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Observed data
 observed = VPCData(

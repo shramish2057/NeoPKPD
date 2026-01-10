@@ -7,7 +7,7 @@ PK model for drugs with multiple absorption sites or mechanisms, each with disti
 ## Usage
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Create parallel absorption model
 model = parallel_first_order_absorption()
@@ -60,7 +60,7 @@ Initial conditions after dose D:
 ## Basic Example
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 model = parallel_first_order_absorption()
 params = CustomODEParams(
@@ -93,7 +93,7 @@ println("Cmax: $cmax mg/L")
 ## Effect of Fraction Split
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 model = parallel_first_order_absorption()
 f1_values = [0.2, 0.4, 0.6, 0.8]

@@ -1,6 +1,6 @@
 # Julia Documentation
 
-Welcome to the Julia documentation for NeoPKPD. The Julia core (`NeoPKPDCore.jl`) provides the foundation for all PK/PD modeling capabilities.
+Welcome to the Julia documentation for NeoPKPD. The Julia core (`NeoPKPD.jl`) provides the foundation for all PK/PD modeling capabilities.
 
 ---
 
@@ -18,7 +18,7 @@ NeoPKPD uses Julia as its core language for several reasons:
 ## Quick Start
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # One-compartment IV bolus simulation
 params = OneCompIVBolusParams(5.0, 50.0)  # CL=5 L/h, V=50 L

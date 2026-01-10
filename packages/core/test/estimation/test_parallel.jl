@@ -1,7 +1,7 @@
 # Test suite for Parallel Computing Infrastructure
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using StableRNGs
 
@@ -405,7 +405,7 @@ using StableRNGs
 
             # Test with serial config
             serial_config = ParallelConfig(SerialBackend())
-            result_serial = NeoPKPDCore.estimate(
+            result_serial = NeoPKPD.estimate(
                 observed, model_spec, config;
                 grid=grid, solver=solver, parallel_config=serial_config
             )
@@ -416,7 +416,7 @@ using StableRNGs
 
             # Test with threaded config (should produce similar results)
             threaded_config = ParallelConfig(ThreadedBackend())
-            result_threaded = NeoPKPDCore.estimate(
+            result_threaded = NeoPKPD.estimate(
                 observed, model_spec, config;
                 grid=grid, solver=solver, parallel_config=threaded_config
             )
@@ -461,7 +461,7 @@ using StableRNGs
             )
 
             parallel_config = ParallelConfig(ThreadedBackend())
-            result = NeoPKPDCore.estimate(
+            result = NeoPKPD.estimate(
                 observed, model_spec, config;
                 grid=grid, solver=solver, parallel_config=parallel_config
             )
@@ -521,18 +521,18 @@ using StableRNGs
         @testset "get_parallel_config" begin
             # From Bool=false -> SerialBackend
             spec1 = BootstrapSpec(n_bootstrap=100, parallel=false)
-            config1 = NeoPKPDCore.get_parallel_config(spec1)
+            config1 = NeoPKPD.get_parallel_config(spec1)
             @test config1.backend isa SerialBackend
 
             # From Bool=true -> ThreadedBackend
             spec2 = BootstrapSpec(n_bootstrap=100, parallel=true)
-            config2 = NeoPKPDCore.get_parallel_config(spec2)
+            config2 = NeoPKPD.get_parallel_config(spec2)
             @test config2.backend isa ThreadedBackend
 
             # From ParallelConfig -> pass-through
             custom_config = ParallelConfig(SerialBackend(); seed=99)
             spec3 = BootstrapSpec(n_bootstrap=100, parallel=custom_config)
-            config3 = NeoPKPDCore.get_parallel_config(spec3)
+            config3 = NeoPKPD.get_parallel_config(spec3)
             @test config3 === custom_config
         end
 

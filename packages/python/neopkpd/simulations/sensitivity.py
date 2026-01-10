@@ -60,11 +60,11 @@ def run_sensitivity(
     """
     jl = _require_julia()
 
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
-    ModelSpec = jl.NeoPKPDCore.ModelSpec
-    SimGrid = jl.NeoPKPDCore.SimGrid
-    SolverSpec = jl.NeoPKPDCore.SolverSpec
-    PerturbationPlan = jl.NeoPKPDCore.PerturbationPlan
+    DoseEvent = jl.NeoPKPD.DoseEvent
+    ModelSpec = jl.NeoPKPD.ModelSpec
+    SimGrid = jl.NeoPKPD.SimGrid
+    SolverSpec = jl.NeoPKPD.SolverSpec
+    PerturbationPlan = jl.NeoPKPD.PerturbationPlan
 
     # Parse model
     kind_str = model["kind"]
@@ -74,13 +74,13 @@ def run_sensitivity(
     doses_vec = _to_julia_vector(jl, dose_objs, DoseEvent)
 
     if kind_str == "OneCompIVBolus":
-        OneCompIVBolus = jl.NeoPKPDCore.OneCompIVBolus
-        OneCompIVBolusParams = jl.NeoPKPDCore.OneCompIVBolusParams
+        OneCompIVBolus = jl.NeoPKPD.OneCompIVBolus
+        OneCompIVBolusParams = jl.NeoPKPD.OneCompIVBolusParams
         params = OneCompIVBolusParams(float(params_dict["CL"]), float(params_dict["V"]))
         model_spec = ModelSpec(OneCompIVBolus(), "py_sens", params, doses_vec)
     elif kind_str == "OneCompOralFirstOrder":
-        OneCompOralFirstOrder = jl.NeoPKPDCore.OneCompOralFirstOrder
-        OneCompOralFirstOrderParams = jl.NeoPKPDCore.OneCompOralFirstOrderParams
+        OneCompOralFirstOrder = jl.NeoPKPD.OneCompOralFirstOrder
+        OneCompOralFirstOrderParams = jl.NeoPKPD.OneCompOralFirstOrderParams
         params = OneCompOralFirstOrderParams(
             float(params_dict["Ka"]),
             float(params_dict["CL"]),
@@ -116,7 +116,7 @@ def run_sensitivity(
     )
 
     # Run sensitivity analysis
-    res = jl.NeoPKPDCore.run_sensitivity(model_spec, grid_jl, solver_jl, plan, jl.Symbol(observation))
+    res = jl.NeoPKPD.run_sensitivity(model_spec, grid_jl, solver_jl, plan, jl.Symbol(observation))
 
     return SensitivityResult(
         plan_name=str(res.plan.name),

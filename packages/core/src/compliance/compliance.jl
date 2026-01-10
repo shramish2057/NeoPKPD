@@ -15,7 +15,7 @@
 #
 # Usage:
 # ```julia
-# using NeoPKPDCore
+# using NeoPKPD
 #
 # # Default: COMPLIANCE_STANDARD level
 # result = simulate(spec, grid, solver)

@@ -148,7 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compliance metadata in artifacts
 
 ### Interfaces
-- Julia API (NeoPKPDCore)
+- Julia API (NeoPKPD)
 - Python bindings (neopkpd) with JuliaCall
 - Command-line interface (CLI)
 

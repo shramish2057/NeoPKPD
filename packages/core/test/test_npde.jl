@@ -1,7 +1,7 @@
 # Test suite for NPDE (Normalized Prediction Distribution Errors)
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using StableRNGs
 using Statistics
 using LinearAlgebra
@@ -59,23 +59,23 @@ using Distributions
 
         # Normal data should have skewness ~0
         normal_data = randn(rng, 1000)
-        skew = NeoPKPDCore._compute_skewness(normal_data)
+        skew = NeoPKPD._compute_skewness(normal_data)
         @test abs(skew) < 0.2  # Should be near 0
 
         # Kurtosis for normal is 3 (excess = 0)
-        kurt = NeoPKPDCore._compute_kurtosis(normal_data)
+        kurt = NeoPKPD._compute_kurtosis(normal_data)
         @test abs(kurt) < 0.5  # Excess kurtosis near 0
 
         # Skewed data
         skewed_data = exp.(randn(rng, 1000))  # Log-normal is right-skewed
-        skew_lognormal = NeoPKPDCore._compute_skewness(skewed_data)
+        skew_lognormal = NeoPKPD._compute_skewness(skewed_data)
         @test skew_lognormal > 0.5  # Should be positive (right-skewed)
     end
 
     @testset "Decorrelation Validation" begin
         # Test validate_npde_decorrelation function exists
-        @test isdefined(NeoPKPDCore, :validate_npde_decorrelation)
-        @test isdefined(NeoPKPDCore, :DecorrelationValidationResult)
+        @test isdefined(NeoPKPD, :validate_npde_decorrelation)
+        @test isdefined(NeoPKPD, :DecorrelationValidationResult)
 
         # Create mock NPDE result with uncorrelated data
         rng = StableRNG(456)
@@ -116,7 +116,7 @@ using Distributions
     end
 
     @testset "Independence Check" begin
-        @test isdefined(NeoPKPDCore, :check_npde_independence)
+        @test isdefined(NeoPKPD, :check_npde_independence)
 
         rng = StableRNG(789)
 
@@ -138,7 +138,7 @@ using Distributions
     end
 
     @testset "Comprehensive NPDE Validation" begin
-        @test isdefined(NeoPKPDCore, :comprehensive_npde_validation)
+        @test isdefined(NeoPKPD, :comprehensive_npde_validation)
 
         # Create mock NPDE result with good properties
         rng = StableRNG(111)
@@ -165,8 +165,8 @@ using Distributions
         pooled_pde = vcat([s.pde for s in subjects]...)
         diagnostics = NPDEDiagnostics(
             mean(all_npde), var(all_npde),
-            NeoPKPDCore._compute_skewness(all_npde),
-            NeoPKPDCore._compute_kurtosis(all_npde) + 3.0,
+            NeoPKPD._compute_skewness(all_npde),
+            NeoPKPD._compute_kurtosis(all_npde) + 3.0,
             0.5, 0.5, 0.5
         )
 
@@ -191,17 +191,17 @@ using Distributions
 
         # Perfectly alternating: should have negative autocorrelation
         alternating = [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0]
-        ac_alt = NeoPKPDCore._compute_lag1_autocorrelation(alternating)
+        ac_alt = NeoPKPD._compute_lag1_autocorrelation(alternating)
         @test ac_alt < -0.5
 
         # Constant: should have undefined/zero autocorrelation (variance is 0)
         constant = [1.0, 1.0, 1.0, 1.0]
-        ac_const = NeoPKPDCore._compute_lag1_autocorrelation(constant)
+        ac_const = NeoPKPD._compute_lag1_autocorrelation(constant)
         @test ac_const == 0.0  # Returns 0 due to zero denominator check
 
         # Trending: should have positive autocorrelation
         trending = collect(1.0:10.0)
-        ac_trend = NeoPKPDCore._compute_lag1_autocorrelation(trending)
+        ac_trend = NeoPKPD._compute_lag1_autocorrelation(trending)
         @test ac_trend > 0.5
     end
 

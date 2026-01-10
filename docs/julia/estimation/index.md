@@ -74,7 +74,7 @@ graph LR
 ### FOCE-I Estimation
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Prepare observed data
 data = EstimationData(

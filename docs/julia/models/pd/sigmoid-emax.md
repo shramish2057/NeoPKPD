@@ -119,7 +119,7 @@ end
 ### Basic Usage
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define Sigmoid Emax parameters
 # gamma = 3 gives steep response
@@ -153,7 +153,7 @@ C = 6.0: Effect = 96.4%
 ### Comparing Different Gamma Values
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 gamma_values = [0.5, 1.0, 2.0, 3.0, 5.0]
 EC50 = 2.0
@@ -226,7 +226,7 @@ gamma=3: EC10=0.93, EC90=4.33, EC90/EC10=4.7
 ## Clinical Example: Neuromuscular Blockade
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Rocuronium neuromuscular blockade
 # Typical gamma = 3-4 (steep response)
@@ -258,7 +258,7 @@ end
 ## PKPD Simulation with Steep Response
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # PK: Two-compartment IV
 pk_params = TwoCompIVBolusParams(3.0, 10.0, 5.0, 30.0)

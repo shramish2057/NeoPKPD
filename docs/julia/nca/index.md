@@ -77,7 +77,7 @@ NCA calculates pharmacokinetic parameters directly from concentration-time data 
 ### Basic NCA
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Concentration-time data
 times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0, 24.0]

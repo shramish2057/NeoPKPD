@@ -24,7 +24,7 @@ FOCE-I linearizes the model around individual eta estimates rather than zero, pr
 ### Basic FOCE-I Estimation
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Create observed data
 observed = ObservedData(
@@ -442,7 +442,7 @@ FOCE-I includes the "interaction" between random effects and residual error.
 ## Example: Full Population PK Analysis
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 using StableRNGs
 
 # Load data

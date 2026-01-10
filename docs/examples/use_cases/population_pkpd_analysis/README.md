@@ -25,10 +25,10 @@ demonstrating drug exposure-response modeling with indirect response dynamics.
 
 ```bash
 # Run complete PKPD workflow
-julia --project=core/NeoPKPDCore docs/examples/use_cases/population_pkpd_analysis/run.jl
+julia --project=core/NeoPKPD docs/examples/use_cases/population_pkpd_analysis/run.jl
 
 # Validate outputs
-julia --project=core/NeoPKPDCore docs/examples/use_cases/population_pkpd_analysis/validate.jl
+julia --project=core/NeoPKPD docs/examples/use_cases/population_pkpd_analysis/validate.jl
 ```
 
 ## Population

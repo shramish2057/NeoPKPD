@@ -170,7 +170,7 @@ def version() -> str:
         '0.1.0'
     """
     jl = _require_julia()
-    return str(jl.NeoPKPDCore.NEOPKPD_VERSION)
+    return str(jl.NeoPKPD.NEOPKPD_VERSION)
 
 
 def _detect_repo_root(start: Optional[Path] = None) -> Path:
@@ -184,7 +184,7 @@ def _detect_repo_root(start: Optional[Path] = None) -> Path:
 
 def init_julia(repo_root: Optional[Union[str, Path]] = None) -> None:
     """
-    Initialize the Julia runtime and load NeoPKPDCore.
+    Initialize the Julia runtime and load NeoPKPD.
 
     This function activates the Julia project and loads the core simulation
     engine. It's safe to call multiple times - subsequent calls are no-ops.
@@ -212,7 +212,7 @@ def init_julia(repo_root: Optional[Union[str, Path]] = None) -> None:
     jl.Pkg.activate(str(core_project))
     jl.Pkg.instantiate()
 
-    jl.seval("using NeoPKPDCore")
+    jl.seval("using NeoPKPD")
 
     _JL = jl
 
@@ -230,7 +230,7 @@ def _require_julia() -> Any:
 
 def _simresult_to_py(res: Any) -> Dict[str, Any]:
     """
-    Convert NeoPKPDCore.SimResult to a Python dictionary.
+    Convert NeoPKPD.SimResult to a Python dictionary.
 
     Args:
         res: Julia SimResult object
@@ -247,7 +247,7 @@ def _simresult_to_py(res: Any) -> Dict[str, Any]:
 
 def _popresult_to_py(popres: Any) -> Dict[str, Any]:
     """
-    Convert NeoPKPDCore.PopulationResult to a Python dictionary.
+    Convert NeoPKPD.PopulationResult to a Python dictionary.
 
     Args:
         popres: Julia PopulationResult object
@@ -303,7 +303,7 @@ def _create_dose_event(jl: Any, dose_dict: Dict[str, Any]) -> Any:
     Returns:
         Julia DoseEvent object
     """
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    DoseEvent = jl.NeoPKPD.DoseEvent
     return DoseEvent(
         float(dose_dict["time"]),
         float(dose_dict["amount"]),
@@ -322,6 +322,6 @@ def _create_dose_events(jl: Any, doses: List[Dict[str, Any]]) -> Any:
     Returns:
         Julia Vector{DoseEvent}
     """
-    DoseEvent = jl.NeoPKPDCore.DoseEvent
+    DoseEvent = jl.NeoPKPD.DoseEvent
     dose_objs = [_create_dose_event(jl, d) for d in doses]
     return _to_julia_vector(jl, dose_objs, DoseEvent)

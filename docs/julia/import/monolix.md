@@ -9,7 +9,7 @@ Comprehensive guide for importing Monolix project files (.mlxtran) into NeoPKPD.
 NeoPKPD can parse Monolix project files and convert them to native NeoPKPD model specifications, enabling migration from Monolix workflows.
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 result = import_monolix("project.mlxtran")
 println("Model: $(result.model_type)")
@@ -23,7 +23,7 @@ println("Parameters: $(result.parameters)")
 ### Basic Import
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Import Monolix project file
 result = import_monolix("project.mlxtran")
@@ -399,7 +399,7 @@ end
 ### Julia Import Code
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Import Monolix project
 result = import_monolix("project.mlxtran")

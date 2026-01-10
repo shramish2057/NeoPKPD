@@ -49,7 +49,7 @@ Validation against published datasets:
 ### Julia (5 minutes)
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Create a one-compartment IV bolus model
 model = create_model_spec("OneCompIVBolus",
@@ -247,7 +247,7 @@ docs/examples/
 ./docs/examples/run_all.sh
 
 # Run specific category
-julia --project=core/NeoPKPDCore docs/examples/models/run_all.jl
+julia --project=core/NeoPKPD docs/examples/models/run_all.jl
 python docs/examples/estimation/run_all.py
 ```
 
@@ -255,7 +255,7 @@ python docs/examples/estimation/run_all.py
 
 ```bash
 # Validate against expected outputs
-julia --project=core/NeoPKPDCore docs/examples/validate_outputs.jl
+julia --project=core/NeoPKPD docs/examples/validate_outputs.jl
 ```
 
 ---

@@ -70,7 +70,7 @@ graph TB
 ### Parallel Design
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define trial design
 design = ParallelDesign(

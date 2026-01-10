@@ -6,7 +6,7 @@
 
 **Transparent, validated pharmacokinetics and pharmacodynamics modeling infrastructure**
 
-The `neopkpd` Python package provides a comprehensive interface to the NeoPKPDCore Julia simulation engine, enabling seamless integration with Python data science workflows.
+The `neopkpd` Python package provides a comprehensive interface to the NeoPKPD Julia simulation engine, enabling seamless integration with Python data science workflows.
 
 ## Installation
 

@@ -19,7 +19,7 @@
 #   Sigma (prop) ≈ 0.01-0.02 (≈10-14% CV)
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using Statistics
 using StableRNGs

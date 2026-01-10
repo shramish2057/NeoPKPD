@@ -9,7 +9,7 @@
 # =============================================================================
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using StableRNGs
 using Statistics
 

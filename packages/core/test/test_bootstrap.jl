@@ -2,7 +2,7 @@
 # Tests regulatory-compliant bootstrap implementation
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using StableRNGs
 using Statistics
@@ -38,14 +38,14 @@ using Statistics
         @testset "PercentileCI" begin
             ci = PercentileCI()
             @test ci isa BootstrapCIMethod
-            @test NeoPKPDCore.ci_method_name(ci) == "Percentile"
+            @test NeoPKPD.ci_method_name(ci) == "Percentile"
         end
 
         @testset "BCCI" begin
             ci = BCCI()
             @test ci isa BootstrapCIMethod
             @test ci.acceleration == 0.0
-            @test NeoPKPDCore.ci_method_name(ci) == "BCa"
+            @test NeoPKPD.ci_method_name(ci) == "BCa"
 
             ci2 = BCCI(0.05)
             @test ci2.acceleration == 0.05
@@ -54,13 +54,13 @@ using Statistics
         @testset "BasicCI" begin
             ci = BasicCI()
             @test ci isa BootstrapCIMethod
-            @test NeoPKPDCore.ci_method_name(ci) == "Basic"
+            @test NeoPKPD.ci_method_name(ci) == "Basic"
         end
 
         @testset "StudentizedCI" begin
             ci = StudentizedCI()
             @test ci isa BootstrapCIMethod
-            @test NeoPKPDCore.ci_method_name(ci) == "Studentized"
+            @test NeoPKPD.ci_method_name(ci) == "Studentized"
         end
     end
 
@@ -209,7 +209,7 @@ using Statistics
             for _ in 1:n_boot
         ]
 
-        summary = NeoPKPDCore._compute_omega_summary(omega_estimates, 0.95, PercentileCI())
+        summary = NeoPKPD._compute_omega_summary(omega_estimates, 0.95, PercentileCI())
 
         @test summary isa OmegaBootstrapSummary
         @test size(summary.mean) == (n_eta, n_eta)
@@ -231,7 +231,7 @@ using Statistics
         rng = StableRNG(123)
         sigma_estimates = 0.1 .+ 0.01 .* randn(rng, 100)
 
-        summary = NeoPKPDCore._compute_sigma_summary(sigma_estimates, 0.95)
+        summary = NeoPKPD._compute_sigma_summary(sigma_estimates, 0.95)
 
         @test summary isa SigmaBootstrapSummary
         @test abs(summary.mean - 0.1) < 0.02
@@ -262,11 +262,11 @@ using Statistics
     @testset "Parallel Config" begin
         @testset "Bool parallel" begin
             spec_serial = BootstrapSpec(parallel=false)
-            config_serial = NeoPKPDCore.get_parallel_config(spec_serial)
+            config_serial = NeoPKPD.get_parallel_config(spec_serial)
             @test config_serial.backend isa SerialBackend
 
             spec_parallel = BootstrapSpec(parallel=true)
-            config_parallel = NeoPKPDCore.get_parallel_config(spec_parallel)
+            config_parallel = NeoPKPD.get_parallel_config(spec_parallel)
             @test config_parallel.backend isa ThreadedBackend
         end
     end

@@ -170,7 +170,7 @@ end
 
 ### Creating Custom Models
 
-See the source code in `core/NeoPKPDCore/src/models/` for examples of extending NeoPKPD with custom models.
+See the source code in `core/NeoPKPD/src/models/` for examples of extending NeoPKPD with custom models.
 
 ---
 

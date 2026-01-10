@@ -119,7 +119,7 @@ end
 ### Example: CL Sensitivity
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define model
 params = OneCompIVBolusParams(5.0, 50.0)
@@ -216,7 +216,7 @@ end
 ### Example: Population CL Sensitivity
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Define population
 params = OneCompIVBolusParams(5.0, 50.0)
@@ -370,7 +370,7 @@ replayed = replay_sensitivity_execution(artifact)
 ## Complete Example: Parameter Ranking
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 
 # Model setup
 params = OneCompOralFirstOrderParams(1.5, 5.0, 50.0)

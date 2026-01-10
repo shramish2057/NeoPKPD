@@ -381,7 +381,7 @@ n_sigma = count_sigma_params(result.sigma)
 ## Example: Complete Model Selection
 
 ```julia
-using NeoPKPDCore
+using NeoPKPD
 using StableRNGs
 
 # Data

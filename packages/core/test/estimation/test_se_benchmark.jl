@@ -7,7 +7,7 @@
 # These tests ensure SEs are mathematically valid and match industry standards.
 
 using Test
-using NeoPKPDCore
+using NeoPKPD
 using LinearAlgebra
 using StableRNGs
 
