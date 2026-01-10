@@ -307,6 +307,91 @@ class ModelComparisonResult:
 
 
 # ============================================================================
+# Mixture Model Types
+# ============================================================================
+
+class MixtureParameterization(Enum):
+    """Type of mixture parameterization."""
+    FULL = "full"                # Both theta and omega differ across components
+    THETA_ONLY = "theta_only"    # Only theta differs (common for metabolizers)
+    OMEGA_ONLY = "omega_only"    # Only omega differs
+
+
+@dataclass
+class MixtureComponent:
+    """Specification for a single mixture component (subpopulation)."""
+    name: str
+    theta: Optional[List[float]] = None
+    omega: Optional[List[List[float]]] = None
+    theta_indices: List[int] = field(default_factory=list)
+    omega_indices: List[int] = field(default_factory=list)
+
+
+@dataclass
+class MixtureConfig:
+    """Configuration for mixture model estimation."""
+    n_components: int
+    components: List[MixtureComponent]
+    mixing_probabilities: List[float]
+    parameterization: MixtureParameterization = MixtureParameterization.THETA_ONLY
+    estimate_probabilities: bool = True
+    probability_bounds: tuple = (0.01, 0.99)
+    # Base parameters
+    base_theta: List[float] = field(default_factory=list)
+    base_omega: List[List[float]] = field(default_factory=list)
+    theta_lower: Optional[List[float]] = None
+    theta_upper: Optional[List[float]] = None
+    # EM settings
+    max_iter: int = 100
+    tol: float = 1e-4
+    n_init: int = 5
+    verbose: bool = False
+    # Sigma settings
+    sigma_type: str = "proportional"
+    sigma_init: float = 0.1
+    # Classification
+    classification_threshold: float = 0.5
+    seed: int = 12345
+
+
+@dataclass
+class MixtureSubjectResult:
+    """Result for a single subject in mixture model."""
+    subject_id: str
+    posterior_probabilities: List[float]
+    most_likely_component: int
+    classification_confidence: float
+    component_likelihoods: List[float]
+    eta: List[float]
+    ipred: List[float]
+
+
+@dataclass
+class MixtureResult:
+    """Result from mixture model estimation."""
+    # Convergence info
+    converged: bool
+    n_iterations: int
+    # Fit statistics
+    log_likelihood: float
+    aic: float
+    bic: float
+    # Mixing probabilities
+    mixing_probabilities: List[float]
+    # Component-specific parameters
+    component_theta: List[List[float]]
+    component_omega: List[List[List[float]]]
+    # Subject-level results
+    subjects: List[MixtureSubjectResult]
+    # Classification summary
+    classification_summary: Dict[int, int]
+    classification_entropy: float
+    # Runtime
+    runtime_seconds: float
+    messages: List[str]
+
+
+# ============================================================================
 # Main Estimation Function
 # ============================================================================
 
@@ -1526,9 +1611,280 @@ def run_scm(
     )
 
 
+# ============================================================================
+# Mixture Model Estimation
+# ============================================================================
+
+def estimate_mixture(
+    observed_data: Dict[str, Any],
+    model_kind: str,
+    config: MixtureConfig,
+    grid: Dict[str, Any],
+    solver: Optional[Dict[str, Any]] = None,
+) -> MixtureResult:
+    """
+    Run mixture model estimation for subpopulation analysis.
+
+    Industry-standard implementation following NONMEM $MIX and Monolix methodology.
+    Uses EM algorithm with proper individual eta estimation and omega updates.
+
+    Args:
+        observed_data: Dict with keys:
+            - subjects: List of subject data dicts
+            - Each subject has: subject_id, times, observations, doses
+        model_kind: PK model type (e.g., "OneCompIVBolus", "TwoCompOral")
+        config: MixtureConfig with mixture specification and estimation settings
+        grid: Simulation grid dict with t0, t1, saveat
+        solver: Optional solver settings
+
+    Returns:
+        MixtureResult containing:
+            - converged: Whether estimation converged
+            - mixing_probabilities: Estimated π_k for each component
+            - component_theta: Component-specific theta values
+            - component_omega: Component-specific omega matrices
+            - subjects: Per-subject posterior probabilities and classifications
+            - classification_entropy: Measure of separation quality
+
+    Example:
+        >>> # Two-component mixture for metabolizer phenotypes
+        >>> config = MixtureConfig(
+        ...     n_components=2,
+        ...     components=[
+        ...         MixtureComponent(name="Slow", theta=[2.0, 50.0]),
+        ...         MixtureComponent(name="Fast", theta=[6.0, 50.0])
+        ...     ],
+        ...     mixing_probabilities=[0.7, 0.3],
+        ...     base_theta=[4.0, 50.0],
+        ...     base_omega=[[0.09, 0.0], [0.0, 0.04]],
+        ... )
+        >>> result = estimate_mixture(data, "OneCompIVBolus", config, grid)
+        >>> for subj in result.subjects:
+        ...     print(f"{subj.subject_id}: Component {subj.most_likely_component}")
+    """
+    jl = _require_julia()
+
+    # Build observed data structure
+    SubjectData = jl.NeoPKPDCore.SubjectData
+    ObservedData = jl.NeoPKPDCore.ObservedData
+    DoseEvent = jl.NeoPKPDCore.DoseEvent
+
+    # Create Julia vector to hold subjects
+    subjects_vec = jl.seval("SubjectData[]")
+    for subj in observed_data["subjects"]:
+        doses_vec = jl.seval("DoseEvent[]")
+        for d in subj.get("doses", []):
+            dose = DoseEvent(float(d["time"]), float(d["amount"]))
+            jl.seval("push!")(doses_vec, dose)
+
+        times_vec = jl.seval("Float64[]")
+        for t in subj["times"]:
+            jl.seval("push!")(times_vec, float(t))
+
+        obs_vec = jl.seval("Float64[]")
+        for o in subj["observations"]:
+            jl.seval("push!")(obs_vec, float(o))
+
+        subj_data = SubjectData(
+            subj["subject_id"],
+            times_vec,
+            obs_vec,
+            doses_vec
+        )
+        jl.seval("push!")(subjects_vec, subj_data)
+
+    obs = ObservedData(subjects_vec)
+
+    # Build model spec
+    model_spec = _build_base_model_spec(jl, model_kind, config.base_theta)
+
+    # Build mixture components
+    MixtureComponent_jl = jl.NeoPKPDCore.MixtureComponent
+    components_vec = jl.seval("MixtureComponent[]")
+
+    for comp in config.components:
+        theta_jl = jl.seval("nothing")
+        if comp.theta is not None:
+            theta_jl = jl.seval("Float64[]")
+            for v in comp.theta:
+                jl.seval("push!")(theta_jl, float(v))
+
+        omega_jl = jl.seval("nothing")
+        if comp.omega is not None:
+            omega_jl = _to_julia_matrix(jl, comp.omega)
+
+        theta_indices_jl = jl.seval("Int[]")
+        for idx in comp.theta_indices:
+            jl.seval("push!")(theta_indices_jl, int(idx))
+
+        omega_indices_jl = jl.seval("Int[]")
+        for idx in comp.omega_indices:
+            jl.seval("push!")(omega_indices_jl, int(idx))
+
+        jl_comp = MixtureComponent_jl(
+            name=comp.name,
+            theta=theta_jl,
+            omega=omega_jl,
+            theta_indices=theta_indices_jl,
+            omega_indices=omega_indices_jl
+        )
+        jl.seval("push!")(components_vec, jl_comp)
+
+    # Build mixing probabilities
+    mixing_probs_jl = jl.seval("Float64[]")
+    for p in config.mixing_probabilities:
+        jl.seval("push!")(mixing_probs_jl, float(p))
+
+    # Build parameterization type
+    if config.parameterization == MixtureParameterization.FULL:
+        param_type = jl.NeoPKPDCore.FullMixture()
+    elif config.parameterization == MixtureParameterization.THETA_ONLY:
+        param_type = jl.NeoPKPDCore.ThetaOnlyMixture()
+    else:
+        param_type = jl.NeoPKPDCore.OmegaOnlyMixture()
+
+    # Build mixture spec
+    MixtureSpec = jl.NeoPKPDCore.MixtureSpec
+    mixture_spec = MixtureSpec(
+        n_components=config.n_components,
+        components=components_vec,
+        mixing_probabilities=mixing_probs_jl,
+        parameterization=param_type,
+        estimate_probabilities=config.estimate_probabilities,
+        probability_bounds=(float(config.probability_bounds[0]), float(config.probability_bounds[1]))
+    )
+
+    # Build EM method
+    MixtureEM = jl.NeoPKPDCore.MixtureEM
+    FOCEIMethod = jl.NeoPKPDCore.FOCEIMethod
+    em_method = MixtureEM(
+        max_iter=config.max_iter,
+        tol=config.tol,
+        inner_method=FOCEIMethod(),
+        n_init=config.n_init,
+        verbose=config.verbose
+    )
+
+    # Build base theta and omega
+    base_theta_jl = jl.seval("Float64[]")
+    for v in config.base_theta:
+        jl.seval("push!")(base_theta_jl, float(v))
+
+    base_omega_jl = _to_julia_matrix(jl, config.base_omega)
+
+    # Build sigma
+    sigma_jl = _build_sigma_spec(jl, config.sigma_type, config.sigma_init)
+
+    # Build theta bounds
+    n_theta = len(config.base_theta)
+    theta_lower_jl = jl.seval("Float64[]")
+    theta_upper_jl = jl.seval("Float64[]")
+
+    lower_vals = config.theta_lower if config.theta_lower else [0.0] * n_theta
+    upper_vals = config.theta_upper if config.theta_upper else [float("inf")] * n_theta
+
+    for v in lower_vals:
+        jl.seval("push!")(theta_lower_jl, float(v))
+    for v in upper_vals:
+        jl.seval("push!")(theta_upper_jl, float(v))
+
+    # Build mixture config
+    MixtureConfig_jl = jl.NeoPKPDCore.MixtureConfig
+    mix_config = MixtureConfig_jl(
+        mixture_spec,
+        em_method,
+        base_theta=base_theta_jl,
+        base_omega=base_omega_jl,
+        sigma=sigma_jl,
+        theta_lower=theta_lower_jl,
+        theta_upper=theta_upper_jl,
+        compute_posteriors=True,
+        classification_threshold=config.classification_threshold,
+        seed=jl.UInt64(config.seed)
+    )
+
+    # Build grid and solver
+    SimGrid = jl.NeoPKPDCore.SimGrid
+    SolverSpec = jl.NeoPKPDCore.SolverSpec
+
+    saveat_jl = jl.seval("Float64[]")
+    for t in grid.get("saveat", []):
+        jl.seval("push!")(saveat_jl, float(t))
+
+    grid_jl = SimGrid(
+        float(grid.get("t0", 0.0)),
+        float(grid.get("t1", 24.0)),
+        saveat_jl
+    )
+
+    solver_settings = solver or {}
+    solver_jl = SolverSpec(
+        jl.Symbol(solver_settings.get("algorithm", "Tsit5")),
+        float(solver_settings.get("abstol", 1e-8)),
+        float(solver_settings.get("reltol", 1e-8)),
+        int(solver_settings.get("maxiters", 100000))
+    )
+
+    # Run mixture estimation
+    result = jl.NeoPKPDCore.mixture_estimate(
+        obs, model_spec, mix_config,
+        grid=grid_jl, solver=solver_jl
+    )
+
+    # Convert results to Python
+    subjects = []
+    for subj in result.subjects:
+        subjects.append(MixtureSubjectResult(
+            subject_id=str(subj.subject_id),
+            posterior_probabilities=list(subj.posterior_probabilities),
+            most_likely_component=int(subj.most_likely_component),
+            classification_confidence=float(subj.classification_confidence),
+            component_likelihoods=list(subj.component_likelihoods),
+            eta=list(subj.eta),
+            ipred=list(subj.ipred)
+        ))
+
+    component_theta = []
+    for theta in result.component_theta:
+        component_theta.append(list(theta))
+
+    component_omega = []
+    for omega in result.component_omega:
+        omega_list = []
+        n = jl.seval("size")(omega, 1)
+        for i in range(1, n + 1):
+            row = []
+            for j in range(1, n + 1):
+                row.append(float(omega[i, j]))
+            omega_list.append(row)
+        component_omega.append(omega_list)
+
+    # Convert classification summary
+    classification_summary = {}
+    for k in result.classification_summary:
+        classification_summary[int(k)] = int(result.classification_summary[k])
+
+    return MixtureResult(
+        converged=bool(result.converged),
+        n_iterations=int(result.n_iterations),
+        log_likelihood=float(result.log_likelihood),
+        aic=float(result.aic),
+        bic=float(result.bic),
+        mixing_probabilities=list(result.mixing_probabilities),
+        component_theta=component_theta,
+        component_omega=component_omega,
+        subjects=subjects,
+        classification_summary=classification_summary,
+        classification_entropy=float(result.entropy),
+        runtime_seconds=float(result.runtime_seconds),
+        messages=list(result.messages)
+    )
+
+
 __all__ = [
     # Main functions
     "estimate",
+    "estimate_mixture",
     "run_bootstrap",
     "run_scm",
     "compare_models",
@@ -1544,6 +1900,8 @@ __all__ = [
     "CovariateOnIIV",
     "SCMConfig",
     "CovariateRelationship",
+    "MixtureConfig",
+    "MixtureComponent",
     # Result types
     "EstimationResult",
     "BootstrapResult",
@@ -1554,9 +1912,12 @@ __all__ = [
     "SCMResult",
     "SCMStepResult",
     "NPDEResult",
+    "MixtureResult",
+    "MixtureSubjectResult",
     # Enums
     "BLQMethod",
     "OmegaStructure",
     "BootstrapCIMethod",
     "CovariateRelationshipType",
+    "MixtureParameterization",
 ]
