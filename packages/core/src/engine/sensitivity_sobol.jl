@@ -6,7 +6,8 @@ using StableRNGs: StableRNG
 
 export SobolIndex, SobolResult, PopulationSobolResult
 export run_sobol_sensitivity, run_population_sobol_sensitivity
-export compute_sobol_indices
+export run_sobol_sensitivity_with_second_order
+export compute_sobol_indices, compute_second_order_sobol_indices
 
 # ============================================================================
 # Result Types
@@ -123,6 +124,15 @@ function run_sobol_sensitivity(
     parallel_config::ParallelConfig=ParallelConfig(SerialBackend()),
     aggregator::Function=mean
 )::SobolResult
+    # Check if second-order computation is requested
+    if gsa_spec.method.compute_second_order
+        return run_sobol_sensitivity_with_second_order(
+            spec, grid, solver, gsa_spec;
+            parallel_config=parallel_config,
+            aggregator=aggregator
+        )
+    end
+
     start_time = time()
     method = gsa_spec.method
     bounds = gsa_spec.bounds
@@ -607,4 +617,246 @@ function compute_sobol_indices(
 )::Dict{Int,SobolIndex}
     actual_rng = rng === nothing ? StableRNG(12345) : rng
     return compute_sobol_indices_internal(Y_A, Y_B, Y_AB, bootstrap_samples, ci_level, actual_rng)
+end
+
+# ============================================================================
+# Second-Order Sobol' Indices
+# ============================================================================
+
+"""
+    compute_second_order_sobol_indices(Y_A, Y_B, Y_AB, Y_ABij, first_order_indices, V_total)
+
+Compute second-order Sobol' indices Sij for all parameter pairs.
+
+The second-order index Sij represents the variance contribution from the interaction
+between parameters i and j, excluding their individual main effects.
+
+# Arguments
+- `Y_A::Vector{Float64}`: Model outputs for matrix A
+- `Y_B::Vector{Float64}`: Model outputs for matrix B
+- `Y_AB::Vector{Vector{Float64}}`: Model outputs for AB matrices
+- `Y_ABij::Dict{Tuple{Int,Int},Vector{Float64}}`: Model outputs for ABij matrices
+- `first_order_indices::Dict{Int,SobolIndex}`: Pre-computed first-order indices
+- `V_total::Float64`: Total variance of model output
+
+# Returns
+- `Dict{Tuple{Int,Int},Float64}`: Second-order indices Sij for each parameter pair (i,j)
+
+# Formula
+Using the Saltelli (2002) estimator:
+  Sij = (Vij - Vi - Vj) / V(Y)
+
+where:
+  Vij = (1/N) * sum(Y_A .* Y_ABij) - f0²
+  f0 = mean(Y)
+
+# References
+- Saltelli (2002) "Making best use of model evaluations to compute sensitivity indices"
+- Homma & Saltelli (1996) "Importance measures in global sensitivity analysis"
+"""
+function compute_second_order_sobol_indices(
+    Y_A::Vector{Float64},
+    Y_B::Vector{Float64},
+    Y_AB::Vector{Vector{Float64}},
+    Y_ABij::Dict{Tuple{Int,Int},Vector{Float64}},
+    first_order_indices::Dict{Int,SobolIndex},
+    V_total::Float64
+)::Dict{Tuple{Int,Int},Float64}
+    N = length(Y_A)
+    d = length(Y_AB)
+
+    # Mean of all samples for computing f0²
+    f0 = mean(vcat(Y_A, Y_B))
+    f0_sq = f0^2
+
+    second_order = Dict{Tuple{Int,Int},Float64}()
+
+    if V_total < 1e-15
+        # No variance - all indices are zero
+        for i in 1:(d-1)
+            for j in (i+1):d
+                second_order[(i, j)] = 0.0
+            end
+        end
+        return second_order
+    end
+
+    for (pair, Y_ij) in Y_ABij
+        i, j = pair
+
+        # Get first-order indices for normalization
+        Vi = first_order_indices[i].Si * V_total  # Variance contribution of parameter i
+        Vj = first_order_indices[j].Si * V_total  # Variance contribution of parameter j
+
+        # Compute variance of the interaction using Saltelli estimator
+        # Vij = (1/N) * sum(Y_A .* Y_ABij[(i,j)]) - f0²
+        Vij = mean(Y_A .* Y_ij) - f0_sq
+
+        # Second-order index: subtract individual contributions
+        # Sij = (Vij - Vi - Vj) / V(Y)
+        Sij_raw = (Vij - Vi - Vj) / V_total
+
+        # Clamp to valid range [0, 1]
+        # Note: Sij can be negative due to estimation error for weak interactions
+        Sij = clamp(Sij_raw, 0.0, 1.0)
+
+        second_order[(i, j)] = Sij
+    end
+
+    return second_order
+end
+
+"""
+    run_sobol_sensitivity_with_second_order(spec, grid, solver, gsa_spec; parallel_config, aggregator)
+
+Run Sobol' sensitivity analysis including second-order interaction indices.
+
+This is an extended version of run_sobol_sensitivity that computes Sij indices
+when compute_second_order=true in the SobolMethod specification.
+
+# Additional evaluations required
+For d parameters, second-order indices require:
+  N * d * (d-1) / 2 additional model evaluations
+
+Total evaluations: N * (d + 2 + d*(d-1)/2)
+
+# Returns
+SobolResult with populated second_order field containing Dict{Tuple{Symbol,Symbol},Float64}
+"""
+function run_sobol_sensitivity_with_second_order(
+    spec::ModelSpec,
+    grid::SimGrid,
+    solver::SolverSpec,
+    gsa_spec::GlobalSensitivitySpec{SobolMethod};
+    parallel_config::ParallelConfig=ParallelConfig(SerialBackend()),
+    aggregator::Function=mean
+)::SobolResult
+    start_time = time()
+    method = gsa_spec.method
+    bounds = gsa_spec.bounds
+    d = length(bounds)
+    N = method.base_sample_size
+
+    # Initialize RNG
+    rng = StableRNG(gsa_spec.seed)
+
+    # Generate extended Saltelli samples including ABij matrices
+    samples = generate_saltelli_samples_second_order(bounds, N, rng)
+
+    # Prepare all parameter sets for evaluation
+    all_param_sets = Vector{Vector{Float64}}()
+
+    # A samples (indices 1:N)
+    for i in 1:N
+        push!(all_param_sets, samples.A[i, :])
+    end
+
+    # B samples (indices N+1:2N)
+    for i in 1:N
+        push!(all_param_sets, samples.B[i, :])
+    end
+
+    # AB samples for each parameter (indices 2N+1 : 2N+N*d)
+    for j in 1:d
+        for i in 1:N
+            push!(all_param_sets, samples.AB[j][i, :])
+        end
+    end
+
+    # ABij samples for each parameter pair
+    # Track where each pair's samples start
+    abij_start_idx = length(all_param_sets) + 1
+    pair_indices = Dict{Tuple{Int,Int},UnitRange{Int}}()
+
+    for i in 1:(d-1)
+        for j in (i+1):d
+            start_idx = length(all_param_sets) + 1
+            ABij_mat = samples.ABij[(i, j)]
+            for k in 1:N
+                push!(all_param_sets, ABij_mat[k, :])
+            end
+            pair_indices[(i, j)] = start_idx:(start_idx + N - 1)
+        end
+    end
+
+    n_evaluations = length(all_param_sets)
+
+    # Evaluate all parameter sets
+    outputs = evaluate_parameter_sets(
+        spec, grid, solver, all_param_sets, bounds.params,
+        gsa_spec.observation, aggregator, parallel_config
+    )
+
+    # Split outputs
+    Y_A = outputs[1:N]
+    Y_B = outputs[N+1:2N]
+    Y_AB = [outputs[(2+j-1)*N+1:(2+j)*N] for j in 1:d]
+
+    # Extract ABij outputs
+    Y_ABij = Dict{Tuple{Int,Int},Vector{Float64}}()
+    for (pair, range) in pair_indices
+        Y_ABij[pair] = outputs[range]
+    end
+
+    # Compute first-order and total-order indices
+    indices_raw = compute_sobol_indices_internal(
+        Y_A, Y_B, Y_AB,
+        method.bootstrap_samples,
+        method.bootstrap_ci_level,
+        StableRNG(gsa_spec.seed + 1)
+    )
+
+    # Compute total variance for second-order computation
+    V_total = var(vcat(Y_A, Y_B))
+
+    # Compute second-order indices
+    second_order_raw = compute_second_order_sobol_indices(
+        Y_A, Y_B, Y_AB, Y_ABij, indices_raw, V_total
+    )
+
+    # Map to parameter names
+    indices = Dict{Symbol,SobolIndex}()
+    for (j, param) in enumerate(bounds.params)
+        indices[param] = indices_raw[j]
+    end
+
+    # Map second-order to parameter names
+    second_order = Dict{Tuple{Symbol,Symbol},Float64}()
+    for ((i, j), Sij) in second_order_raw
+        param_i = bounds.params[i]
+        param_j = bounds.params[j]
+        second_order[(param_i, param_j)] = Sij
+    end
+
+    # Compute convergence metric (sum of Si should be ≤ 1)
+    convergence = sum(idx.Si for idx in values(indices))
+
+    # Build result
+    elapsed = time() - start_time
+
+    metadata = Dict{String,Any}(
+        "engine_version" => "0.1.0",
+        "method" => "Sobol",
+        "base_sample_size" => N,
+        "n_parameters" => d,
+        "bootstrap_samples" => method.bootstrap_samples,
+        "bootstrap_ci_level" => method.bootstrap_ci_level,
+        "seed" => gsa_spec.seed,
+        "observation" => String(gsa_spec.observation),
+        "aggregator" => string(aggregator),
+        "compute_second_order" => true,
+        "n_parameter_pairs" => length(second_order),
+    )
+
+    return SobolResult(
+        gsa_spec,
+        bounds.params,
+        indices,
+        second_order,
+        n_evaluations,
+        convergence,
+        V_total,
+        elapsed,
+        metadata
+    )
 end

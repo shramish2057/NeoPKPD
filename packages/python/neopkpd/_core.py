@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 _JL = None
 
@@ -95,6 +95,8 @@ class SobolResult:
     Attributes:
         params: Parameter names in analysis order
         indices: Dict mapping parameter name to SobolIndex
+        second_order: Dict mapping parameter pair tuples to Sij indices (optional)
+            e.g., {("CL", "V"): 0.05} indicates 5% of variance from CL-V interaction
         n_evaluations: Total number of model evaluations
         convergence_metric: Sum of first-order indices (should be <= 1)
         output_variance: Total variance of model output
@@ -103,6 +105,7 @@ class SobolResult:
     """
     params: List[str]
     indices: Dict[str, SobolIndex]
+    second_order: Optional[Dict[Tuple[str, str], float]]
     n_evaluations: int
     convergence_metric: float
     output_variance: float

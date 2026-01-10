@@ -1,8 +1,8 @@
 {
-  "artifact_schema_version": "1.0.0",
+  "artifact_schema_version": "1.1.0",
   "execution_mode": "pk",
   "semantics_fingerprint": {
-    "artifact_schema_version": "1.0.0",
+    "artifact_schema_version": "1.1.0",
     "solver_semantics_version": "1.0.0",
     "event_semantics_version": "1.0.0"
   },

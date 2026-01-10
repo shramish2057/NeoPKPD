@@ -33,6 +33,7 @@ def run_sobol_sensitivity(
     bounds: Dict[str, tuple],
     *,
     base_sample_size: int = 1024,
+    compute_second_order: bool = False,
     bootstrap_samples: int = 1000,
     bootstrap_ci_level: float = 0.95,
     observation: str = "conc",
@@ -43,7 +44,8 @@ def run_sobol_sensitivity(
     Run Sobol' variance-based global sensitivity analysis.
 
     Computes first-order (Si) and total-order (STi) sensitivity indices
-    for each parameter using the Saltelli sampling scheme.
+    for each parameter using the Saltelli sampling scheme. Optionally
+    computes second-order indices (Sij) for parameter interactions.
 
     Args:
         model: Model specification dict with keys:
@@ -57,6 +59,10 @@ def run_sobol_sensitivity(
         bounds: Parameter bounds as Dict[str, (lower, upper)]
             e.g., {"CL": (0.5, 2.0), "V": (5.0, 20.0)}
         base_sample_size: N in Saltelli scheme. Total evals = N*(d+2)
+            With second_order=True: N*(d+2 + d*(d-1)/2)
+        compute_second_order: If True, compute Sij interaction indices.
+            This requires additional model evaluations but reveals
+            important parameter interactions for model reduction.
         bootstrap_samples: Number of bootstrap samples for CIs (0 = no CI)
         bootstrap_ci_level: Confidence level (default 0.95)
         observation: Model output to analyze (default "conc")
@@ -64,9 +70,12 @@ def run_sobol_sensitivity(
         aggregator: How to aggregate time series ("mean", "max", "auc")
 
     Returns:
-        SobolResult with sensitivity indices for each parameter
+        SobolResult with sensitivity indices for each parameter.
+        If compute_second_order=True, result.second_order contains
+        Dict[Tuple[str, str], float] with Sij indices.
 
     Example:
+        >>> # First-order only
         >>> result = run_sobol_sensitivity(
         ...     model={"kind": "OneCompIVBolus", "params": {"CL": 1.0, "V": 10.0},
         ...            "doses": [{"time": 0.0, "amount": 100.0}]},
@@ -75,6 +84,17 @@ def run_sobol_sensitivity(
         ...     base_sample_size=512
         ... )
         >>> print(f"CL importance: Si={result.indices['CL'].Si:.3f}")
+
+        >>> # With second-order interactions
+        >>> result = run_sobol_sensitivity(
+        ...     model={"kind": "OneCompIVBolus", "params": {"CL": 1.0, "V": 10.0},
+        ...            "doses": [{"time": 0.0, "amount": 100.0}]},
+        ...     grid={"t0": 0.0, "t1": 24.0, "saveat": list(range(25))},
+        ...     bounds={"CL": (0.5, 2.0), "V": (5.0, 20.0)},
+        ...     base_sample_size=512,
+        ...     compute_second_order=True
+        ... )
+        >>> print(f"CL-V interaction: Sij={result.second_order[('CL', 'V')]:.3f}")
     """
     jl = _require_julia()
     NC = jl.NeoPKPDCore
@@ -107,7 +127,7 @@ def run_sobol_sensitivity(
     # Build method
     method = NC.SobolMethod(
         base_sample_size=base_sample_size,
-        compute_second_order=False,
+        compute_second_order=compute_second_order,
         bootstrap_samples=bootstrap_samples,
         bootstrap_ci_level=bootstrap_ci_level,
     )
@@ -146,11 +166,24 @@ def run_sobol_sensitivity(
             STi_ci_upper=float(idx.STi_ci_upper),
         )
 
+    # Convert second-order indices if computed
+    second_order = None
+    if result.second_order is not None and compute_second_order:
+        second_order = {}
+        # Julia uses Symbol tuples as keys, convert to Python string tuples
+        for key in result.second_order.keys():
+            # Key is a Julia Tuple{Symbol, Symbol}
+            param_i = str(key[0])
+            param_j = str(key[1])
+            sij = float(result.second_order[key])
+            second_order[(param_i, param_j)] = sij
+
     metadata = {str(k): v for k, v in result.metadata.items()}
 
     return SobolResult(
         params=params_list,
         indices=indices,
+        second_order=second_order,
         n_evaluations=int(result.n_evaluations),
         convergence_metric=float(result.convergence_metric),
         output_variance=float(result.output_variance),

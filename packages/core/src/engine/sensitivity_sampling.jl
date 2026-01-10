@@ -4,7 +4,8 @@
 using Random
 using StableRNGs
 
-export generate_saltelli_samples, generate_morris_trajectories
+export generate_saltelli_samples, generate_saltelli_samples_second_order
+export generate_morris_trajectories
 export transform_samples, generate_sobol_sequence
 
 """
@@ -98,6 +99,78 @@ function generate_saltelli_samples(
     end
 
     return (A=A, B=B, AB=AB, BA=BA)
+end
+
+"""
+    generate_saltelli_samples_second_order(bounds::ParameterBounds, N::Int, rng::AbstractRNG)
+
+Generate sample matrices for second-order Sobol' indices using extended Saltelli scheme.
+
+In addition to the standard matrices (A, B, AB), this generates ABij matrices where
+columns i and j are both taken from B. These are required for computing second-order
+interaction indices Sij.
+
+# Arguments
+- `bounds::ParameterBounds`: Parameter bounds specification
+- `N::Int`: Base sample size
+- `rng::AbstractRNG`: Random number generator for reproducibility
+
+# Returns
+Named tuple with:
+- `A::Matrix{Float64}`: N×d matrix A
+- `B::Matrix{Float64}`: N×d matrix B
+- `AB::Vector{Matrix{Float64}}`: d matrices where AB[i] = A with column i from B
+- `BA::Vector{Matrix{Float64}}`: d matrices where BA[i] = B with column i from A
+- `ABij::Dict{Tuple{Int,Int},Matrix{Float64}}`: (d*(d-1)/2) matrices where ABij[(i,j)] = A with columns i,j from B
+
+Total model evaluations required: N*(d+2) + N*(d*(d-1)/2) for Si, STi, and Sij
+
+# References
+- Saltelli (2002) "Making best use of model evaluations to compute sensitivity indices"
+- Homma & Saltelli (1996) "Importance measures in global sensitivity analysis"
+"""
+function generate_saltelli_samples_second_order(
+    bounds::ParameterBounds,
+    N::Int,
+    rng::AbstractRNG
+)::NamedTuple{(:A, :B, :AB, :BA, :ABij), Tuple{Matrix{Float64}, Matrix{Float64}, Vector{Matrix{Float64}}, Vector{Matrix{Float64}}, Dict{Tuple{Int,Int},Matrix{Float64}}}}
+    d = length(bounds)
+
+    # Generate two independent sample matrices in [0,1]^d
+    A_unit = generate_sobol_sequence(N, d, rng)
+    B_unit = generate_sobol_sequence(N, d, rng)
+
+    # Transform to parameter space
+    A = transform_samples(A_unit, bounds)
+    B = transform_samples(B_unit, bounds)
+
+    # Generate AB matrices: A with column i replaced by B's column i
+    AB = Vector{Matrix{Float64}}(undef, d)
+    for i in 1:d
+        AB[i] = copy(A)
+        AB[i][:, i] = B[:, i]
+    end
+
+    # Generate BA matrices: B with column i replaced by A's column i
+    BA = Vector{Matrix{Float64}}(undef, d)
+    for i in 1:d
+        BA[i] = copy(B)
+        BA[i][:, i] = A[:, i]
+    end
+
+    # Generate ABij matrices for second-order indices
+    # ABij[(i,j)] = A with columns i AND j replaced by B's columns i and j
+    ABij = Dict{Tuple{Int,Int},Matrix{Float64}}()
+    for i in 1:(d-1)
+        for j in (i+1):d
+            ABij_mat = copy(A)
+            ABij_mat[:, i] = B[:, i]
+            ABij_mat[:, j] = B[:, j]
+            ABij[(i, j)] = ABij_mat
+        end
+    end
+
+    return (A=A, B=B, AB=AB, BA=BA, ABij=ABij)
 end
 
 """
