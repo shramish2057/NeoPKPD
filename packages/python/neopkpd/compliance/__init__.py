@@ -61,6 +61,23 @@ from .config import (
     set_compliance_config,
 )
 
+from .signatures import (
+    SignatureAlgorithm,
+    SignaturePurpose,
+    SigningKey,
+    VerificationKey,
+    KeyPair,
+    ArtifactSignature,
+    SignatureVerificationResult,
+    generate_keypair,
+    sign_artifact,
+    verify_signature,
+    get_artifact_signatures,
+    verify_all_signatures,
+    export_public_key,
+    import_public_key,
+)
+
 __all__ = [
     # Audit
     "AuditRecord",
@@ -85,4 +102,19 @@ __all__ = [
     "ComplianceConfig",
     "get_compliance_config",
     "set_compliance_config",
+    # Signatures
+    "SignatureAlgorithm",
+    "SignaturePurpose",
+    "SigningKey",
+    "VerificationKey",
+    "KeyPair",
+    "ArtifactSignature",
+    "SignatureVerificationResult",
+    "generate_keypair",
+    "sign_artifact",
+    "verify_signature",
+    "get_artifact_signatures",
+    "verify_all_signatures",
+    "export_public_key",
+    "import_public_key",
 ]

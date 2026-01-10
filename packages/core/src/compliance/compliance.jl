@@ -45,5 +45,14 @@ include("integrity.jl")
 # Audit trail - Phase 2
 include("audit_trail.jl")
 
+# Digital signatures - Phase 1 Gold-Tier
+include("signatures.jl")
+
+# JSON Schema validation - Phase 1 Gold-Tier
+include("schema_validation.jl")
+
+# Schema migration framework - Phase 1 Gold-Tier
+include("migration.jl")
+
 # Validation reports - Phase 4
 include("validation_report.jl")
