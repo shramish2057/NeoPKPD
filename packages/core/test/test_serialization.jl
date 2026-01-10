@@ -15,7 +15,7 @@
 
     artifact = serialize_execution(model_spec=pk, grid=grid, solver=solver, result=res)
 
-    @test artifact["artifact_schema_version"] == "1.0.0"
+    @test artifact["artifact_schema_version"] == ARTIFACT_SCHEMA_VERSION
     @test haskey(artifact, "model_spec")
     @test haskey(artifact, "grid")
     @test haskey(artifact, "solver")

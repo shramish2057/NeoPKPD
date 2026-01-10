@@ -205,11 +205,25 @@ Returns a NamedTuple containing:
 - execution_mode (String)
 """
 function deserialize_execution(artifact::Dict)
-    schema = _require_key(artifact, "artifact_schema_version")
-    if String(schema) != ARTIFACT_SCHEMA_VERSION
-        error(
-            "Unsupported artifact schema version: $(schema). Expected: $(ARTIFACT_SCHEMA_VERSION)",
-        )
+    schema = get(artifact, "artifact_schema_version", "1.0.0")
+    schema_str = String(schema)
+
+    # Handle backward compatibility via migration
+    if schema_str != ARTIFACT_SCHEMA_VERSION
+        if can_migrate(schema_str, ARTIFACT_SCHEMA_VERSION)
+            migration_result = migrate_artifact(artifact)
+            if migration_result.success
+                artifact = migration_result.migrated_artifact
+            else
+                error(
+                    "Failed to migrate artifact from $(schema_str) to $(ARTIFACT_SCHEMA_VERSION): $(join(migration_result.errors, "; "))"
+                )
+            end
+        else
+            error(
+                "Unsupported artifact schema version: $(schema_str). Expected: $(ARTIFACT_SCHEMA_VERSION). No migration path available.",
+            )
+        end
     end
 
     model_spec = _parse_model_spec(_to_dict(_require_key(artifact, "model_spec")))
