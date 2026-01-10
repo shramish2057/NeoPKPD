@@ -226,11 +226,14 @@ function compute_model_weights(
     method::StackedWeighting;
     use_aicc::Bool=false  # Ignored for stacking
 )::Vector{Float64}
-    # Stacked regression requires cross-validated predictions
-    # This is a simplified implementation - full stacking requires
-    # re-fitting models on each fold
+    # Stacked regression (Breiman 1996): find weights that minimize
+    # cross-validated prediction error using NNLS optimization
 
     n_models = length(models)
+
+    if n_models == 1
+        return [1.0]
+    end
 
     # Check if predictions are available
     has_preds = all(m -> m.predictions !== nothing, models)
@@ -240,12 +243,165 @@ function compute_model_weights(
         return compute_model_weights(models, AICWeighting(); use_aicc=true)
     end
 
-    # Use simple non-negative least squares to find weights
-    # that minimize prediction error
+    # Try to extract observed values from estimation results
+    y = _extract_observations(models)
 
-    # For simplicity, use equal weighting as placeholder
-    # Full implementation would use NNLS optimization
-    return ones(n_models) / n_models
+    if y === nothing
+        # Fall back to AIC weighting if no observations available
+        return compute_model_weights(models, AICWeighting(); use_aicc=true)
+    end
+
+    n_obs = length(y)
+
+    # Build prediction matrix X (n_obs × n_models)
+    X = zeros(n_obs, n_models)
+    for (i, model) in enumerate(models)
+        if length(model.predictions) != n_obs
+            # Inconsistent prediction lengths - fall back to AIC
+            return compute_model_weights(models, AICWeighting(); use_aicc=true)
+        end
+        X[:, i] = model.predictions
+    end
+
+    # Solve: min ||Xw - y||² subject to w ≥ 0, sum(w) = 1
+    weights = _nnls_simplex(X, y)
+
+    return weights
+end
+
+"""
+    _extract_observations(models)
+
+Extract observed values from estimation results.
+Returns nothing if observations cannot be extracted.
+"""
+function _extract_observations(models::Vector{CandidateModel})::Union{Nothing, Vector{Float64}}
+    # Try to extract observations from the first model's estimation result
+    if isempty(models)
+        return nothing
+    end
+
+    est = models[1].estimation_result
+    if est === nothing
+        return nothing
+    end
+
+    # Try different ways to access observations
+    # EstimationResult typically stores population data
+    if hasproperty(est, :observations) && est.observations !== nothing
+        return Vector{Float64}(est.observations)
+    elseif hasproperty(est, :population) && est.population !== nothing
+        pop = est.population
+        if hasproperty(pop, :observations)
+            return Vector{Float64}(pop.observations)
+        elseif hasproperty(pop, :dv) && pop.dv !== nothing
+            return Vector{Float64}(pop.dv)
+        end
+    elseif hasproperty(est, :data) && est.data !== nothing
+        data = est.data
+        if hasproperty(data, :dv)
+            return Vector{Float64}(data.dv)
+        end
+    end
+
+    return nothing
+end
+
+"""
+    _nnls_simplex(X, y; max_iter=1000, tol=1e-8)
+
+Solve non-negative least squares with simplex constraint:
+    min ||Xw - y||² subject to w ≥ 0, sum(w) = 1
+
+Uses projected gradient descent with adaptive step size.
+"""
+function _nnls_simplex(
+    X::Matrix{Float64},
+    y::Vector{Float64};
+    max_iter::Int=1000,
+    tol::Float64=1e-8
+)::Vector{Float64}
+    n_obs, n_models = size(X)
+
+    # Initialize with equal weights
+    w = ones(n_models) / n_models
+
+    # Precompute X'X and X'y for efficiency
+    XtX = X' * X
+    Xty = X' * y
+
+    # Lipschitz constant for step size
+    L = opnorm(XtX)
+    if L < 1e-10
+        return w  # Degenerate case
+    end
+    step_size = 1.0 / L
+
+    prev_obj = Inf
+
+    for iter in 1:max_iter
+        # Gradient: ∇f = 2(X'Xw - X'y) = 2*X'*(Xw - y)
+        grad = 2.0 * (XtX * w - Xty)
+
+        # Gradient step
+        w_new = w - step_size * grad
+
+        # Project onto probability simplex
+        w_new = _project_to_simplex(w_new)
+
+        # Compute objective for convergence check
+        residual = X * w_new - y
+        obj = dot(residual, residual)
+
+        # Check convergence
+        if abs(prev_obj - obj) < tol * max(1.0, prev_obj)
+            w = w_new
+            break
+        end
+
+        prev_obj = obj
+        w = w_new
+    end
+
+    # Ensure strict non-negativity and normalization
+    w = max.(w, 0.0)
+    w_sum = sum(w)
+    if w_sum > 0
+        w ./= w_sum
+    else
+        # Fallback to equal weights if something went wrong
+        w = ones(n_models) / n_models
+    end
+
+    return w
+end
+
+"""
+    _project_to_simplex(v)
+
+Project vector v onto the probability simplex {w : w ≥ 0, sum(w) = 1}.
+Uses the algorithm from Duchi et al. (2008).
+"""
+function _project_to_simplex(v::Vector{Float64})::Vector{Float64}
+    n = length(v)
+
+    # Sort in descending order
+    u = sort(v, rev=true)
+
+    # Find the threshold
+    cssv = cumsum(u)
+    rho = 0
+    for j in 1:n
+        if u[j] + (1.0 - cssv[j]) / j > 0
+            rho = j
+        end
+    end
+
+    # Compute threshold
+    theta = (cssv[rho] - 1.0) / rho
+
+    # Apply thresholding
+    return max.(v .- theta, 0.0)
 end
 
 # ============================================================================
