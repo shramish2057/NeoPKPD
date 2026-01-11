@@ -5,7 +5,8 @@ using Distributions
 using StableRNGs
 
 export simulate_escalation, EscalationResult, CohortResult
-export simulate_3plus3, simulate_mtpi, simulate_crm
+export simulate_3plus3, simulate_mtpi, simulate_crm, simulate_boin
+export boin_boundaries, boin_isotonic_regression
 
 # ============================================================================
 # Result Types
@@ -88,6 +89,9 @@ function simulate_escalation(
             dlt_model=dlt_model, seed=seed, verbose=verbose)
     elseif design.escalation_rule isa CRM
         return simulate_crm(design, pk_model_spec, grid, solver;
+            dlt_model=dlt_model, seed=seed, verbose=verbose)
+    elseif design.escalation_rule isa BOIN
+        return simulate_boin(design, pk_model_spec, grid, solver;
             dlt_model=dlt_model, seed=seed, verbose=verbose)
     else
         error("Unsupported escalation rule type: $(typeof(design.escalation_rule))")
@@ -826,4 +830,346 @@ function _determine_mtd_from_data(
     else
         return nothing, nothing
     end
+end
+
+# ============================================================================
+# BOIN Design (Bayesian Optimal Interval)
+# ============================================================================
+
+"""
+    boin_boundaries(target::Float64; p1_ratio::Float64 = 0.6, p2_ratio::Float64 = 1.4)
+
+Compute BOIN escalation and de-escalation boundaries.
+
+# Arguments
+- `target`: Target DLT rate
+- `p1_ratio`: Ratio of p1 to target (default 0.6)
+- `p2_ratio`: Ratio of p2 to target (default 1.4)
+
+# Returns
+- `(λe, λd)`: Escalation and de-escalation boundaries
+"""
+function boin_boundaries(target::Float64; p1_ratio::Float64 = 0.6, p2_ratio::Float64 = 1.4)
+    p1 = p1_ratio * target
+    p2 = p2_ratio * target
+
+    # Optimal boundaries from Bayesian decision theory
+    λe = log((1 - p1) / (1 - target)) / log(target * (1 - p1) / (p1 * (1 - target)))
+    λd = log((1 - target) / (1 - p2)) / log(p2 * (1 - target) / (target * (1 - p2)))
+
+    return λe, λd
+end
+
+"""
+    boin_decision(n_dlt::Int, n::Int, boin::BOIN)
+
+Make BOIN dose escalation decision.
+
+# Arguments
+- `n_dlt`: Number of DLTs at current dose
+- `n`: Number of subjects at current dose
+- `boin`: BOIN design parameters
+
+# Returns
+- `:escalate`, `:stay`, `:deescalate`, or `:eliminate`
+"""
+function boin_decision(n_dlt::Int, n::Int, boin::BOIN)
+    p_hat = n_dlt / n
+
+    if p_hat <= boin.cutoff_e
+        return :escalate
+    elseif p_hat >= boin.cutoff_d
+        # Check for elimination
+        if n >= boin.n_eliminate
+            # Use posterior probability for elimination
+            # P(p > target | data) using Beta-Binomial
+            posterior = Beta(1 + n_dlt, 1 + n - n_dlt)
+            prob_toxic = 1 - cdf(posterior, boin.target_dlt_rate)
+            if prob_toxic >= boin.eliminate_threshold
+                return :eliminate
+            end
+        end
+        return :deescalate
+    else
+        return :stay
+    end
+end
+
+"""
+    boin_isotonic_regression(n_per_dose::Dict{Int, Int}, n_dlt_per_dose::Dict{Int, Int})
+
+Apply isotonic regression to DLT rates for MTD selection.
+
+BOIN uses isotonic regression to ensure DLT rates are monotonically increasing
+with dose when selecting the MTD at the end of the trial.
+
+# Returns
+- Vector of isotonic DLT rates
+"""
+function boin_isotonic_regression(n_per_dose::Dict{Int, Int}, n_dlt_per_dose::Dict{Int, Int})
+    n_doses = maximum(keys(n_per_dose))
+
+    # Extract raw rates for doses with data
+    rates = Float64[]
+    weights = Float64[]
+
+    for d in 1:n_doses
+        if n_per_dose[d] > 0
+            push!(rates, n_dlt_per_dose[d] / n_per_dose[d])
+            push!(weights, Float64(n_per_dose[d]))
+        else
+            push!(rates, NaN)
+            push!(weights, 0.0)
+        end
+    end
+
+    # Pool-adjacent-violators algorithm (PAVA) for isotonic regression
+    isotonic_rates = copy(rates)
+    n = length(isotonic_rates)
+
+    # Forward pass - ensure non-decreasing
+    for i in 2:n
+        if isnan(isotonic_rates[i])
+            continue
+        end
+        for j in (i-1):-1:1
+            if isnan(isotonic_rates[j])
+                continue
+            end
+            if isotonic_rates[j] > isotonic_rates[i]
+                # Pool j and i
+                total_dlt = 0.0
+                total_n = 0.0
+                for k in j:i
+                    if !isnan(rates[k]) && weights[k] > 0
+                        total_dlt += rates[k] * weights[k]
+                        total_n += weights[k]
+                    end
+                end
+                pooled_rate = total_n > 0 ? total_dlt / total_n : 0.0
+                for k in j:i
+                    if !isnan(isotonic_rates[k])
+                        isotonic_rates[k] = pooled_rate
+                    end
+                end
+            end
+            break
+        end
+    end
+
+    return isotonic_rates
+end
+
+"""
+    simulate_boin(design, pk_model_spec, grid, solver; dlt_model, seed, verbose)
+
+Simulate a BOIN dose escalation trial.
+
+BOIN (Bayesian Optimal Interval) design uses:
+1. Pre-calculated optimal boundaries for dose decisions
+2. Posterior probability for dose elimination
+3. Isotonic regression for MTD selection
+
+# Decision Rules
+- If observed DLT rate ≤ λe: Escalate
+- If observed DLT rate ≥ λd: De-escalate (or eliminate if P(p > target) ≥ threshold)
+- Otherwise: Stay at current dose
+
+# Reference
+Liu S, Yuan Y (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials.
+"""
+function simulate_boin(
+    design::DoseEscalationDesign,
+    pk_model_spec::ModelSpec,
+    grid::SimGrid,
+    solver::SolverSpec;
+    dlt_model = (:threshold, 100.0),
+    seed::UInt64 = UInt64(12345),
+    verbose::Bool = false
+)::EscalationResult
+    rng = StableRNG(seed)
+    boin = design.escalation_rule::BOIN
+
+    n_doses = length(design.dose_levels)
+    cohort_size = design.cohort_size
+
+    # Find starting dose level index
+    current_level = findfirst(d -> d == design.starting_dose, design.dose_levels)
+
+    # Track results
+    cohorts = CohortResult[]
+    n_per_dose = Dict{Int, Int}()
+    n_dlt_per_dose = Dict{Int, Int}()
+    eliminated = Set{Int}()
+
+    for i in 1:n_doses
+        n_per_dose[i] = 0
+        n_dlt_per_dose[i] = 0
+    end
+
+    subject_counter = 0
+    cohort_counter = 0
+    mtd_level = nothing
+    mtd_dose = nothing
+    completed = false
+    termination_reason = ""
+
+    if verbose
+        println("BOIN Dose Escalation Simulation")
+        println("Target DLT rate: $(boin.target_dlt_rate)")
+        println("Escalation cutoff (λe): $(round(boin.cutoff_e, digits=3))")
+        println("De-escalation cutoff (λd): $(round(boin.cutoff_d, digits=3))")
+        println()
+    end
+
+    while subject_counter < design.max_subjects
+        # Check if current dose is eliminated
+        while current_level in eliminated && current_level > 1
+            current_level -= 1
+        end
+
+        if current_level in eliminated
+            completed = true
+            termination_reason = "All doses eliminated"
+            break
+        end
+
+        cohort_counter += 1
+        current_dose = design.dose_levels[current_level]
+
+        if verbose
+            println("Cohort $cohort_counter: Dose level $current_level ($(current_dose) mg)")
+        end
+
+        # Enroll cohort
+        n_enroll = min(cohort_size, design.max_subjects - subject_counter)
+
+        # Simulate subjects
+        subject_ids = Int[]
+        dlt_flags = Bool[]
+        pk_exposures = Float64[]
+
+        for _ in 1:n_enroll
+            subject_counter += 1
+            push!(subject_ids, subject_counter)
+
+            # Simulate PK
+            exposure = _simulate_subject_exposure(pk_model_spec, current_dose, grid, solver, rng)
+            push!(pk_exposures, exposure)
+
+            # Determine DLT
+            has_dlt = _evaluate_dlt(current_dose, exposure, dlt_model, rng)
+            push!(dlt_flags, has_dlt)
+        end
+
+        n_dlt = sum(dlt_flags)
+        n_per_dose[current_level] += n_enroll
+        n_dlt_per_dose[current_level] += n_dlt
+
+        if verbose
+            println("  Enrolled: $n_enroll, DLTs: $n_dlt")
+            println("  Cumulative at dose: $(n_per_dose[current_level]) subjects, $(n_dlt_per_dose[current_level]) DLTs")
+        end
+
+        # Make BOIN decision based on cumulative data at current dose
+        decision = boin_decision(n_dlt_per_dose[current_level], n_per_dose[current_level], boin)
+
+        if verbose
+            println("  Decision: $decision")
+        end
+
+        # Record cohort result
+        push!(cohorts, CohortResult(
+            cohort_counter,
+            current_level,
+            current_dose,
+            n_enroll,
+            n_dlt,
+            subject_ids,
+            dlt_flags,
+            pk_exposures,
+            decision
+        ))
+
+        # Apply decision
+        if decision == :escalate
+            if current_level < n_doses && !(current_level + 1 in eliminated)
+                current_level += 1
+            end
+        elseif decision == :deescalate
+            if current_level > 1
+                current_level -= 1
+            else
+                # Can't go lower, stay at dose 1
+            end
+        elseif decision == :eliminate
+            push!(eliminated, current_level)
+            # Also eliminate all higher doses
+            for d in (current_level + 1):n_doses
+                push!(eliminated, d)
+            end
+
+            if current_level > 1
+                current_level -= 1
+            else
+                completed = true
+                termination_reason = "Lowest dose eliminated"
+                break
+            end
+        end
+        # :stay - keep current_level unchanged
+    end
+
+    if !completed
+        termination_reason = "Maximum subjects reached"
+        completed = true
+    end
+
+    # Determine MTD using isotonic regression
+    isotonic_rates = boin_isotonic_regression(n_per_dose, n_dlt_per_dose)
+
+    # Find MTD: highest dose where isotonic rate ≤ target and not eliminated
+    for d in n_doses:-1:1
+        if n_per_dose[d] > 0 && !(d in eliminated)
+            if !isnan(isotonic_rates[d]) && isotonic_rates[d] <= boin.target_dlt_rate
+                mtd_level = d
+                mtd_dose = design.dose_levels[d]
+                break
+            end
+        end
+    end
+
+    if verbose
+        println()
+        println("Trial completed: $termination_reason")
+        if mtd_level !== nothing
+            println("MTD: Level $mtd_level ($(mtd_dose) mg)")
+        else
+            println("MTD: Not determined")
+        end
+    end
+
+    # Compute DLT rates
+    dlt_rates = Dict{Int, Float64}()
+    for d in 1:n_doses
+        if n_per_dose[d] > 0
+            dlt_rates[d] = n_dlt_per_dose[d] / n_per_dose[d]
+        else
+            dlt_rates[d] = NaN
+        end
+    end
+
+    return EscalationResult(
+        design,
+        cohorts,
+        mtd_level,
+        mtd_dose,
+        subject_counter,
+        sum(values(n_dlt_per_dose)),
+        dlt_rates,
+        n_per_dose,
+        completed,
+        termination_reason,
+        seed
+    )
 end

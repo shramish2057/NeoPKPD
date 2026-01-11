@@ -160,4 +160,29 @@ include("test_helpers.jl")
     @testset "TMDD Models" begin
         include("test_tmdd.jl")
     end
+
+    # MCP-Mod (Phase II Dose-Response)
+    @testset "MCP-Mod" begin
+        include("test_mcpmod.jl")
+    end
+
+    # Exposure-Response Analysis
+    @testset "Exposure-Response" begin
+        include("test_exposure_response.jl")
+    end
+
+    # Probability of Success (Go/No-Go Decisions)
+    @testset "Probability of Success" begin
+        include("test_pos.jl")
+    end
+
+    # Oncology Case Study Integration
+    @testset "Oncology Case Study" begin
+        include("test_oncology_case_study.jl")
+    end
+
+    # Combination Synergy Study (2D Dose-Finding)
+    @testset "Combination Synergy" begin
+        include("test_combination_synergy.jl")
+    end
 end

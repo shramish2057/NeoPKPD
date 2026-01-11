@@ -9,7 +9,7 @@ export DemographicSpec, DiseaseSpec, VirtualPopulationSpec, VirtualSubject
 export DropoutSpec, ComplianceSpec, EnrollmentSpec
 export EndpointSpec, PKEndpoint, PDEndpoint, SafetyEndpoint, CompositeEndpoint
 export TreatmentArm, TrialSpec, TrialResult, ArmResult
-export EscalationRule, ThreePlusThree, mTPI, CRM
+export EscalationRule, ThreePlusThree, mTPI, CRM, BOIN
 
 using Random
 using StableRNGs
@@ -123,6 +123,71 @@ struct CRM <: EscalationRule
     CRM(; target_dlt_rate::Float64 = 0.25,
           skeleton::Vector{Float64} = [0.05, 0.10, 0.20, 0.30, 0.50],
           model::Symbol = :logistic) = new(target_dlt_rate, skeleton, model)
+end
+
+"""
+    BOIN
+
+Bayesian Optimal Interval Design for Phase I dose escalation.
+
+BOIN uses pre-calculated optimal boundaries for dose escalation decisions
+based on Bayesian decision theory.
+
+# Fields
+- `target_dlt_rate::Float64`: Target DLT rate (default 0.25)
+- `p1::Float64`: Lower bound for acceptable DLT rate (default 0.6 * target)
+- `p2::Float64`: Upper bound for acceptable DLT rate (default 1.4 * target)
+- `cutoff_e::Float64`: Escalation boundary (default: computed from p1, target)
+- `cutoff_d::Float64`: De-escalation boundary (default: computed from target, p2)
+- `n_eliminate::Int`: Min subjects at dose before elimination check (default: 3)
+- `eliminate_threshold::Float64`: Threshold for dose elimination (default: 0.95)
+
+# Reference
+Liu S, Yuan Y (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials.
+Journal of the Royal Statistical Society: Series C.
+"""
+struct BOIN <: EscalationRule
+    target_dlt_rate::Float64
+    p1::Float64
+    p2::Float64
+    cutoff_e::Float64
+    cutoff_d::Float64
+    n_eliminate::Int
+    eliminate_threshold::Float64
+
+    function BOIN(; target_dlt_rate::Float64 = 0.25,
+                    p1::Union{Float64, Nothing} = nothing,
+                    p2::Union{Float64, Nothing} = nothing,
+                    cutoff_e::Union{Float64, Nothing} = nothing,
+                    cutoff_d::Union{Float64, Nothing} = nothing,
+                    n_eliminate::Int = 3,
+                    eliminate_threshold::Float64 = 0.95)
+        # Default interval bounds
+        if p1 === nothing
+            p1 = 0.6 * target_dlt_rate
+        end
+        if p2 === nothing
+            p2 = 1.4 * target_dlt_rate
+        end
+
+        @assert 0 < p1 < target_dlt_rate < p2 < 1 "Must have 0 < p1 < target < p2 < 1"
+
+        # Compute optimal boundaries if not provided
+        # λe = log((1-p1)/(1-target)) / log(target*(1-p1)/(p1*(1-target)))
+        # λd = log((1-target)/(1-p2)) / log(p2*(1-target)/(target*(1-p2)))
+        if cutoff_e === nothing
+            cutoff_e = log((1 - p1) / (1 - target_dlt_rate)) /
+                       log(target_dlt_rate * (1 - p1) / (p1 * (1 - target_dlt_rate)))
+        end
+        if cutoff_d === nothing
+            cutoff_d = log((1 - target_dlt_rate) / (1 - p2)) /
+                       log(p2 * (1 - target_dlt_rate) / (target_dlt_rate * (1 - p2)))
+        end
+
+        @assert cutoff_e < cutoff_d "Escalation cutoff must be less than de-escalation cutoff"
+
+        new(target_dlt_rate, p1, p2, cutoff_e, cutoff_d, n_eliminate, eliminate_threshold)
+    end
 end
 
 """
