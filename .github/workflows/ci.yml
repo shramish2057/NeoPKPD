@@ -15,6 +15,8 @@ env:
   JULIA_NUM_THREADS: 2
   JULIA_VERSION: "1.10"
   PYTHON_VERSION: "3.11"
+  # Prevent juliacall segfaults in CI by enabling signal handling
+  PYTHON_JULIACALL_HANDLE_SIGNALS: "yes"
 
 jobs:
   # ===========================================================================

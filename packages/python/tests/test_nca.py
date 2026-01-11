@@ -101,10 +101,9 @@ SS_TAU = 12.0
 # Fixtures
 # ============================================================================
 
-@pytest.fixture(scope="module")
-def init():
-    """Initialize Julia once for all tests."""
-    neopkpd.init_julia()
+# Note: The 'init' fixture is now provided by conftest.py which handles
+# Julia initialization with proper signal handling for CI environments.
+# Tests use 'init' fixture from conftest.py to ensure Julia is ready.
 
 
 # ============================================================================

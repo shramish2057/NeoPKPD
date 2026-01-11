@@ -320,12 +320,8 @@ populationParameters()
 # Test Fixtures
 # ============================================================================
 
-@pytest.fixture(scope="module")
-def julia_initialized():
-    """Initialize Julia once for all tests that need it."""
-    import neopkpd
-    neopkpd.init_julia()
-    return True
+# Note: Julia initialization is handled by conftest.py with proper signal
+# handling. Tests use 'init' fixture from conftest.py to ensure Julia is ready.
 
 
 @pytest.fixture
